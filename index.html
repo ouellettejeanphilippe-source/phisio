@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker Pro</title>
+    <!-- Utilisation d'une police moderne sans-serif -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --surface-color: #161b22;
+            --surface-hover: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-color: #238636;
+            --accent-hover: #2ea043;
+            --border-color: #30363d;
+            --card-radius: 12px;
+            --transition-speed: 0.2s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-icon {
+            width: 24px;
+            height: 24px;
+            background-color: var(--accent-color);
+            border-radius: 6px;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .nav-item:hover {
+            background-color: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem 4rem;
+            max-width: 1200px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .search-bar {
+            padding: 0.75rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background-color: var(--surface-color);
+            color: white;
+            width: 300px;
+            outline: none;
+            transition: border-color var(--transition-speed);
+        }
+
+        .search-bar:focus {
+            border-color: var(--accent-color);
+        }
+
+        /* Grids & Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 1.5rem;
+            transition: transform var(--transition-speed), border-color var(--transition-speed);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--text-secondary);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-meta {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background-color: rgba(35, 134, 54, 0.15);
+            color: var(--accent-hover);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+
+        .card-footer {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            font-size: 0.875rem;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+        }
+
+        /* Modal / Detail View */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: var(--card-radius);
+            border: 1px solid var(--border-color);
+            overflow-y: auto;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform var(--transition-speed);
+            padding: 2.5rem;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color var(--transition-speed);
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .ex-list {
+            margin-top: 2rem;
+            list-style: none;
+        }
+
+        .ex-item {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .ex-item h4 {
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-msg {
+            color: #ff7b72;
+            padding: 1rem;
+            background: rgba(255, 123, 114, 0.1);
+            border: 1px solid #ff7b72;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Sections Toggle */
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-icon"></div>
+            FitTrack Pro
+        </div>
+        <div class="nav-item active" onclick="switchTab('plans')">Mes Programmes</div>
+        <div class="nav-item" onclick="switchTab('exercices')">Bibliothèque</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Mes Programmes</h1>
+            <input type="text" class="search-bar" id="search-input" placeholder="Rechercher..." oninput="handleSearch()">
+        </div>
+
+        <div id="error-container" class="error-msg"></div>
+        <div id="loader" class="loader"></div>
+
+        <!-- Plans Section -->
+        <div id="plans-section" class="section active">
+            <div class="grid" id="plans-grid"></div>
+        </div>
+
+        <!-- Exercices Section -->
+        <div id="exercices-section" class="section">
+            <div class="grid" id="exercices-grid"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Plan Details -->
+    <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title" id="modal-title">Titre du Programme</h2>
+            <div class="card-meta" id="modal-meta"></div>
+            <p id="modal-desc" style="font-size: 1.1rem; margin-bottom: 2rem; color: var(--text-primary);"></p>
+
+            <h3 style="color: white; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Exercices de la séance</h3>
+            <ul class="ex-list" id="modal-ex-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        let db = { exercices: [], plans: [] };
+        let currentTab = 'plans';
+
+        // Initialisation
+        async function init() {
+            showLoader();
+            try {
+                const exRes = await fetch('exercices.json');
+                const plansRes = await fetch('plans.json');
+
+                if (!exRes.ok || !plansRes.ok) {
+                    throw new Error("Impossible de charger les données JSON. Êtes-vous sur un serveur web (http://localhost) ?");
+                }
+
+                db.exercices = await exRes.json();
+                db.plans = await plansRes.json();
+
+                renderPlans(db.plans);
+                renderExercices(db.exercices);
+                hideError();
+            } catch (err) {
+                showError("Erreur de chargement des données. Veuillez lancer l'application via les scripts de démarrage (demarrer_windows.bat ou demarrer_mac_linux.sh) pour éviter les blocages de sécurité de votre navigateur.");
+                console.error(err);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // Navigation
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`${tab}-section`).classList.add('active');
+
+            document.getElementById('page-title').textContent = tab === 'plans' ? 'Mes Programmes' : 'Bibliothèque d\'exercices';
+            document.getElementById('search-input').value = '';
+
+            // Reset views
+            if (tab === 'plans') renderPlans(db.plans);
+            else renderExercices(db.exercices);
+        }
+
+        // Render Plans (Programmes)
+        function renderPlans(plansToRender) {
+            const grid = document.getElementById('plans-grid');
+            grid.innerHTML = '';
+
+            plansToRender.forEach(plan => {
+                const exCount = plan.exercices_ids ? plan.exercices_ids.length : 0;
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openPlanDetails(plan);
+                card.innerHTML = `
+                    <div class="card-title">${plan.nom}</div>
+                    <div class="card-meta">
+                        <span class="tag">${plan.goal}x / semaine</span>
+                        <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exercices</span>
+                    </div>
+                    <div class="card-desc">${plan.description}</div>
+                    <div class="card-footer">
+                        <span>Ouvrir la séance →</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Render Exercices
+        function renderExercices(exercicesToRender) {
+            const grid = document.getElementById('exercices-grid');
+            grid.innerHTML = '';
+
+            exercicesToRender.forEach(ex => {
+                const tagsHTML = (ex.tags || '').split(',').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.cursor = 'default';
+                card.innerHTML = `
+                    <div class="card-title">${ex.nom}</div>
+                    <div class="card-meta">${tagsHTML}</div>
+                    <div class="card-desc">${ex.description}</div>
+                    <div class="card-footer">
+                        <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
+                        <span>Repos: ${ex.repos}s</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Search logic
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+
+            if (currentTab === 'plans') {
+                const filtered = db.plans.filter(p =>
+                    p.nom.toLowerCase().includes(query) ||
+                    p.description.toLowerCase().includes(query)
+                );
+                renderPlans(filtered);
+            } else {
+                const filtered = db.exercices.filter(e =>
+                    (e.nom && e.nom.toLowerCase().includes(query)) ||
+                    (e.description && e.description.toLowerCase().includes(query)) ||
+                    (e.tags && e.tags.toLowerCase().includes(query))
+                );
+                renderExercices(filtered);
+            }
+        }
+
+        // Modal Logic
+        function openPlanDetails(plan) {
+            document.getElementById('modal-title').textContent = plan.nom;
+            document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
+            document.getElementById('modal-desc').textContent = plan.description;
+
+            const list = document.getElementById('modal-ex-list');
+            list.innerHTML = '';
+
+            if (plan.exercices_ids) {
+                plan.exercices_ids.forEach((id, index) => {
+                    const ex = db.exercices.find(e => e.id === id);
+                    if (ex) {
+                        const li = document.createElement('li');
+                        li.className = 'ex-item';
+                        li.innerHTML = `
+                            <h4>${index + 1}. ${ex.nom}</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 8px;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
+                            <p>${ex.description}</p>
+                            ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em;">▶ Trouver la vidéo</a>` : ''}
+                        `;
+                        list.appendChild(li);
+                    }
+                });
+            }
+
+            document.getElementById('modal').classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== document.getElementById('modal') && event.target.className !== 'close-btn') {
+                return;
+            }
+            document.getElementById('modal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Utilities
+        function showLoader() { document.getElementById('loader').style.display = 'block'; }
+        function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+        function showError(msg) {
+            const el = document.getElementById('error-container');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+        function hideError() { document.getElementById('error-container').style.display = 'none'; }
+
+        // Start
+        window.onload = init;
+    </script>
+</body>
+</html>
