@@ -303,9 +303,98 @@
             animation: fadeIn 0.3s ease;
         }
 
+        /* Timer Button */
+        .btn-timer {
+            background-color: var(--surface-hover);
+            color: white;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-timer:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-hover);
+        }
+
+        .btn-timer.active-timer {
+            background-color: rgba(35, 134, 54, 0.2);
+            border-color: var(--accent-color);
+            color: var(--accent-hover);
+            font-weight: bold;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: fixed;
+                bottom: 0;
+                top: auto;
+                flex-direction: row;
+                justify-content: space-around;
+                padding: 1rem;
+                z-index: 100;
+                border-right: none;
+                border-top: 1px solid var(--border-color);
+            }
+
+            .brand {
+                display: none; /* Cache le logo sur mobile pour laisser la place aux onglets */
+            }
+
+            .nav-item {
+                margin-bottom: 0;
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem 1rem 5rem 1rem; /* Padding bottom pour la nav */
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                width: 95%;
+                margin-top: 2rem;
+            }
+
+            .modal-title {
+                font-size: 1.5rem;
+                margin-right: 2rem; /* Pour ne pas chevaucher le bouton fermer */
+            }
         }
 
     </style>
@@ -434,13 +523,21 @@
 
             exercicesToRender.forEach(ex => {
                 const tagsHTML = (ex.tags || '').split(',').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+                let importanceTag = '';
+                if (ex.importance) {
+                    let color = ex.importance.includes('Haute') ? '#ff7b72' : (ex.importance.includes('Moyenne') ? '#d2a8ff' : '#a5d6ff');
+                    let bg = ex.importance.includes('Haute') ? 'rgba(255,123,114,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(210,168,255,0.15)' : 'rgba(165,214,255,0.15)');
+                    importanceTag = `<span class="tag" style="color:${color}; background:${bg}; border: 1px solid ${color};">${ex.importance}</span>`;
+                }
+
+                let freqTag = ex.frequence ? `<span class="tag" style="background: rgba(139, 148, 158, 0.2); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
 
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.style.cursor = 'default';
                 card.innerHTML = `
                     <div class="card-title">${ex.nom}</div>
-                    <div class="card-meta">${tagsHTML}</div>
+                    <div class="card-meta">${importanceTag} ${freqTag} ${tagsHTML}</div>
                     <div class="card-desc">${ex.description}</div>
                     <div class="card-footer">
                         <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
@@ -490,7 +587,8 @@
                             <h4>${index + 1}. ${ex.nom}</h4>
                             <p style="color: var(--text-secondary); margin-bottom: 8px;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
                             <p>${ex.description}</p>
-                            ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em;">▶ Trouver la vidéo</a>` : ''}
+                            ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em; margin-right: 15px;">▶ Trouver la vidéo</a>` : ''}
+                            ${ex.repos > 0 ? `<button class="btn-timer" id="timer-btn-${index}" onclick="startTimer(${ex.repos}, 'timer-btn-${index}')">⏱ Lancer repos (${ex.repos}s)</button>` : ''}
                         `;
                         list.appendChild(li);
                     }
@@ -501,10 +599,48 @@
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
         }
 
+        let activeTimers = {};
+
+        function startTimer(duration, buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (!btn || activeTimers[buttonId]) return; // Timer already running
+
+            let timeRemaining = duration;
+            btn.classList.add('active-timer');
+            btn.innerHTML = `⏳ Repos en cours: ${timeRemaining}s`;
+
+            activeTimers[buttonId] = setInterval(() => {
+                timeRemaining -= 1;
+                if (timeRemaining <= 0) {
+                    clearInterval(activeTimers[buttonId]);
+                    delete activeTimers[buttonId];
+                    btn.classList.remove('active-timer');
+                    btn.innerHTML = `✅ Repos terminé !`;
+                    // Bip simple (facultatif si le navigateur l'autorise)
+                    try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3); } catch(e){}
+                    setTimeout(() => {
+                        if(document.getElementById(buttonId)) {
+                             document.getElementById(buttonId).innerHTML = `⏱ Relancer repos (${duration}s)`;
+                        }
+                    }, 3000);
+                } else {
+                    btn.innerHTML = `⏳ Repos en cours: ${timeRemaining}s`;
+                }
+            }, 1000);
+        }
+
+        function stopAllTimers() {
+            for (let id in activeTimers) {
+                clearInterval(activeTimers[id]);
+            }
+            activeTimers = {};
+        }
+
         function closeModal(event) {
             if (event && event.target !== document.getElementById('modal') && event.target.className !== 'close-btn') {
                 return;
             }
+            stopAllTimers();
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
