@@ -33,7 +33,7 @@ def search_exercises(exercices, keyword):
 
 def get_plan_details(exercices, plans, plan_id):
     """Récupère un programme complet avec les descriptions détaillées de chaque exercice."""
-    plan = next((p for p in plans if p.get('id') == plan_id), None)
+    plan = next((p for p in plans if str(p.get('id')) == str(plan_id)), None)
     if not plan:
         return None
 
@@ -47,7 +47,7 @@ def get_plan_details(exercices, plans, plan_id):
 
     exercice_ids = plan.get('exercices_ids', [])
     for ex_id in exercice_ids:
-        ex = next((e for e in exercices if e.get('id') == ex_id), None)
+        ex = next((e for e in exercices if str(e.get('id')) == str(ex_id)), None)
         if ex:
             plan_details['exercices'].append(ex)
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="Gestionnaire d'entraînement")
-    parser.add_argument('--export', type=int, help="ID du plan à exporter en Markdown")
+    parser.add_argument('--export', type=str, help="ID du plan à exporter en Markdown")
     parser.add_argument('--output', type=str, default="plan_export.md", help="Nom du fichier de sortie")
     parser.add_argument('--search', type=str, help="Recherche un exercice par mot-clé")
     parser.add_argument('--tag', type=str, help="Filtre les exercices par tag")
