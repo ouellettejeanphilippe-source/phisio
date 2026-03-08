@@ -9,7 +9,18 @@ Une application web locale moderne et réactive pour gérer vos programmes d'ent
 * **Intégration YouTube :** Trouvez les vidéos de vos exercices en un clic.
 * **Synchronisation Google Sheets :** Synchronisez facilement vos données d'exercices depuis le Cloud !
 
-## Démarrage Rapide
+## Comment installer l'application sur votre téléphone ? 📱
+
+L'application est une **PWA (Progressive Web App)** : elle s'installe comme une application normale sans passer par le Play Store ou l'App Store, directement depuis son URL !
+
+1. **Hébergez** ou **exposez** le dossier de ce projet pour y accéder depuis votre téléphone (via GitHub Pages, Netlify, Vercel ou un accès Wi-Fi local à votre ordinateur).
+2. **Ouvrez** le site web de l'application depuis le navigateur de votre téléphone (Chrome, Safari, Firefox).
+3. **Installez-la** :
+   - Sur **Android** (Chrome) : Un bandeau "Ajouter à l'écran d'accueil" apparaîtra en bas de l'écran, ou allez dans le menu (les 3 points en haut à droite) et cliquez sur "Ajouter à l'écran d'accueil" ou "Installer l'application".
+   - Sur **iOS / iPhone** (Safari) : Cliquez sur le bouton de Partage (le carré avec une flèche vers le haut) et sélectionnez "Sur l'écran d'accueil".
+4. Une fois installée, l'application fonctionnera hors ligne (grâce au *Service Worker*) et apparaîtra dans votre liste d'applications avec son propre icône, sans barre d'adresse !
+
+## Démarrage Rapide (En local sur ordinateur)
 
 Double-cliquez sur l'un des scripts suivants selon votre système d'exploitation. Cela démarrera un serveur local très léger qui permet à l'application web de lire vos données correctement :
 * Windows : `demarrer_windows.bat`
