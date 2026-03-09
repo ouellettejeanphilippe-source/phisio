@@ -143,7 +143,6 @@
             background-color: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: var(--card-radius);
-            padding: 1.5rem;
             transition: all var(--transition-speed);
             cursor: pointer;
             display: flex;
@@ -156,6 +155,30 @@
             transform: translateY(-5px) scale(1.02);
             border-color: var(--accent-color);
             box-shadow: 0 8px 30px rgba(178, 255, 5, 0.1);
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 160px;
+            background-color: #050505;
+            position: relative;
+            border-top-left-radius: calc(var(--card-radius) - 1px);
+            border-top-right-radius: calc(var(--card-radius) - 1px);
+            overflow: hidden;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .card-title {
@@ -562,9 +585,11 @@
             <!-- Exercice View -->
             <div id="workout-ex-view" style="display: flex; flex-direction: column; height: 100%;">
                 <h2 id="workout-ex-title" style="font-size: 2.5rem; text-align: center; margin-bottom: 10px; color: white;">Pompes</h2>
-                <div id="workout-ex-meta" style="text-align: center; margin-bottom: 30px;">
+                <div id="workout-ex-meta" style="text-align: center; margin-bottom: 20px;">
                     <span class="tag" id="workout-ex-target" style="font-size: 1rem; padding: 6px 12px; background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">3 x 10 reps</span>
                 </div>
+
+                <div id="workout-ex-img-container" style="text-align: center; margin-bottom: 20px;"></div>
 
                 <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; flex: 1;">
                     <p id="workout-ex-desc" style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 30px;"></p>
@@ -611,6 +636,8 @@
             <h2 class="modal-title" id="modal-ex-title">Titre Exercice</h2>
             <div class="card-meta" id="modal-ex-meta" style="margin-bottom: 1.5rem;"></div>
 
+            <div id="modal-ex-img-container"></div>
+
             <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                     <div>
@@ -642,6 +669,20 @@
             isResting: false,
             restInterval: null
         };
+
+        // Utilitaire: Obtenir l'image d'un exercice
+        function getExImage(ex) {
+            if (ex.image && ex.image.trim() !== "") {
+                return ex.image;
+            }
+            // Fallback: générer une image via un service externe en utilisant le nom de l'exercice
+            // Note: Unsplash Source is deprecated, using Unsplash API directly or another alternative is better,
+            // but for a simple fallback we can use a generic placeholder service like placehold.co or a generic fitness image
+            // Let's use a dynamic placeholder or generic image if possible.
+            // A simple placeholder with the exercise initial or name:
+            const encodedName = encodeURIComponent(ex.nom);
+            return `https://ui-avatars.com/api/?name=${encodedName}&background=111111&color=b2ff05&size=400&font-size=0.33`;
+        }
 
         // Initialisation
         async function init() {
@@ -722,7 +763,7 @@
             plansToRender.forEach(plan => {
                 const exCount = plan.exercices_ids ? plan.exercices_ids.length : 0;
                 const completedCount = history[plan.id] || 0;
-                const badge = completedCount > 0 ? `<div style="position: absolute; top: -10px; right: -10px; background: var(--accent-color); color: #000; font-weight: bold; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">${completedCount}</div>` : '';
+                const badge = completedCount > 0 ? `<div style="position: absolute; top: -10px; right: -10px; background: var(--accent-color); color: #000; font-weight: bold; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">${completedCount}</div>` : '';
 
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -730,14 +771,16 @@
                 card.onclick = () => openPlanDetails(plan);
                 card.innerHTML = `
                     ${badge}
-                    <div class="card-title">${plan.nom}</div>
-                    <div class="card-meta">
-                        <span class="tag" style="background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">${plan.goal}x / sem</span>
-                        <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
-                    </div>
-                    <div class="card-desc">${plan.description}</div>
-                    <div class="card-footer" style="color: var(--accent-color); font-weight: 600;">
-                        <span>VOIR LA SÉANCE →</span>
+                    <div class="card-content">
+                        <div class="card-title">${plan.nom}</div>
+                        <div class="card-meta">
+                            <span class="tag" style="background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">${plan.goal}x / sem</span>
+                            <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
+                        </div>
+                        <div class="card-desc">${plan.description}</div>
+                        <div class="card-footer" style="color: var(--accent-color); font-weight: 600;">
+                            <span>VOIR LA SÉANCE →</span>
+                        </div>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -760,16 +803,23 @@
 
                 let freqTag = ex.frequence ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
 
+                const imgUrl = getExImage(ex);
+
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.onclick = () => openExerciceDetails(ex); // Changed to be clickable
                 card.innerHTML = `
-                    <div class="card-title">${ex.nom}</div>
-                    <div class="card-meta" style="gap: 5px;">${importanceTag} ${freqTag} ${tagsHTML}</div>
-                    <div class="card-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${ex.description}</div>
-                    <div class="card-footer">
-                        <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
-                        <span>⏱ ${ex.repos}s</span>
+                    <div class="card-image-container">
+                        <img src="${imgUrl}" alt="${ex.nom}" class="card-image" loading="lazy">
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">${ex.nom}</div>
+                        <div class="card-meta" style="gap: 5px;">${importanceTag} ${freqTag} ${tagsHTML}</div>
+                        <div class="card-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${ex.description}</div>
+                        <div class="card-footer">
+                            <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
+                            <span>⏱ ${ex.repos}s</span>
+                        </div>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -813,6 +863,7 @@
                     repos: ex.rest || 0,
                     description: ex.d || "",
                     video: ex.v || "",
+                    image: ex.image || ex.img || ex.url_image || "",
                     frequence: ex.frequence || 0
                 }));
 
@@ -896,14 +947,20 @@
                 plan.exercices_ids.forEach((id, index) => {
                     const ex = db.exercices.find(e => e.id === id);
                     if (ex) {
+                        const imgUrl = getExImage(ex);
                         const li = document.createElement('li');
                         li.className = 'ex-item';
+                        li.style.display = 'flex';
+                        li.style.gap = '15px';
                         li.innerHTML = `
-                            <h4>${index + 1}. ${ex.nom}</h4>
-                            <p style="color: var(--text-secondary); margin-bottom: 8px;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
-                            <p>${ex.description}</p>
-                            ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em; margin-right: 15px;">▶ Trouver la vidéo</a>` : ''}
-                            ${ex.repos > 0 ? `<button class="btn-timer" id="timer-btn-${index}" onclick="startTimer(${ex.repos}, 'timer-btn-${index}')">⏱ Lancer repos (${ex.repos}s)</button>` : ''}
+                            <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
+                            <div style="flex-grow: 1;">
+                                <h4>${index + 1}. ${ex.nom}</h4>
+                                <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
+                                <p style="font-size: 0.95rem;">${ex.description}</p>
+                                ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em; margin-right: 15px;">▶ Trouver la vidéo</a>` : ''}
+                                ${ex.repos > 0 ? `<button class="btn-timer" id="timer-btn-${index}" onclick="startTimer(${ex.repos}, 'timer-btn-${index}')">⏱ Lancer repos (${ex.repos}s)</button>` : ''}
+                            </div>
                         `;
                         list.appendChild(li);
                     }
@@ -956,6 +1013,12 @@
 
             const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
             document.getElementById('modal-ex-meta').innerHTML = tagsHTML;
+
+            const imgUrl = getExImage(ex);
+            const imgContainer = document.getElementById('modal-ex-img-container');
+            if (imgContainer) {
+                imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem;" loading="lazy">`;
+            }
 
             document.getElementById('modal-ex-series').textContent = `${ex.series} × ${ex.valeur} ${ex.type}`;
             document.getElementById('modal-ex-repos').textContent = `${ex.repos}s`;
@@ -1044,6 +1107,12 @@
                 document.getElementById('workout-ex-title').textContent = ex.nom;
                 document.getElementById('workout-ex-target').textContent = `${ex.series} x ${ex.valeur} ${ex.type}`;
                 document.getElementById('workout-ex-desc').textContent = ex.description;
+
+                const imgUrl = getExImage(ex);
+                const imgContainer = document.getElementById('workout-ex-img-container');
+                if (imgContainer) {
+                    imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px;" loading="lazy">`;
+                }
 
                 // Générer les bulles de séries
                 const setsContainer = document.getElementById('workout-sets-container');
