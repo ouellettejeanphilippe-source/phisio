@@ -16,16 +16,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0d1117;
-            --surface-color: #161b22;
-            --surface-hover: #21262d;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --accent-color: #238636;
-            --accent-hover: #2ea043;
-            --border-color: #30363d;
-            --card-radius: 12px;
-            --transition-speed: 0.2s;
+            --bg-color: #000000;
+            --surface-color: #111111;
+            --surface-hover: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #9e9e9e;
+            --accent-color: #b2ff05; /* Garmin/Fitness neon green */
+            --accent-hover: #8fc700;
+            --accent-dark: rgba(178, 255, 5, 0.15);
+            --border-color: #2a2a2a;
+            --card-radius: 16px;
+            --transition-speed: 0.25s;
         }
 
         * {
@@ -33,6 +34,7 @@
             margin: 0;
             padding: 0;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -46,7 +48,7 @@
         /* Sidebar Navigation */
         .sidebar {
             width: 260px;
-            background-color: var(--surface-color);
+            background-color: #050505;
             border-right: 1px solid var(--border-color);
             padding: 2rem 1rem;
             display: flex;
@@ -89,8 +91,9 @@
         }
 
         .nav-item.active {
-            background-color: var(--accent-color);
-            color: white;
+            background-color: var(--accent-dark);
+            color: var(--accent-color);
+            border-left: 3px solid var(--accent-color);
         }
 
         /* Main Content */
@@ -141,16 +144,18 @@
             border: 1px solid var(--border-color);
             border-radius: var(--card-radius);
             padding: 1.5rem;
-            transition: transform var(--transition-speed), border-color var(--transition-speed);
+            transition: all var(--transition-speed);
             cursor: pointer;
             display: flex;
             flex-direction: column;
             height: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
         .card:hover {
-            transform: translateY(-4px);
-            border-color: var(--text-secondary);
+            transform: translateY(-5px) scale(1.02);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 30px rgba(178, 255, 5, 0.1);
         }
 
         .card-title {
@@ -170,12 +175,14 @@
         }
 
         .tag {
-            background-color: rgba(35, 134, 54, 0.15);
-            color: var(--accent-hover);
-            padding: 2px 8px;
-            border-radius: 12px;
+            background-color: var(--accent-dark);
+            color: var(--accent-color);
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.75rem;
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .card-desc {
@@ -312,14 +319,41 @@
         }
 
         /* Timer Button */
+        .btn-action {
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            transition: all var(--transition-speed);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+        }
+
+        .btn-action:hover {
+            background-color: var(--accent-hover);
+            transform: scale(1.02);
+            box-shadow: 0 0 15px var(--accent-dark);
+        }
+
         .btn-timer {
-            background-color: var(--surface-hover);
-            color: white;
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 6px;
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--accent-color);
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 0.85rem;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -328,15 +362,22 @@
         }
 
         .btn-timer:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-hover);
+            background-color: var(--accent-dark);
+            color: var(--accent-color);
         }
 
         .btn-timer.active-timer {
-            background-color: rgba(35, 134, 54, 0.2);
+            background-color: var(--accent-color);
             border-color: var(--accent-color);
-            color: var(--accent-hover);
+            color: #000;
             font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-dark); }
+            50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(178, 255, 5, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(178, 255, 5, 0); }
         }
 
         @keyframes fadeIn {
@@ -389,6 +430,7 @@
                 background-color: transparent;
                 color: var(--accent-color);
                 border-top: 3px solid var(--accent-color);
+                border-left: none;
             }
 
             .main-content {
@@ -480,10 +522,10 @@
                     <input type="text" id="api-url" class="search-bar" style="width: 100%; border-radius: 6px;" placeholder="https://script.google.com/macros/s/.../exec">
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 2rem;">
-                    <button onclick="syncData()" style="background-color: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1;">
+                    <button onclick="syncData()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; text-transform: uppercase;">
                         ⬇️ Synchroniser les données
                     </button>
-                    <button onclick="clearData()" style="background-color: transparent; color: #ff7b72; border: 1px solid #ff7b72; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    <button onclick="clearData()" style="background-color: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; text-transform: uppercase;">
                         🗑️ Vider
                     </button>
                 </div>
@@ -500,14 +542,106 @@
             <div class="card-meta" id="modal-meta"></div>
             <p id="modal-desc" style="font-size: 1.1rem; margin-bottom: 2rem; color: var(--text-primary);"></p>
 
+            <button class="btn-action" id="btn-start-workout" style="margin-bottom: 2rem;">▶ DÉMARRER LA SÉANCE</button>
+
             <h3 style="color: white; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Exercices de la séance</h3>
             <ul class="ex-list" id="modal-ex-list"></ul>
+        </div>
+    </div>
+
+    <!-- Workout Sequence Fullscreen -->
+    <div id="workout-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-color); z-index: 2000; flex-direction: column; overflow: hidden;">
+        <!-- Header -->
+        <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: #050505;">
+            <button onclick="quitWorkout()" style="background: none; border: none; color: #ff3333; font-weight: bold; font-size: 1rem; cursor: pointer;">✕ QUITTER</button>
+            <div id="workout-progress" style="color: var(--text-secondary); font-weight: 600;">1 / 5</div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="workout-content" style="flex: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto;">
+            <!-- Exercice View -->
+            <div id="workout-ex-view" style="display: flex; flex-direction: column; height: 100%;">
+                <h2 id="workout-ex-title" style="font-size: 2.5rem; text-align: center; margin-bottom: 10px; color: white;">Pompes</h2>
+                <div id="workout-ex-meta" style="text-align: center; margin-bottom: 30px;">
+                    <span class="tag" id="workout-ex-target" style="font-size: 1rem; padding: 6px 12px; background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">3 x 10 reps</span>
+                </div>
+
+                <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; flex: 1;">
+                    <p id="workout-ex-desc" style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 30px;"></p>
+
+                    <h3 style="text-align: center; color: white; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">Séries complétées</h3>
+                    <div id="workout-sets-container" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
+                        <!-- Sets bubbles injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rest View -->
+            <div id="workout-rest-view" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                <h2 style="color: var(--accent-color); font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;">Repos</h2>
+                <div id="workout-rest-timer" style="font-size: 6rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 40px; text-shadow: 0 0 20px rgba(178, 255, 5, 0.3);">
+                    60
+                </div>
+                <div style="color: var(--text-secondary); text-align: center;">
+                    <div style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 5px;">À SUIVRE :</div>
+                    <div id="workout-next-ex" style="font-size: 1.2rem; color: white; font-weight: bold;">Traction</div>
+                </div>
+            </div>
+
+            <!-- End Screen View -->
+            <div id="workout-end-view" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center;">
+                <div style="font-size: 5rem; margin-bottom: 20px;">🏆</div>
+                <h2 style="color: var(--accent-color); font-size: 2.5rem; margin-bottom: 15px;">SÉANCE TERMINÉE</h2>
+                <p style="color: var(--text-secondary); font-size: 1.2rem; margin-bottom: 40px;">Excellent travail ! La régularité est la clé du succès.</p>
+                <button onclick="finishWorkout()" class="btn-action" style="max-width: 300px;">RETOUR À L'ACCUEIL</button>
+            </div>
+        </div>
+
+        <!-- Footer / Controls -->
+        <div id="workout-controls" style="padding: 20px; background-color: #050505; border-top: 1px solid var(--border-color);">
+            <button id="btn-next-step" onclick="nextWorkoutStep()" class="btn-action" style="margin-top: 0; padding: 20px; font-size: 1.2rem;">SÉRIE SUIVANTE</button>
+            <button id="btn-skip-rest" onclick="skipRest()" class="btn-timer" style="width: 100%; justify-content: center; margin-top: 15px; display: none; padding: 15px; font-size: 1rem;">PASSER LE REPOS</button>
+        </div>
+    </div>
+
+    <!-- Modal for Exercice Details -->
+    <div class="modal-overlay" id="modal-ex" onclick="closeExModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeExModal()">&times;</button>
+            <h2 class="modal-title" id="modal-ex-title">Titre Exercice</h2>
+            <div class="card-meta" id="modal-ex-meta" style="margin-bottom: 1.5rem;"></div>
+
+            <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <span style="display: block; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase;">Séries & Répétitions</span>
+                        <span style="font-size: 1.2rem; font-weight: bold; color: white;" id="modal-ex-series"></span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: block; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase;">Repos</span>
+                        <span style="font-size: 1.2rem; font-weight: bold; color: white;" id="modal-ex-repos"></span>
+                    </div>
+                </div>
+                <p id="modal-ex-desc" style="font-size: 1.05rem; color: var(--text-primary); line-height: 1.6;"></p>
+            </div>
+
+            <a id="modal-ex-video" href="#" target="_blank" class="btn-action" style="background-color: #ff0000; color: white; text-decoration: none;">▶ CHERCHER SUR YOUTUBE</a>
         </div>
     </div>
 
     <script>
         let db = { exercices: [], plans: [] };
         let currentTab = 'plans';
+
+        // Variables pour la séance en cours
+        let currentWorkout = {
+            planId: null,
+            exercices: [],
+            currentExIndex: 0,
+            currentSet: 0,
+            isResting: false,
+            restInterval: null
+        };
 
         // Initialisation
         async function init() {
@@ -581,20 +715,29 @@
             const grid = document.getElementById('plans-grid');
             grid.innerHTML = '';
 
+            // Retrieve completion history
+            let history = {};
+            try { history = JSON.parse(localStorage.getItem('fitness_history') || '{}'); } catch(e){}
+
             plansToRender.forEach(plan => {
                 const exCount = plan.exercices_ids ? plan.exercices_ids.length : 0;
+                const completedCount = history[plan.id] || 0;
+                const badge = completedCount > 0 ? `<div style="position: absolute; top: -10px; right: -10px; background: var(--accent-color); color: #000; font-weight: bold; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">${completedCount}</div>` : '';
+
                 const card = document.createElement('div');
                 card.className = 'card';
+                card.style.position = 'relative';
                 card.onclick = () => openPlanDetails(plan);
                 card.innerHTML = `
+                    ${badge}
                     <div class="card-title">${plan.nom}</div>
                     <div class="card-meta">
-                        <span class="tag">${plan.goal}x / semaine</span>
-                        <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exercices</span>
+                        <span class="tag" style="background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">${plan.goal}x / sem</span>
+                        <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
                     </div>
                     <div class="card-desc">${plan.description}</div>
-                    <div class="card-footer">
-                        <span>Ouvrir la séance →</span>
+                    <div class="card-footer" style="color: var(--accent-color); font-weight: 600;">
+                        <span>VOIR LA SÉANCE →</span>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -607,26 +750,26 @@
             grid.innerHTML = '';
 
             exercicesToRender.forEach(ex => {
-                const tagsHTML = (ex.tags || '').split(',').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+                const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
                 let importanceTag = '';
                 if (ex.importance) {
-                    let color = ex.importance.includes('Haute') ? '#ff7b72' : (ex.importance.includes('Moyenne') ? '#d2a8ff' : '#a5d6ff');
-                    let bg = ex.importance.includes('Haute') ? 'rgba(255,123,114,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(210,168,255,0.15)' : 'rgba(165,214,255,0.15)');
+                    let color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
+                    let bg = ex.importance.includes('Haute') ? 'rgba(255,51,51,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(255,179,0,0.15)' : 'rgba(88,166,255,0.15)');
                     importanceTag = `<span class="tag" style="color:${color}; background:${bg}; border: 1px solid ${color};">${ex.importance}</span>`;
                 }
 
-                let freqTag = ex.frequence ? `<span class="tag" style="background: rgba(139, 148, 158, 0.2); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
+                let freqTag = ex.frequence ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
 
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.style.cursor = 'default';
+                card.onclick = () => openExerciceDetails(ex); // Changed to be clickable
                 card.innerHTML = `
                     <div class="card-title">${ex.nom}</div>
-                    <div class="card-meta">${importanceTag} ${freqTag} ${tagsHTML}</div>
-                    <div class="card-desc">${ex.description}</div>
+                    <div class="card-meta" style="gap: 5px;">${importanceTag} ${freqTag} ${tagsHTML}</div>
+                    <div class="card-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${ex.description}</div>
                     <div class="card-footer">
                         <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
-                        <span>Repos: ${ex.repos}s</span>
+                        <span>⏱ ${ex.repos}s</span>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -743,6 +886,9 @@
             document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
             document.getElementById('modal-desc').textContent = plan.description;
 
+            // Setup "Démarrer" button
+            document.getElementById('btn-start-workout').onclick = () => startWorkout(plan);
+
             const list = document.getElementById('modal-ex-list');
             list.innerHTML = '';
 
@@ -803,6 +949,274 @@
                 clearInterval(activeTimers[id]);
             }
             activeTimers = {};
+        }
+
+        function openExerciceDetails(ex) {
+            document.getElementById('modal-ex-title').textContent = ex.nom;
+
+            const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+            document.getElementById('modal-ex-meta').innerHTML = tagsHTML;
+
+            document.getElementById('modal-ex-series').textContent = `${ex.series} × ${ex.valeur} ${ex.type}`;
+            document.getElementById('modal-ex-repos').textContent = `${ex.repos}s`;
+            document.getElementById('modal-ex-desc').textContent = ex.description;
+
+            const videoBtn = document.getElementById('modal-ex-video');
+            if (ex.video) {
+                videoBtn.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(ex.video)}`;
+                videoBtn.style.display = 'inline-flex';
+            } else {
+                videoBtn.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(ex.nom)}`;
+                videoBtn.style.display = 'inline-flex';
+            }
+
+            document.getElementById('modal-ex').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ==========================================
+        // MOTEUR DE SÉANCE D'ENTRAÎNEMENT (WORKOUT)
+        // ==========================================
+
+        function startWorkout(plan) {
+            if (!plan.exercices_ids || plan.exercices_ids.length === 0) {
+                alert("Ce programme ne contient aucun exercice.");
+                return;
+            }
+
+            // Récupérer les objets exercices
+            const exos = plan.exercices_ids.map(id => db.exercices.find(e => e.id === id)).filter(e => e);
+            if (exos.length === 0) return;
+
+            // Initialiser l'état
+            currentWorkout = {
+                planId: plan.id,
+                exercices: exos,
+                currentExIndex: 0,
+                currentSet: 0, // 0 means haven't done set 1 yet
+                isResting: false,
+                restInterval: null
+            };
+
+            // Cacher modale et afficher l'écran plein écran
+            document.getElementById('modal').classList.remove('active');
+            document.getElementById('workout-screen').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            renderWorkoutStep();
+        }
+
+        function renderWorkoutStep() {
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            // Mise à jour de la barre de progression
+            document.getElementById('workout-progress').textContent = `${currentWorkout.currentExIndex + 1} / ${currentWorkout.exercices.length}`;
+
+            // Si on se repose
+            if (currentWorkout.isResting) {
+                document.getElementById('workout-ex-view').style.display = 'none';
+                document.getElementById('workout-rest-view').style.display = 'flex';
+                document.getElementById('workout-end-view').style.display = 'none';
+
+                document.getElementById('btn-next-step').style.display = 'none';
+                document.getElementById('btn-skip-rest').style.display = 'flex';
+
+                // Info sur le prochain exercice
+                const nextExName = (currentWorkout.currentSet >= ex.series && currentWorkout.currentExIndex + 1 < currentWorkout.exercices.length)
+                    ? currentWorkout.exercices[currentWorkout.currentExIndex + 1].nom
+                    : `${ex.nom} (Série ${currentWorkout.currentSet + 1}/${ex.series})`;
+
+                document.getElementById('workout-next-ex').textContent = nextExName;
+
+                startRestTimer(ex.repos);
+            } else {
+                // Si on s'entraîne
+                document.getElementById('workout-ex-view').style.display = 'flex';
+                document.getElementById('workout-rest-view').style.display = 'none';
+                document.getElementById('workout-end-view').style.display = 'none';
+
+                document.getElementById('btn-next-step').style.display = 'flex';
+                document.getElementById('btn-skip-rest').style.display = 'none';
+
+                document.getElementById('btn-next-step').textContent = 'VALIDER LA SÉRIE';
+
+                // Remplir les infos de l'exercice
+                document.getElementById('workout-ex-title').textContent = ex.nom;
+                document.getElementById('workout-ex-target').textContent = `${ex.series} x ${ex.valeur} ${ex.type}`;
+                document.getElementById('workout-ex-desc').textContent = ex.description;
+
+                // Générer les bulles de séries
+                const setsContainer = document.getElementById('workout-sets-container');
+                setsContainer.innerHTML = '';
+                for (let i = 0; i < ex.series; i++) {
+                    const bubble = document.createElement('div');
+                    const isCompleted = i < currentWorkout.currentSet;
+
+                    bubble.style.width = '40px';
+                    bubble.style.height = '40px';
+                    bubble.style.borderRadius = '50%';
+                    bubble.style.display = 'flex';
+                    bubble.style.alignItems = 'center';
+                    bubble.style.justifyContent = 'center';
+                    bubble.style.fontWeight = 'bold';
+                    bubble.style.fontSize = '1.2rem';
+                    bubble.style.transition = 'all 0.3s';
+
+                    if (isCompleted) {
+                        bubble.style.backgroundColor = 'var(--accent-color)';
+                        bubble.style.color = '#000';
+                        bubble.innerHTML = '✓';
+                        bubble.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.4)';
+                    } else if (i === currentWorkout.currentSet) {
+                        bubble.style.backgroundColor = 'transparent';
+                        bubble.style.border = '2px solid var(--accent-color)';
+                        bubble.style.color = 'var(--accent-color)';
+                        bubble.innerHTML = i + 1;
+                    } else {
+                        bubble.style.backgroundColor = 'transparent';
+                        bubble.style.border = '2px solid var(--border-color)';
+                        bubble.style.color = 'var(--text-secondary)';
+                        bubble.innerHTML = i + 1;
+                    }
+                    setsContainer.appendChild(bubble);
+                }
+            }
+        }
+
+        function nextWorkoutStep() {
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            // On vient de valider une série
+            currentWorkout.currentSet++;
+
+            // Doit-on se reposer ?
+            if (ex.repos > 0) {
+                // On se repose sauf si c'est la toute dernière série du tout dernier exercice
+                const isLastEx = currentWorkout.currentExIndex === currentWorkout.exercices.length - 1;
+                const isLastSet = currentWorkout.currentSet >= ex.series;
+
+                if (!(isLastEx && isLastSet)) {
+                    currentWorkout.isResting = true;
+                    renderWorkoutStep();
+                    return;
+                }
+            }
+
+            // Si pas de repos, on enchaîne
+            advanceAfterRest();
+        }
+
+        function advanceAfterRest() {
+            currentWorkout.isResting = false;
+            if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
+
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            if (currentWorkout.currentSet >= ex.series) {
+                // Exercice terminé, on passe au suivant
+                currentWorkout.currentExIndex++;
+                currentWorkout.currentSet = 0;
+
+                if (currentWorkout.currentExIndex >= currentWorkout.exercices.length) {
+                    // SÉANCE TERMINÉE
+                    showWorkoutEnd();
+                    return;
+                }
+            }
+            renderWorkoutStep();
+        }
+
+        function startRestTimer(duration) {
+            let timeRemaining = duration;
+            const timerEl = document.getElementById('workout-rest-timer');
+            timerEl.textContent = timeRemaining;
+
+            if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
+
+            // Beep au début du repos (optionnel)
+            playBeep(400, 0.1);
+
+            currentWorkout.restInterval = setInterval(() => {
+                timeRemaining--;
+                timerEl.textContent = timeRemaining;
+
+                // Beeps pour les 3 dernières secondes
+                if (timeRemaining > 0 && timeRemaining <= 3) {
+                    playBeep(600, 0.1);
+                }
+
+                if (timeRemaining <= 0) {
+                    clearInterval(currentWorkout.restInterval);
+                    // Long Beep final
+                    playBeep(800, 0.5);
+                    advanceAfterRest();
+                }
+            }, 1000);
+        }
+
+        function skipRest() {
+            advanceAfterRest();
+        }
+
+        function showWorkoutEnd() {
+            document.getElementById('workout-progress').textContent = "Terminé";
+            document.getElementById('workout-ex-view').style.display = 'none';
+            document.getElementById('workout-rest-view').style.display = 'none';
+            document.getElementById('workout-end-view').style.display = 'flex';
+
+            document.getElementById('workout-controls').style.display = 'none';
+
+            // Mettre à jour l'historique de complétion
+            let history = {};
+            try { history = JSON.parse(localStorage.getItem('fitness_history') || '{}'); } catch(e){}
+            history[currentWorkout.planId] = (history[currentWorkout.planId] || 0) + 1;
+            localStorage.setItem('fitness_history', JSON.stringify(history));
+
+            // Rafraîchir l'interface (pour le badge)
+            renderPlans(db.plans);
+        }
+
+        function finishWorkout() {
+            quitWorkout();
+        }
+
+        function quitWorkout() {
+            if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
+            document.getElementById('workout-screen').style.display = 'none';
+            document.getElementById('workout-controls').style.display = 'block'; // Reset for next time
+            document.body.style.overflow = 'auto';
+        }
+
+        // Utilitaire: Émettre un bip
+        let sharedAudioCtx = null;
+        function playBeep(frequency, duration) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                if (!sharedAudioCtx) {
+                    sharedAudioCtx = new AudioContext();
+                }
+
+                // Si le contexte est suspendu (sécurité navigateur), on le réveille
+                if (sharedAudioCtx.state === 'suspended') {
+                    sharedAudioCtx.resume();
+                }
+
+                const osc = sharedAudioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(frequency, sharedAudioCtx.currentTime);
+                osc.connect(sharedAudioCtx.destination);
+                osc.start();
+                osc.stop(sharedAudioCtx.currentTime + duration);
+            } catch (e) { console.log("Audio not supported or allowed yet", e); }
+        }
+
+        function closeExModal(event) {
+            if (event && event.target !== document.getElementById('modal-ex') && event.target.className !== 'close-btn') {
+                return;
+            }
+            document.getElementById('modal-ex').classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
         function closeModal(event) {
