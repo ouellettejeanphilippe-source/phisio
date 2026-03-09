@@ -444,6 +444,7 @@
         </div>
         <div class="nav-item active" onclick="switchTab('plans')">Mes Programmes</div>
         <div class="nav-item" onclick="switchTab('exercices')">Bibliothèque</div>
+        <div class="nav-item" onclick="switchTab('settings')">Paramètres</div>
     </div>
 
     <!-- Main Content -->
@@ -454,6 +455,7 @@
         </div>
 
         <div id="error-container" class="error-msg"></div>
+        <div id="success-container" class="error-msg" style="color: #3fb950; background: rgba(63, 185, 80, 0.1); border-color: #3fb950;"></div>
         <div id="loader" class="loader"></div>
 
         <!-- Plans Section -->
@@ -464,6 +466,29 @@
         <!-- Exercices Section -->
         <div id="exercices-section" class="section">
             <div class="grid" id="exercices-grid"></div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings-section" class="section">
+            <div class="card" style="max-width: 600px; margin: 0 auto; cursor: default;">
+                <h2 style="color: white; margin-bottom: 1rem;">Synchronisation Hors-Ligne</h2>
+                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    Connectez votre application à Google Sheets via Apps Script pour télécharger vos données. Une fois téléchargées, elles seront sauvegardées sur votre appareil et accessibles <strong>sans connexion internet</strong>.
+                </p>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: white;">URL de l'API (Google Apps Script) :</label>
+                    <input type="text" id="api-url" class="search-bar" style="width: 100%; border-radius: 6px;" placeholder="https://script.google.com/macros/s/.../exec">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                    <button onclick="syncData()" style="background-color: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1;">
+                        ⬇️ Synchroniser les données
+                    </button>
+                    <button onclick="clearData()" style="background-color: transparent; color: #ff7b72; border: 1px solid #ff7b72; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        🗑️ Vider
+                    </button>
+                </div>
+                <div id="sync-status" style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); text-align: center;"></div>
+            </div>
         </div>
     </div>
 
@@ -487,43 +512,68 @@
         // Initialisation
         async function init() {
             showLoader();
-            try {
-                const exRes = await fetch('exercices.json');
-                const plansRes = await fetch('plans.json');
 
-                if (!exRes.ok || !plansRes.ok) {
-                    throw new Error("Impossible de charger les données JSON. Êtes-vous sur un serveur web (http://localhost) ?");
+            // Load URL if previously saved
+            const savedUrl = localStorage.getItem('sync_url');
+            if (savedUrl) {
+                document.getElementById('api-url').value = savedUrl;
+            }
+
+            // Load Data
+            const savedData = localStorage.getItem('fitness_data');
+            if (savedData) {
+                try {
+                    db = JSON.parse(savedData);
+                    renderPlans(db.plans);
+                    renderExercices(db.exercices);
+                    hideError();
+                } catch (e) {
+                    showError("Erreur lors de la lecture des données locales. Veuillez re-synchroniser.");
                 }
+            } else {
+                // Initial state - no data
+                switchTab('settings');
+                showError("Aucune donnée locale trouvée. Veuillez entrer l'URL de votre Google Apps Script et cliquer sur Synchroniser.");
+            }
 
-                db.exercices = await exRes.json();
-                db.plans = await plansRes.json();
+            hideLoader();
+        }
 
-                renderPlans(db.plans);
-                renderExercices(db.exercices);
-                hideError();
-            } catch (err) {
-                showError("Erreur de chargement des données. Veuillez lancer l'application via les scripts de démarrage (demarrer_windows.bat ou demarrer_mac_linux.sh) pour éviter les blocages de sécurité de votre navigateur.");
-                console.error(err);
-            } finally {
-                hideLoader();
+        function updateStatusUI() {
+            const statusDiv = document.getElementById('sync-status');
+            const lastSync = localStorage.getItem('last_sync');
+            if (lastSync) {
+                const date = new Date(parseInt(lastSync));
+                statusDiv.innerHTML = `✅ Données disponibles hors-ligne<br>Dernière synchronisation : ${date.toLocaleString('fr-FR')}`;
+            } else {
+                statusDiv.innerHTML = `⚠️ Aucune donnée n'est actuellement sauvegardée sur cet appareil.`;
             }
         }
 
         // Navigation
         function switchTab(tab) {
             currentTab = tab;
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(el => el.classList.remove('active'));
+
+            if(tab === 'plans' && navItems[0]) navItems[0].classList.add('active');
+            if(tab === 'exercices' && navItems[1]) navItems[1].classList.add('active');
+            if(tab === 'settings' && navItems[2]) navItems[2].classList.add('active');
 
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.getElementById(`${tab}-section`).classList.add('active');
 
-            document.getElementById('page-title').textContent = tab === 'plans' ? 'Mes Programmes' : 'Bibliothèque d\'exercices';
+            if (tab === 'plans') document.getElementById('page-title').textContent = 'Mes Programmes';
+            else if (tab === 'exercices') document.getElementById('page-title').textContent = 'Bibliothèque d\'exercices';
+            else document.getElementById('page-title').textContent = 'Paramètres';
+
+            document.getElementById('search-input').style.display = tab === 'settings' ? 'none' : 'block';
             document.getElementById('search-input').value = '';
 
             // Reset views
             if (tab === 'plans') renderPlans(db.plans);
-            else renderExercices(db.exercices);
+            else if (tab === 'exercices') renderExercices(db.exercices);
+            else updateStatusUI(); // Update settings UI
         }
 
         // Render Plans (Programmes)
@@ -581,6 +631,90 @@
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        // Settings / Sync Logic
+        async function syncData() {
+            const url = document.getElementById('api-url').value.trim();
+            if (!url) {
+                showError("Veuillez entrer une URL valide.");
+                return;
+            }
+
+            showLoader();
+            hideError();
+            hideSuccess();
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Erreur réseau");
+
+                const rawData = await response.json();
+
+                // Allow "exercices" or "exercises"
+                const exData = rawData.exercices || rawData.exercises;
+
+                if (!exData || !rawData.plans) {
+                    throw new Error("Format de données invalide reçu de l'API.");
+                }
+
+                // Format the API data to match the app's internal structure
+                const formattedExercices = exData.map(ex => ({
+                    id: String(ex.id),
+                    nom: ex.n || "",
+                    tags: ex.t || "",
+                    importance: ex.imp || "",
+                    series: ex.sets || 0,
+                    valeur: ex.val || 0,
+                    type: ex.type || "",
+                    repos: ex.rest || 0,
+                    description: ex.d || "",
+                    video: ex.v || "",
+                    frequence: ex.frequence || 0
+                }));
+
+                const formattedPlans = rawData.plans.map(p => ({
+                    id: String(p.id),
+                    nom: p.nom || "",
+                    description: p.description || "",
+                    goal: p.goal || 0,
+                    exercices_ids: (p.exercices_ids || []).map(String)
+                }));
+
+                db = {
+                    exercices: formattedExercices,
+                    plans: formattedPlans
+                };
+
+                // Save to localStorage
+                localStorage.setItem('fitness_data', JSON.stringify(db));
+                localStorage.setItem('sync_url', url);
+                localStorage.setItem('last_sync', Date.now().toString());
+
+                // Update UI
+                renderPlans(db.plans);
+                renderExercices(db.exercices);
+                updateStatusUI();
+                showSuccess("✅ Synchronisation réussie ! Les données sont sauvegardées hors-ligne.");
+
+            } catch (err) {
+                console.error(err);
+                showError("Échec de la synchronisation. Vérifiez l'URL et votre connexion internet.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function clearData() {
+            if (confirm("Voulez-vous vraiment effacer toutes les données sauvegardées sur cet appareil ?")) {
+                localStorage.removeItem('fitness_data');
+                localStorage.removeItem('last_sync');
+                db = { exercices: [], plans: [] };
+                renderPlans([]);
+                renderExercices([]);
+                updateStatusUI();
+                showSuccess("Données locales effacées avec succès.");
+            }
         }
 
         // Search logic
@@ -685,10 +819,17 @@
         function hideLoader() { document.getElementById('loader').style.display = 'none'; }
         function showError(msg) {
             const el = document.getElementById('error-container');
-            el.textContent = msg;
+            el.innerHTML = msg;
             el.style.display = 'block';
         }
         function hideError() { document.getElementById('error-container').style.display = 'none'; }
+        function showSuccess(msg) {
+            const el = document.getElementById('success-container');
+            el.innerHTML = msg;
+            el.style.display = 'block';
+            setTimeout(hideSuccess, 5000);
+        }
+        function hideSuccess() { document.getElementById('success-container').style.display = 'none'; }
 
         // Service Worker Registration for PWA
         if ('serviceWorker' in navigator) {
