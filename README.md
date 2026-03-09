@@ -30,11 +30,4 @@ L'application peut fonctionner de manière **100% autonome sur votre téléphone
 4. Cliquez sur **Synchroniser les données**.
 5. Les données sont maintenant sauvegardées dans la mémoire de votre téléphone (`localStorage`) ! Vous pouvez ouvrir l'application hors-ligne quand vous le souhaitez.
 
-*Note : La méthode locale (via `sync_sheets.py` et `demarrer_windows.bat`) n'est plus requise pour l'utilisation sur mobile.*
-
-## Gestion en Ligne de Commande (CLI)
-Un outil puissant est aussi fourni (`workout_manager.py`) pour exporter vos programmes en Markdown ou chercher des exercices :
-```bash
-python workout_manager.py --search "Dos"
-python workout_manager.py --export-all
-```
+*Note : L'application télécharge vos données et les sauvegarde sur votre téléphone via localStorage. Le fonctionnement est donc entièrement hors ligne par la suite.*
