@@ -18,42 +18,28 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.endsWith('.json') && !event.request.url.endsWith('manifest.json')) {
-    // Network-first for dynamic JSON files (exercices.json, plans.json)
-    event.respondWith(
-      fetch(event.request).then((response) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, response.clone());
+  // Cache-first for all static assets
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        if (response) {
           return response;
-        });
-      }).catch(() => {
-        return caches.match(event.request);
-      })
-    );
-  } else {
-    // Cache-first for other static assets
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          if (response) {
-            return response;
-          }
-          return fetch(event.request).then(
-            (response) => {
-              if(!response || response.status !== 200 || response.type !== 'basic') {
-                return response;
-              }
-              var responseToCache = response.clone();
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache);
-                });
+        }
+        return fetch(event.request).then(
+          (response) => {
+            if(!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-          );
-        })
-    );
-  }
+            var responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+            return response;
+          }
+        );
+      })
+  );
 });
 
 self.addEventListener('activate', (event) => {

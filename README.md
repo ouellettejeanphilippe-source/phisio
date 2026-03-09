@@ -20,29 +20,17 @@ L'application est une **PWA (Progressive Web App)** : elle s'installe comme une 
    - Sur **iOS / iPhone** (Safari) : Cliquez sur le bouton de Partage (le carré avec une flèche vers le haut) et sélectionnez "Sur l'écran d'accueil".
 4. Une fois installée, l'application fonctionnera hors ligne (grâce au *Service Worker*) et apparaîtra dans votre liste d'applications avec son propre icône, sans barre d'adresse !
 
-## Démarrage Rapide (En local sur ordinateur)
+## Comment lier l'application à Google Sheets (Apps Script) ? 📊
 
-Double-cliquez sur l'un des scripts suivants selon votre système d'exploitation. Cela démarrera un serveur local très léger qui permet à l'application web de lire vos données correctement :
-* Windows : `demarrer_windows.bat`
-* Mac / Linux : `demarrer_mac_linux.sh`
+L'application peut fonctionner de manière **100% autonome sur votre téléphone**, sans aucun serveur local ni script Python ! Pour ce faire, elle utilise un lien Google Apps Script pour récupérer vos données.
 
-L'application s'ouvrira automatiquement dans votre navigateur.
+1. Déployez l'application web (par exemple via GitHub Pages ou en transférant simplement `index.html` sur votre téléphone).
+2. Ouvrez l'application, allez dans l'onglet **Paramètres**.
+3. Collez l'URL de votre Google Apps Script (se terminant par `/exec`).
+4. Cliquez sur **Synchroniser les données**.
+5. Les données sont maintenant sauvegardées dans la mémoire de votre téléphone (`localStorage`) ! Vous pouvez ouvrir l'application hors-ligne quand vous le souhaitez.
 
-## Comment lier un Google Sheets ? 📊
-
-Au lieu de modifier le fichier `exercices.csv` manuellement, vous pouvez tout gérer dans un tableau Google Sheets !
-
-1. Allez sur votre Google Sheets d'exercices.
-2. Cliquez sur `Fichier > Partager > Publier sur le web`.
-3. Sous "Lien", choisissez votre feuille d'exercices et sélectionnez le format "Valeurs séparées par des virgules (.csv)".
-4. Copiez le lien généré (qui ressemble à `https://docs.google.com/spreadsheets/d/.../pub?output=csv`).
-5. Ouvrez un terminal dans le dossier du projet et exécutez la commande suivante en collant votre lien :
-
-```bash
-python sync_sheets.py "VOTRE_LIEN_GOOGLE_SHEETS_CSV"
-```
-
-Cette commande mettra automatiquement à jour `exercices.csv` et générera le nouveau `exercices.json`. Rechargez ensuite la page web !
+*Note : La méthode locale (via `sync_sheets.py` et `demarrer_windows.bat`) n'est plus requise pour l'utilisation sur mobile.*
 
 ## Gestion en Ligne de Commande (CLI)
 Un outil puissant est aussi fourni (`workout_manager.py`) pour exporter vos programmes en Markdown ou chercher des exercices :
