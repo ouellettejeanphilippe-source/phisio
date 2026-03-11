@@ -224,12 +224,12 @@
         }
 
         // --- Séance rapide (On the fly) ---
-        let selectedQuickExercices = [];
+        let selectedQuickExercices = new Set();
         let webSuggestions = [];
         let searchTimeout = null;
 
         function openQuickWorkoutSetup() {
-            selectedQuickExercices = [];
+            selectedQuickExercices = new Set();
             webSuggestions = [];
             document.getElementById('web-suggestions-container').style.display = 'none';
             document.getElementById('web-exercices-grid').innerHTML = '';
@@ -237,11 +237,10 @@
         }
 
         function toggleQuickExercice(exId) {
-            const index = selectedQuickExercices.indexOf(exId);
-            if (index > -1) {
-                selectedQuickExercices.splice(index, 1);
+            if (selectedQuickExercices.has(exId)) {
+                selectedQuickExercices.delete(exId);
             } else {
-                selectedQuickExercices.push(exId);
+                selectedQuickExercices.add(exId);
             }
             updateQuickWorkoutUI();
         }
@@ -250,9 +249,9 @@
             const btn = document.getElementById('btn-start-quick');
             const btnSet = document.getElementById('btn-settings-quick');
             const countSpan = document.getElementById('quick-count');
-            countSpan.textContent = selectedQuickExercices.length;
+            countSpan.textContent = selectedQuickExercices.size;
 
-            if (selectedQuickExercices.length > 0) {
+            if (selectedQuickExercices.size > 0) {
                 btn.disabled = false;
                 btn.style.opacity = '1';
                 btnSet.disabled = false;
@@ -267,7 +266,7 @@
             // Update card styling
             document.querySelectorAll('.quick-ex-card').forEach(card => {
                 const exId = card.dataset.id;
-                if (selectedQuickExercices.includes(exId)) {
+                if (selectedQuickExercices.has(exId)) {
                     card.style.borderColor = 'var(--accent-color)';
                     card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
                     card.querySelector('.check-circle').style.backgroundColor = 'var(--accent-color)';
@@ -287,7 +286,7 @@
 
             exercicesToRender.forEach(ex => {
                 const imgUrl = getExImage(ex);
-                const isSelected = selectedQuickExercices.includes(ex.id);
+                const isSelected = selectedQuickExercices.has(ex.id);
 
                 const card = document.createElement('div');
                 card.className = 'card quick-ex-card';
@@ -369,7 +368,7 @@
             // Appliquer aux exercices locaux (uniquement les exercices de base/web qui n'ont pas encore été modifiés)
             // On le fait dans l'objet global pour que ça s'affiche bien
             db.exercices.forEach(ex => {
-                if (selectedQuickExercices.includes(ex.id)) {
+                if (selectedQuickExercices.has(ex.id)) {
                     ex.series = quickWorkoutDefaults.series;
                     if (ex.type === 'reps' || !ex.type) {
                         ex.valeur = quickWorkoutDefaults.reps;
@@ -394,7 +393,7 @@
         }
 
         function startQuickWorkout() {
-            if (selectedQuickExercices.length === 0) return;
+            if (selectedQuickExercices.size === 0) return;
 
             // Create a fake plan object
             const quickPlan = {
@@ -472,7 +471,7 @@
                 if (db.exercices.find(e => e.id === ex.id)) return;
 
                 const imgUrl = getExImage(ex);
-                const isSelected = selectedQuickExercices.includes(ex.id);
+                const isSelected = selectedQuickExercices.has(ex.id);
 
                 const card = document.createElement('div');
                 card.className = 'card quick-ex-card';
