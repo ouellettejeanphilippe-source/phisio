@@ -1,0 +1,5 @@
+## 2024-05-14 - Non-semantic Main Navigation
+
+**Learning:** The application uses `<div class="nav-item">` with `onclick` handlers for its main navigation menu instead of semantic elements like `<button>` or `<a>`. This pattern lacks native keyboard accessibility (focus styles, enter/space interaction) and ARIA roles for screen readers. Given the context (a very simple PWA with entirely custom DOM interactions and no test suite), standardizing this to semantic tags might require a broader refactor of the CSS and event handling logic that exceeds the scope of small UX improvements.
+
+**Action:** When adding or modifying interactive elements in this specific application, be aware that many existing elements may lack proper keyboard/focus states. Ensure that new interactive elements either use semantic HTML (e.g., `<button>`) with proper ARIA labels (like the close buttons updated today) or manually add `tabindex` and keyboard event listeners if mimicking this project's custom `div` interaction patterns.
