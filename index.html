@@ -612,7 +612,7 @@
     <!-- Modal for Plan Details -->
     <div class="modal-overlay" id="modal" onclick="closeModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <button class="close-btn" aria-label="Fermer" onclick="closeModal()">&times;</button>
             <h2 class="modal-title" id="modal-title">Titre du Programme</h2>
             <div class="card-meta" id="modal-meta"></div>
             <p id="modal-desc" style="font-size: 1.1rem; margin-bottom: 2rem; color: var(--text-primary);"></p>
@@ -694,7 +694,7 @@
     <!-- Modal for Exercice Details -->
     <div class="modal-overlay" id="modal-ex" onclick="closeExModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" onclick="closeExModal()">&times;</button>
+            <button class="close-btn" aria-label="Fermer" onclick="closeExModal()">&times;</button>
             <h2 class="modal-title" id="modal-ex-title">Titre Exercice</h2>
             <div class="card-meta" id="modal-ex-meta" style="margin-bottom: 1.5rem;"></div>
 
@@ -947,6 +947,11 @@
             const grid = document.getElementById('plans-grid');
             grid.innerHTML = '';
 
+            if (plansToRender.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Aucun programme trouvé.</div>';
+                return;
+            }
+
             // Retrieve completion history
             let history = {};
             try { history = JSON.parse(localStorage.getItem('fitness_history') || '{}'); } catch(e){}
@@ -982,6 +987,11 @@
         function renderExercices(exercicesToRender) {
             const grid = document.getElementById('exercices-grid');
             grid.innerHTML = '';
+
+            if (exercicesToRender.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Aucun exercice trouvé.</div>';
+                return;
+            }
 
             exercicesToRender.forEach(ex => {
                 const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
