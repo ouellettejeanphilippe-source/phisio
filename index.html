@@ -332,6 +332,42 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Chronomètre SVG animé */
+        .rest-timer-ring {
+            width: 250px;
+            height: 250px;
+            position: relative;
+            margin: 0 auto 40px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rest-timer-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .rest-timer-bg {
+            fill: none;
+            stroke: var(--surface-hover);
+            stroke-width: 8;
+        }
+
+        .rest-timer-progress {
+            fill: none;
+            stroke: var(--accent-color);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 700;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+
         /* Sections Toggle */
         .section {
             display: none;
@@ -554,6 +590,22 @@
                 </div>
                 <div id="sync-status" style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); text-align: center;"></div>
             </div>
+
+            <div class="card" style="max-width: 600px; margin: 2rem auto; cursor: default;">
+                <h2 style="color: white; margin-bottom: 1rem;">Préférences</h2>
+                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <div>
+                        <div style="color: white; font-weight: 600;">Effets sonores</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">Bips de fin de repos et alertes</div>
+                    </div>
+                    <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
+                        <input type="checkbox" id="toggle-sound" style="opacity: 0; width: 0; height: 0;" onchange="toggleSoundPref()">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--surface-hover); transition: .4s; border-radius: 34px; border: 1px solid var(--border-color);" id="toggle-slider">
+                            <span style="position: absolute; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: var(--text-secondary); transition: .4s; border-radius: 50%;" id="toggle-knob"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -602,11 +654,21 @@
             </div>
 
             <!-- Rest View -->
-            <div id="workout-rest-view" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+            <div id="workout-rest-view" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: fadeIn 0.5s ease;">
                 <h2 style="color: var(--accent-color); font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;">Repos</h2>
-                <div id="workout-rest-timer" style="font-size: 6rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 40px; text-shadow: 0 0 20px rgba(178, 255, 5, 0.3);">
-                    60
+
+                <div class="rest-timer-ring">
+                    <svg class="rest-timer-svg" viewBox="0 0 250 250">
+                        <!-- cx, cy = center, r = 110 (125-15) -->
+                        <circle class="rest-timer-bg" cx="125" cy="125" r="110"></circle>
+                        <!-- circumference = 2 * pi * 110 ≈ 691. On utilise dasharray: 700 dans le CSS. -->
+                        <circle id="rest-timer-circle" class="rest-timer-progress" cx="125" cy="125" r="110" style="stroke-dasharray: 691; stroke-dashoffset: 0;"></circle>
+                    </svg>
+                    <div id="workout-rest-timer" style="font-size: 5rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 20px rgba(178, 255, 5, 0.3);">
+                        60
+                    </div>
                 </div>
+
                 <div style="color: var(--text-secondary); text-align: center;">
                     <div style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 5px;">À SUIVRE :</div>
                     <div id="workout-next-ex" style="font-size: 1.2rem; color: white; font-weight: bold;">Traction</div>
@@ -670,23 +732,152 @@
             restInterval: null
         };
 
-        // Utilitaire: Obtenir l'image d'un exercice
+        // Utilitaire: Obtenir l'image d'un exercice (Fallback visuel hors-ligne)
         function getExImage(ex) {
             if (ex.image && ex.image.trim() !== "") {
                 return ex.image;
             }
-            // Fallback: générer une image via un service externe en utilisant le nom de l'exercice
-            // Note: Unsplash Source is deprecated, using Unsplash API directly or another alternative is better,
-            // but for a simple fallback we can use a generic placeholder service like placehold.co or a generic fitness image
-            // Let's use a dynamic placeholder or generic image if possible.
-            // A simple placeholder with the exercise initial or name:
-            const encodedName = encodeURIComponent(ex.nom);
-            return `https://ui-avatars.com/api/?name=${encodedName}&background=111111&color=b2ff05&size=400&font-size=0.33`;
+
+            const name = ex.nom.toLowerCase();
+            const bgColor = "#111111";
+            const strokeColor = "#b2ff05"; // --accent-color
+            let svgContent = "";
+
+            // Génération de dessins schématiques simples (stickman / matériel) basés sur le nom
+            if (name.includes("pompe") || name.includes("push") || name.includes("gainage") || name.includes("planche")) {
+                // Stickman en position de planche
+                svgContent = `
+                    <circle cx="300" cy="200" r="25" fill="none" stroke="${strokeColor}" stroke-width="12"/>
+                    <!-- Corps -->
+                    <line x1="275" y1="200" x2="150" y2="250" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Bras -->
+                    <line x1="250" y1="210" x2="250" y2="300" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Jambes -->
+                    <line x1="150" y1="250" x2="50" y2="290" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Sol -->
+                    <line x1="30" y1="300" x2="370" y2="300" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+                `;
+            } else if (name.includes("traction") || name.includes("pull") || name.includes("muscle up")) {
+                // Stickman suspendu à une barre
+                svgContent = `
+                    <!-- Barre -->
+                    <line x1="100" y1="100" x2="300" y2="100" stroke="#555" stroke-width="16" stroke-linecap="round"/>
+                    <!-- Tête -->
+                    <circle cx="200" cy="150" r="25" fill="none" stroke="${strokeColor}" stroke-width="12"/>
+                    <!-- Bras (pliés) -->
+                    <polyline points="150,100 150,180 200,180" fill="none" stroke="${strokeColor}" stroke-width="12" stroke-linejoin="round"/>
+                    <polyline points="250,100 250,180 200,180" fill="none" stroke="${strokeColor}" stroke-width="12" stroke-linejoin="round"/>
+                    <!-- Corps -->
+                    <line x1="200" y1="180" x2="200" y2="260" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Jambes -->
+                    <line x1="200" y1="260" x2="180" y2="340" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <line x1="200" y1="260" x2="220" y2="340" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                `;
+            } else if (name.includes("squat") || name.includes("fente") || name.includes("chaise") || name.includes("leg")) {
+                // Stickman faisant un squat
+                svgContent = `
+                    <circle cx="200" cy="120" r="25" fill="none" stroke="${strokeColor}" stroke-width="12"/>
+                    <!-- Corps penché -->
+                    <line x1="200" y1="145" x2="180" y2="220" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Cuisse parallèle -->
+                    <line x1="180" y1="220" x2="250" y2="220" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Mollet vertical -->
+                    <line x1="250" y1="220" x2="250" y2="300" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Pied -->
+                    <line x1="250" y1="300" x2="280" y2="300" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Bras tendus avant -->
+                    <line x1="195" y1="160" x2="280" y2="160" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                `;
+            } else if (name.includes("abdo") || name.includes("crunch") || name.includes("sit")) {
+                 // Stickman couché (crunch)
+                 svgContent = `
+                    <circle cx="300" cy="230" r="25" fill="none" stroke="${strokeColor}" stroke-width="12"/>
+                    <!-- Corps relevé -->
+                    <line x1="280" y1="250" x2="180" y2="280" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Jambes pliées -->
+                    <polyline points="180,280 130,200 80,280" fill="none" stroke="${strokeColor}" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+                    <!-- Bras derrière la tête -->
+                    <polyline points="190,270 240,200 300,230" fill="none" stroke="${strokeColor}" stroke-width="8" stroke-linejoin="round" stroke-dasharray="10,5"/>
+                    <!-- Sol -->
+                    <line x1="50" y1="290" x2="350" y2="290" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+                 `;
+            } else if (name.includes("course") || name.includes("run") || name.includes("sprint") || name.includes("jog")) {
+                // Stickman courant
+                svgContent = `
+                    <circle cx="220" cy="120" r="25" fill="none" stroke="${strokeColor}" stroke-width="12"/>
+                    <!-- Corps légèrement penché -->
+                    <line x1="220" y1="145" x2="200" y2="220" stroke="${strokeColor}" stroke-width="12" stroke-linecap="round"/>
+                    <!-- Jambe avant (pliée) -->
+                    <polyline points="200,220 250,220 250,280" fill="none" stroke="${strokeColor}" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+                    <!-- Jambe arrière (tendue) -->
+                    <polyline points="200,220 150,260 100,280" fill="none" stroke="${strokeColor}" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+                    <!-- Bras avant (plié) -->
+                    <polyline points="215,160 160,180 140,140" fill="none" stroke="${strokeColor}" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+                    <!-- Bras arrière (plié) -->
+                    <polyline points="215,160 260,160 280,120" fill="none" stroke="${strokeColor}" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+                `;
+            } else {
+                // Haltère générique (symbole par défaut)
+                svgContent = `
+                    <rect x="185" y="100" width="30" height="200" fill="#555" rx="5"/>
+                    <rect x="130" y="120" width="140" height="40" fill="${strokeColor}" rx="8"/>
+                    <rect x="100" y="140" width="200" height="20" fill="${strokeColor}" rx="5"/>
+                    <rect x="130" y="240" width="140" height="40" fill="${strokeColor}" rx="8"/>
+                    <rect x="100" y="240" width="200" height="20" fill="${strokeColor}" rx="5"/>
+                `;
+            }
+
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+                    <rect width="400" height="400" fill="${bgColor}"/>
+                    ${svgContent}
+                </svg>
+            `.trim().replace(/\s+/g, ' ');
+
+            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
+        let soundEnabled = true;
+
+        function toggleSoundPref() {
+            const checkbox = document.getElementById('toggle-sound');
+            soundEnabled = checkbox.checked;
+            localStorage.setItem('fitness_sound_pref', soundEnabled ? '1' : '0');
+            updateToggleUI();
+
+            // Jouer un petit son de test si on active
+            if (soundEnabled) {
+                playBeep(600, 0.1, 'triangle');
+            }
+        }
+
+        function updateToggleUI() {
+            const slider = document.getElementById('toggle-slider');
+            const knob = document.getElementById('toggle-knob');
+            if (soundEnabled) {
+                slider.style.backgroundColor = 'var(--accent-color)';
+                slider.style.borderColor = 'var(--accent-color)';
+                knob.style.backgroundColor = '#000';
+                knob.style.transform = 'translateX(20px)';
+            } else {
+                slider.style.backgroundColor = 'var(--surface-hover)';
+                slider.style.borderColor = 'var(--border-color)';
+                knob.style.backgroundColor = 'var(--text-secondary)';
+                knob.style.transform = 'translateX(0)';
+            }
         }
 
         // Initialisation
         async function init() {
             showLoader();
+
+            // Load Preferences
+            const savedSoundPref = localStorage.getItem('fitness_sound_pref');
+            if (savedSoundPref !== null) {
+                soundEnabled = savedSoundPref === '1';
+            }
+            document.getElementById('toggle-sound').checked = soundEnabled;
+            updateToggleUI();
 
             // Load URL if previously saved
             const savedUrl = localStorage.getItem('sync_url');
@@ -1198,9 +1389,18 @@
         function startRestTimer(duration) {
             let timeRemaining = duration;
             const timerEl = document.getElementById('workout-rest-timer');
+            const circleEl = document.getElementById('rest-timer-circle');
+            const circumference = 691; // 2 * pi * 110 (rayon)
+
             timerEl.textContent = timeRemaining;
+            circleEl.style.transition = 'none'; // Désactiver la transition pour reset instantané
+            circleEl.style.strokeDashoffset = '0'; // Remettre à zéro
 
             if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
+
+            // Forcer un reflow pour que la transition css s'applique correctement ensuite
+            void circleEl.offsetWidth;
+            circleEl.style.transition = 'stroke-dashoffset 1s linear';
 
             // Beep au début du repos (optionnel)
             playBeep(400, 0.1);
@@ -1208,6 +1408,11 @@
             currentWorkout.restInterval = setInterval(() => {
                 timeRemaining--;
                 timerEl.textContent = timeRemaining;
+
+                // Mise à jour de la barre circulaire
+                const progress = ((duration - timeRemaining) / duration);
+                const offset = circumference * progress;
+                circleEl.style.strokeDashoffset = offset;
 
                 // Beeps pour les 3 dernières secondes
                 if (timeRemaining > 0 && timeRemaining <= 3) {
@@ -1258,7 +1463,9 @@
 
         // Utilitaire: Émettre un bip
         let sharedAudioCtx = null;
-        function playBeep(frequency, duration) {
+        function playBeep(frequency, duration, type = 'sine') {
+            if (!soundEnabled) return;
+
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
@@ -1272,9 +1479,18 @@
                 }
 
                 const osc = sharedAudioCtx.createOscillator();
-                osc.type = 'sine';
+                const gainNode = sharedAudioCtx.createGain();
+
+                osc.type = type;
                 osc.frequency.setValueAtTime(frequency, sharedAudioCtx.currentTime);
-                osc.connect(sharedAudioCtx.destination);
+
+                // Enveloppe sonore (fade out) pour éviter le clic sec
+                gainNode.gain.setValueAtTime(1, sharedAudioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, sharedAudioCtx.currentTime + duration);
+
+                osc.connect(gainNode);
+                gainNode.connect(sharedAudioCtx.destination);
+
                 osc.start();
                 osc.stop(sharedAudioCtx.currentTime + duration);
             } catch (e) { console.log("Audio not supported or allowed yet", e); }
