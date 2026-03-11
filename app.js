@@ -210,7 +210,8 @@
 
             if (tab === 'plans') document.getElementById('page-title').textContent = 'Mes Programmes';
             else if (tab === 'exercices') document.getElementById('page-title').textContent = 'Bibliothèque d\'exercices';
-            else document.getElementById('page-title').textContent = 'Paramètres';
+            else if (tab === 'settings') document.getElementById('page-title').textContent = 'Paramètres';
+            else if (tab === 'quick-workout') document.getElementById('page-title').textContent = 'Séance Rapide';
 
             document.getElementById('search-input').style.display = tab === 'settings' ? 'none' : 'block';
             document.getElementById('search-input').value = '';
@@ -218,7 +219,288 @@
             // Reset views
             if (tab === 'plans') renderPlans(db.plans);
             else if (tab === 'exercices') renderExercices(db.exercices);
-            else updateStatusUI(); // Update settings UI
+            else if (tab === 'settings') updateStatusUI();
+            else if (tab === 'quick-workout') renderQuickWorkoutExercices(db.exercices);
+        }
+
+        // --- Séance rapide (On the fly) ---
+        let selectedQuickExercices = [];
+        let webSuggestions = [];
+        let searchTimeout = null;
+
+        function openQuickWorkoutSetup() {
+            selectedQuickExercices = [];
+            webSuggestions = [];
+            document.getElementById('web-suggestions-container').style.display = 'none';
+            document.getElementById('web-exercices-grid').innerHTML = '';
+            switchTab('quick-workout');
+        }
+
+        function toggleQuickExercice(exId) {
+            const index = selectedQuickExercices.indexOf(exId);
+            if (index > -1) {
+                selectedQuickExercices.splice(index, 1);
+            } else {
+                selectedQuickExercices.push(exId);
+            }
+            updateQuickWorkoutUI();
+        }
+
+        function updateQuickWorkoutUI() {
+            const btn = document.getElementById('btn-start-quick');
+            const btnSet = document.getElementById('btn-settings-quick');
+            const countSpan = document.getElementById('quick-count');
+            countSpan.textContent = selectedQuickExercices.length;
+
+            if (selectedQuickExercices.length > 0) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btnSet.disabled = false;
+                btnSet.style.opacity = '1';
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btnSet.disabled = true;
+                btnSet.style.opacity = '0.5';
+            }
+
+            // Update card styling
+            document.querySelectorAll('.quick-ex-card').forEach(card => {
+                const exId = card.dataset.id;
+                if (selectedQuickExercices.includes(exId)) {
+                    card.style.borderColor = 'var(--accent-color)';
+                    card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
+                    card.querySelector('.check-circle').style.backgroundColor = 'var(--accent-color)';
+                    card.querySelector('.check-circle').innerHTML = '✓';
+                } else {
+                    card.style.borderColor = 'var(--border-color)';
+                    card.style.boxShadow = 'none';
+                    card.querySelector('.check-circle').style.backgroundColor = 'transparent';
+                    card.querySelector('.check-circle').innerHTML = '';
+                }
+            });
+        }
+
+        function renderQuickWorkoutExercices(exercicesToRender) {
+            const grid = document.getElementById('quick-exercices-grid');
+            grid.innerHTML = '';
+
+            exercicesToRender.forEach(ex => {
+                const imgUrl = getExImage(ex);
+                const isSelected = selectedQuickExercices.includes(ex.id);
+
+                const card = document.createElement('div');
+                card.className = 'card quick-ex-card';
+                card.dataset.id = ex.id;
+                card.style.flexDirection = 'row';
+                card.style.alignItems = 'center';
+                card.style.padding = '10px';
+                card.style.gap = '15px';
+                if (isSelected) {
+                    card.style.borderColor = 'var(--accent-color)';
+                    card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
+                }
+
+                card.onclick = () => toggleQuickExercice(ex.id);
+
+                const checkBg = isSelected ? 'var(--accent-color)' : 'transparent';
+                const checkTxt = isSelected ? '✓' : '';
+
+                card.innerHTML = `
+                    <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: ${checkBg}; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">${checkTxt}</div>
+                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
+                    <div style="flex-grow: 1; overflow: hidden;">
+                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series || 3}x${ex.valeur || 10} | ${ex.repos || 60}s</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            updateQuickWorkoutUI();
+        }
+
+        function toggleWebExercice(exId) {
+            // Find in webSuggestions
+            const ex = webSuggestions.find(w => w.id === exId);
+            if (!ex) return;
+
+            // Save to local DB if not exists
+            if (!db.exercices.find(e => e.id === ex.id)) {
+                db.exercices.push(ex);
+                localStorage.setItem('fitness_data', JSON.stringify(db));
+            }
+
+            // Now it acts like a normal quick exercice
+            toggleQuickExercice(ex.id);
+
+            // Re-render respecting search query
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = db.exercices.filter(e =>
+                (e.nom && e.nom.toLowerCase().includes(query)) ||
+                (e.description && e.description.toLowerCase().includes(query)) ||
+                (e.tags && e.tags.toLowerCase().includes(query))
+            );
+            renderQuickWorkoutExercices(filtered);
+
+            renderWebSuggestions(webSuggestions); // Re-render to update checkmark
+        }
+
+        let quickWorkoutDefaults = { series: 3, reps: 10, repos: 60 };
+
+        function openQuickWorkoutSettings() {
+            document.getElementById('quick-set-series').value = quickWorkoutDefaults.series;
+            document.getElementById('quick-set-reps').value = quickWorkoutDefaults.reps;
+            document.getElementById('quick-set-repos').value = quickWorkoutDefaults.repos;
+            document.getElementById('modal-quick-settings').classList.add('active');
+        }
+
+        function closeQuickWorkoutSettings(event) {
+            if (event && event.target !== document.getElementById('modal-quick-settings') && event.target.className !== 'close-btn') {
+                return;
+            }
+            document.getElementById('modal-quick-settings').classList.remove('active');
+        }
+
+        function saveQuickWorkoutSettings() {
+            quickWorkoutDefaults.series = parseInt(document.getElementById('quick-set-series').value) || 3;
+            quickWorkoutDefaults.reps = parseInt(document.getElementById('quick-set-reps').value) || 10;
+            quickWorkoutDefaults.repos = parseInt(document.getElementById('quick-set-repos').value) || 60;
+
+            // Appliquer aux exercices locaux (uniquement les exercices de base/web qui n'ont pas encore été modifiés)
+            // On le fait dans l'objet global pour que ça s'affiche bien
+            db.exercices.forEach(ex => {
+                if (selectedQuickExercices.includes(ex.id)) {
+                    ex.series = quickWorkoutDefaults.series;
+                    if (ex.type === 'reps' || !ex.type) {
+                        ex.valeur = quickWorkoutDefaults.reps;
+                        ex.type = 'reps';
+                    }
+                    ex.repos = quickWorkoutDefaults.repos;
+                }
+            });
+            localStorage.setItem('fitness_data', JSON.stringify(db));
+
+            // Re-render respecting search query
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = db.exercices.filter(e =>
+                (e.nom && e.nom.toLowerCase().includes(query)) ||
+                (e.description && e.description.toLowerCase().includes(query)) ||
+                (e.tags && e.tags.toLowerCase().includes(query))
+            );
+            renderQuickWorkoutExercices(filtered);
+
+            closeQuickWorkoutSettings();
+            showSuccess("Paramètres appliqués aux exercices sélectionnés.");
+        }
+
+        function startQuickWorkout() {
+            if (selectedQuickExercices.length === 0) return;
+
+            // Create a fake plan object
+            const quickPlan = {
+                id: 'quick_' + Date.now(),
+                nom: 'Séance Rapide',
+                description: 'Entraînement à la volée',
+                exercices_ids: [...selectedQuickExercices]
+            };
+
+            startWorkout(quickPlan);
+        }
+
+        // --- Fetch Web API Suggestions ---
+        async function searchWebAPI(query) {
+            if (!query || query.trim().length < 3) {
+                document.getElementById('web-suggestions-container').style.display = 'none';
+                return;
+            }
+            if (!navigator.onLine) {
+                document.getElementById('web-suggestions-container').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('web-suggestions-container').style.display = 'block';
+            document.getElementById('web-loading').style.display = 'block';
+            document.getElementById('web-exercices-grid').innerHTML = '';
+            webSuggestions = [];
+
+            try {
+                // Search WGER search endpoint (works well for english and general terms, returns images)
+                const res = await fetch(`https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (data.suggestions && data.suggestions.length > 0) {
+                    webSuggestions = data.suggestions.slice(0, 6).map(s => {
+                        const baseData = s.data;
+                        return {
+                            id: 'web_' + baseData.id,
+                            nom: baseData.name || "Exercice Inconnu",
+                            tags: baseData.category || "Web",
+                            importance: "Moyenne",
+                            series: 3,
+                            valeur: 10,
+                            type: "reps",
+                            repos: 60,
+                            description: "Suggestion importée depuis wger.de",
+                            video: baseData.name || "",
+                            image: baseData.image ? "https://wger.de" + baseData.image : "",
+                            frequence: 0
+                        };
+                    });
+                }
+
+                document.getElementById('web-loading').style.display = 'none';
+
+                if (webSuggestions.length > 0) {
+                    renderWebSuggestions(webSuggestions);
+                } else {
+                    document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Aucune suggestion trouvée en ligne.</div>';
+                }
+
+            } catch (err) {
+                console.error("Erreur API WGER:", err);
+                document.getElementById('web-loading').style.display = 'none';
+                document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Erreur de connexion à l\'API.</div>';
+            }
+        }
+
+        function renderWebSuggestions(suggestions) {
+            const grid = document.getElementById('web-exercices-grid');
+            grid.innerHTML = '';
+
+            suggestions.forEach(ex => {
+                // Skip if already in local db to avoid duplicates
+                if (db.exercices.find(e => e.id === ex.id)) return;
+
+                const imgUrl = getExImage(ex);
+                const isSelected = selectedQuickExercices.includes(ex.id);
+
+                const card = document.createElement('div');
+                card.className = 'card quick-ex-card';
+                card.dataset.id = ex.id;
+                card.style.flexDirection = 'row';
+                card.style.alignItems = 'center';
+                card.style.padding = '10px';
+                card.style.gap = '15px';
+                if (isSelected) {
+                    card.style.borderColor = 'var(--accent-color)';
+                    card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
+                }
+
+                card.onclick = () => toggleWebExercice(ex.id);
+
+                const checkBg = isSelected ? 'var(--accent-color)' : 'transparent';
+                const checkTxt = isSelected ? '✓' : '';
+
+                card.innerHTML = `
+                    <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: ${checkBg}; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">${checkTxt}</div>
+                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
+                    <div style="flex-grow: 1; overflow: hidden;">
+                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom} <span class="tag" style="background:rgba(88, 166, 255, 0.2); color:#58a6ff; font-size:0.6rem;">🌐 WEB</span></div>
+                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series}x${ex.valeur} | ${ex.repos}s</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
 
         // Render Plans (Programmes)
@@ -443,13 +725,31 @@
                     p.description.toLowerCase().includes(query)
                 );
                 renderPlans(filtered);
-            } else {
+            } else if (currentTab === 'exercices') {
                 const filtered = db.exercices.filter(e =>
                     (e.nom && e.nom.toLowerCase().includes(query)) ||
                     (e.description && e.description.toLowerCase().includes(query)) ||
                     (e.tags && e.tags.toLowerCase().includes(query))
                 );
                 renderExercices(filtered);
+            } else if (currentTab === 'quick-workout') {
+                const filtered = db.exercices.filter(e =>
+                    (e.nom && e.nom.toLowerCase().includes(query)) ||
+                    (e.description && e.description.toLowerCase().includes(query)) ||
+                    (e.tags && e.tags.toLowerCase().includes(query))
+                );
+                renderQuickWorkoutExercices(filtered);
+
+                // Trigger web search with debounce
+                clearTimeout(searchTimeout);
+                if (query.trim().length >= 3) {
+                    searchTimeout = setTimeout(() => {
+                        searchWebAPI(query);
+                    }, 800);
+                } else {
+                    document.getElementById('web-suggestions-container').style.display = 'none';
+                    webSuggestions = [];
+                }
             }
         }
 
@@ -563,14 +863,20 @@
         // MOTEUR DE SÉANCE D'ENTRAÎNEMENT (WORKOUT)
         // ==========================================
 
+        let activeWorkoutTimerInterval = null;
+
         function startWorkout(plan) {
             if (!plan.exercices_ids || plan.exercices_ids.length === 0) {
                 alert("Ce programme ne contient aucun exercice.");
                 return;
             }
 
-            // Récupérer les objets exercices
-            const exos = plan.exercices_ids.map(id => db.exercices.find(e => e.id === id)).filter(e => e);
+            // Récupérer et cloner les objets exercices pour permettre la modif à la volée
+            const exos = plan.exercices_ids.map(id => {
+                const e = db.exercices.find(ex => ex.id === id);
+                return e ? JSON.parse(JSON.stringify(e)) : null; // Deep copy
+            }).filter(e => e);
+
             if (exos.length === 0) return;
 
             // Initialiser l'état
@@ -592,6 +898,12 @@
         }
 
         function renderWorkoutStep() {
+            // Nettoyage des timers actifs si existants
+            if (activeWorkoutTimerInterval) {
+                clearInterval(activeWorkoutTimerInterval);
+                activeWorkoutTimerInterval = null;
+            }
+
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
 
             // Mise à jour de la barre de progression
@@ -627,13 +939,43 @@
 
                 // Remplir les infos de l'exercice
                 document.getElementById('workout-ex-title').textContent = ex.nom;
-                document.getElementById('workout-ex-target').textContent = `${ex.series} x ${ex.valeur} ${ex.type}`;
+
+                // Formater l'objectif selon le type
+                let targetText = `${ex.series} x ${ex.valeur} ${ex.type}`;
+                if (ex.type === 'kegel') {
+                    targetText = `${ex.series} x ${ex.valeur} cycles (C:${ex.kegel_on || 5}s / R:${ex.kegel_off || 5}s)`;
+                }
+                document.getElementById('workout-ex-target').textContent = targetText;
+
                 document.getElementById('workout-ex-desc').textContent = ex.description;
 
                 const imgUrl = getExImage(ex);
                 const imgContainer = document.getElementById('workout-ex-img-container');
                 if (imgContainer) {
                     imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px;" loading="lazy">`;
+                }
+
+                // Gestion des timers spécifiques (Isométrie ou Kegel)
+                const activeTimerSection = document.getElementById('workout-active-timer-section');
+                if (ex.type === 'secs' || ex.type === 'kegel') {
+                    activeTimerSection.style.display = 'flex';
+                    const phaseEl = document.getElementById('workout-active-timer-phase');
+                    const btnStartTimer = document.getElementById('btn-start-active-timer');
+
+                    if (ex.type === 'kegel') {
+                        document.getElementById('workout-active-timer').textContent = ex.valeur;
+                        phaseEl.textContent = "PRÊT (CYCLES)";
+                    } else {
+                        document.getElementById('workout-active-timer').textContent = ex.valeur;
+                        phaseEl.textContent = "MAINTENIR";
+                    }
+
+                    btnStartTimer.style.display = 'block';
+                    document.getElementById('active-timer-circle').style.transition = 'none';
+                    document.getElementById('active-timer-circle').style.strokeDashoffset = '0';
+                    document.getElementById('active-timer-circle').style.stroke = 'var(--accent-color)';
+                } else {
+                    activeTimerSection.style.display = 'none';
                 }
 
                 // Générer les bulles de séries
@@ -695,6 +1037,97 @@
 
             // Si pas de repos, on enchaîne
             advanceAfterRest();
+        }
+
+        // Fonction pour démarrer le timer spécifique à l'exercice (isométrie ou kegel)
+        function startActiveWorkoutTimer() {
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+            const btn = document.getElementById('btn-start-active-timer');
+            const timerEl = document.getElementById('workout-active-timer');
+            const circleEl = document.getElementById('active-timer-circle');
+            const phaseEl = document.getElementById('workout-active-timer-phase');
+
+            btn.style.display = 'none'; // Cacher le bouton Démarrer
+
+            const circumference = 691;
+            circleEl.style.transition = 'none';
+            circleEl.style.strokeDashoffset = '0';
+            void circleEl.offsetWidth;
+
+            if (activeWorkoutTimerInterval) clearInterval(activeWorkoutTimerInterval);
+
+            if (ex.type === 'secs') {
+                // Logique Isométrie (Temps total)
+                let timeRemaining = parseInt(ex.valeur);
+                circleEl.style.transition = 'stroke-dashoffset 1s linear';
+                phaseEl.textContent = "MAINTENIR";
+
+                playBeep(400, 0.2); // Start beep
+
+                activeWorkoutTimerInterval = setInterval(() => {
+                    timeRemaining--;
+                    timerEl.textContent = timeRemaining;
+
+                    const progress = ((ex.valeur - timeRemaining) / ex.valeur);
+                    circleEl.style.strokeDashoffset = circumference * progress;
+
+                    if (timeRemaining > 0 && timeRemaining <= 3) playBeep(600, 0.1);
+
+                    if (timeRemaining <= 0) {
+                        clearInterval(activeWorkoutTimerInterval);
+                        playBeep(800, 0.5); // End beep
+                        phaseEl.textContent = "TERMINÉ";
+                        document.getElementById('btn-next-step').click(); // Auto-valider la série
+                    }
+                }, 1000);
+
+            } else if (ex.type === 'kegel') {
+                // Logique Cycles Respiration / Kegel
+                const tOn = parseInt(ex.kegel_on || 5);
+                const tOff = parseInt(ex.kegel_off || 5);
+                const totalCycles = parseInt(ex.valeur);
+
+                let currentCycle = 1;
+                let isContracting = true;
+                let phaseTimeLeft = tOn;
+
+                timerEl.textContent = currentCycle;
+                phaseEl.textContent = `CONTRACTER (1/${totalCycles})`;
+                circleEl.style.stroke = '#ff3333'; // Rouge pour contraction
+                playBeep(600, 0.3); // High beep for contract
+
+                activeWorkoutTimerInterval = setInterval(() => {
+                    phaseTimeLeft--;
+
+                    if (phaseTimeLeft <= 0) {
+                        // Switch Phase
+                        isContracting = !isContracting;
+
+                        if (isContracting) {
+                            // On passe à la contraction du cycle SUIVANT
+                            currentCycle++;
+                            if (currentCycle > totalCycles) {
+                                // Fini !
+                                clearInterval(activeWorkoutTimerInterval);
+                                playBeep(800, 0.6); // End beep
+                                phaseEl.textContent = "TERMINÉ";
+                                document.getElementById('btn-next-step').click(); // Auto-valider la série
+                                return;
+                            }
+                            phaseTimeLeft = tOn;
+                            phaseEl.textContent = `CONTRACTER (${currentCycle}/${totalCycles})`;
+                            circleEl.style.stroke = '#ff3333';
+                            playBeep(600, 0.3);
+                        } else {
+                            // On passe au relâchement du cycle EN COURS
+                            phaseTimeLeft = tOff;
+                            phaseEl.textContent = `RELÂCHER (${currentCycle}/${totalCycles})`;
+                            circleEl.style.stroke = '#3fb950'; // Vert pour relâchement
+                            playBeep(400, 0.3); // Low beep for relax
+                        }
+                    }
+                }, 1000);
+            }
         }
 
         function advanceAfterRest() {
@@ -787,9 +1220,81 @@
 
         function quitWorkout() {
             if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
+            if (activeWorkoutTimerInterval) {
+                clearInterval(activeWorkoutTimerInterval);
+                activeWorkoutTimerInterval = null;
+            }
             document.getElementById('workout-screen').style.display = 'none';
             document.getElementById('workout-controls').style.display = 'block'; // Reset for next time
             document.body.style.overflow = 'auto';
+        }
+
+        // --- Edit Exercice On-the-fly ---
+        function openEditCurrentEx() {
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            document.getElementById('edit-ex-series').value = ex.series;
+
+            let type = 'reps';
+            if (ex.type === 'secs') type = 'secs';
+            if (ex.type === 'kegel') type = 'kegel';
+            document.getElementById('edit-ex-type').value = type;
+
+            document.getElementById('edit-ex-valeur').value = ex.valeur;
+            document.getElementById('edit-ex-kegel-on').value = ex.kegel_on || 5;
+            document.getElementById('edit-ex-kegel-off').value = ex.kegel_off || 5;
+            document.getElementById('edit-ex-repos').value = ex.repos;
+
+            updateEditExUI();
+
+            document.getElementById('modal-edit-ex').classList.add('active');
+        }
+
+        function updateEditExUI() {
+            const type = document.getElementById('edit-ex-type').value;
+            const lblValeur = document.getElementById('lbl-edit-ex-valeur');
+            const kegelContainer = document.getElementById('edit-kegel-container');
+
+            if (type === 'reps') {
+                lblValeur.textContent = "Nombre de répétitions (reps)";
+                kegelContainer.style.display = 'none';
+            } else if (type === 'secs') {
+                lblValeur.textContent = "Temps de maintien total (secs)";
+                kegelContainer.style.display = 'none';
+            } else if (type === 'kegel') {
+                lblValeur.textContent = "Nombre de cycles (C+R)";
+                kegelContainer.style.display = 'flex';
+            }
+        }
+
+        function closeEditExModal(event) {
+            if (event && event.target !== document.getElementById('modal-edit-ex') && event.target.className !== 'close-btn') {
+                return;
+            }
+            document.getElementById('modal-edit-ex').classList.remove('active');
+        }
+
+        function saveEditEx() {
+            const series = parseInt(document.getElementById('edit-ex-series').value) || 1;
+            const type = document.getElementById('edit-ex-type').value;
+            const valeur = parseInt(document.getElementById('edit-ex-valeur').value) || 1;
+            const repos = parseInt(document.getElementById('edit-ex-repos').value) || 0;
+            const kOn = parseInt(document.getElementById('edit-ex-kegel-on').value) || 5;
+            const kOff = parseInt(document.getElementById('edit-ex-kegel-off').value) || 5;
+
+            // Update current workout instance ONLY
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+            ex.series = series;
+            ex.type = type;
+            ex.valeur = valeur;
+            ex.repos = repos;
+            if (type === 'kegel') {
+                ex.kegel_on = kOn;
+                ex.kegel_off = kOff;
+            }
+
+            closeEditExModal();
+            renderWorkoutStep(); // re-render step to apply changes visually
         }
 
         // Utilitaire: Émettre un bip

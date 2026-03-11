@@ -42,12 +42,33 @@
 
         <!-- Plans Section -->
         <div id="plans-section" class="section active">
+            <div style="margin-bottom: 2rem; display: flex; justify-content: flex-end;">
+                <button class="btn-action" onclick="openQuickWorkoutSetup()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;">+ SÉANCE RAPIDE</button>
+            </div>
             <div class="grid" id="plans-grid"></div>
         </div>
 
         <!-- Exercices Section -->
         <div id="exercices-section" class="section">
             <div class="grid" id="exercices-grid"></div>
+        </div>
+
+        <!-- Quick Workout Section -->
+        <div id="quick-workout-section" class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: white;">Sélectionnez vos exercices</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-timer" onclick="openQuickWorkoutSettings()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;" id="btn-settings-quick" disabled>⚙️ CONFIGURER</button>
+                    <button class="btn-action" onclick="startQuickWorkout()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;" id="btn-start-quick" disabled>DÉMARRER (<span id="quick-count">0</span>)</button>
+                </div>
+            </div>
+            <div class="grid" id="quick-exercices-grid" style="margin-bottom: 2rem;"></div>
+
+            <div id="web-suggestions-container" style="display: none;">
+                <h3 style="color: var(--text-secondary); margin-bottom: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Suggestions Web (En ligne)</h3>
+                <div id="web-loading" style="color: var(--accent-color); font-size: 0.9rem; margin-bottom: 1rem; display: none;">⏳ Recherche de suggestions...</div>
+                <div class="grid" id="web-exercices-grid"></div>
+            </div>
         </div>
 
         <!-- Settings Section -->
@@ -118,14 +139,30 @@
             <!-- Exercice View -->
             <div id="workout-ex-view" style="display: flex; flex-direction: column; height: 100%;">
                 <h2 id="workout-ex-title" style="font-size: 2.5rem; text-align: center; margin-bottom: 10px; color: white;">Pompes</h2>
-                <div id="workout-ex-meta" style="text-align: center; margin-bottom: 20px;">
+                <div id="workout-ex-meta" style="text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <span class="tag" id="workout-ex-target" style="font-size: 1rem; padding: 6px 12px; background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">3 x 10 reps</span>
+                    <button class="btn-timer" onclick="openEditCurrentEx()" style="margin: 0; padding: 4px 10px; font-size: 0.8rem;">✏️ Modifier</button>
                 </div>
 
                 <div id="workout-ex-img-container" style="text-align: center; margin-bottom: 20px;"></div>
 
-                <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; flex: 1;">
-                    <p id="workout-ex-desc" style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 30px;"></p>
+                <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; flex: 1; display: flex; flex-direction: column;">
+                    <p id="workout-ex-desc" style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 20px;"></p>
+
+                    <!-- Isometry / Breathing Timer Section -->
+                    <div id="workout-active-timer-section" style="display: none; flex-direction: column; align-items: center; margin-bottom: 20px;">
+                        <div class="rest-timer-ring" style="width: 200px; height: 200px; margin-bottom: 10px;">
+                            <svg class="rest-timer-svg" viewBox="0 0 250 250">
+                                <circle class="rest-timer-bg" cx="125" cy="125" r="110"></circle>
+                                <circle id="active-timer-circle" class="rest-timer-progress" cx="125" cy="125" r="110" style="stroke-dasharray: 691; stroke-dashoffset: 0;"></circle>
+                            </svg>
+                            <div id="workout-active-timer" style="font-size: 3.5rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 20px rgba(178, 255, 5, 0.3);">
+                                60
+                            </div>
+                        </div>
+                        <div id="workout-active-timer-phase" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color); text-transform: uppercase;">MAINTENIR</div>
+                        <button id="btn-start-active-timer" class="btn-action" style="max-width: 200px; margin-top: 15px; font-size: 0.9rem;" onclick="startActiveWorkoutTimer()">▶ DÉMARRER LE TIMER</button>
+                    </div>
 
                     <h3 style="text-align: center; color: white; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">Séries complétées</h3>
                     <div id="workout-sets-container" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
@@ -184,7 +221,7 @@
             <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <span style="display: block; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase;">Séries & Répétitions</span>
+                        <span style="display: block; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase;">Séries & Objectif</span>
                         <span style="font-size: 1.2rem; font-weight: bold; color: white;" id="modal-ex-series"></span>
                     </div>
                     <div style="text-align: right;">
@@ -196,6 +233,77 @@
             </div>
 
             <a id="modal-ex-video" href="#" target="_blank" class="btn-action" style="background-color: #ff0000; color: white; text-decoration: none;">▶ CHERCHER SUR YOUTUBE</a>
+        </div>
+    </div>
+
+    <!-- Modal for Quick Workout Settings -->
+    <div class="modal-overlay" id="modal-quick-settings" onclick="closeQuickWorkoutSettings(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px; padding: 2rem;">
+            <button class="close-btn" aria-label="Fermer" onclick="closeQuickWorkoutSettings()">&times;</button>
+            <h2 class="modal-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Configuration de la séance</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">Appliquez ces paramètres par défaut à tous les exercices sélectionnés pour cette séance rapide.</p>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Séries par défaut</label>
+                <input type="number" id="quick-set-series" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="1" step="1" value="3">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Répétitions par défaut</label>
+                <input type="number" id="quick-set-reps" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="1" step="1" value="10">
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Repos par défaut (secondes)</label>
+                <input type="number" id="quick-set-repos" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="0" step="5" value="60">
+            </div>
+
+            <button class="btn-action" onclick="saveQuickWorkoutSettings()" style="width: 100%;">APPLIQUER</button>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Current Exercice On-the-fly -->
+    <div class="modal-overlay" id="modal-edit-ex" onclick="closeEditExModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 400px; padding: 2rem;">
+            <button class="close-btn" aria-label="Fermer" onclick="closeEditExModal()">&times;</button>
+            <h2 class="modal-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Modifier l'exercice</h2>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Séries</label>
+                <input type="number" id="edit-ex-series" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="1" step="1">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Type d'objectif</label>
+                <select id="edit-ex-type" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px; background-color: var(--surface-color); color: white;" onchange="updateEditExUI()">
+                    <option value="reps">Répétitions (reps)</option>
+                    <option value="secs">Temps de maintien (secs)</option>
+                    <option value="kegel">Cycles Respiration/Kegel</option>
+                </select>
+            </div>
+
+            <div id="edit-valeur-container" style="margin-bottom: 1rem;">
+                <label id="lbl-edit-ex-valeur" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Valeur (Reps/Secs)</label>
+                <input type="number" id="edit-ex-valeur" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="1" step="1">
+            </div>
+
+            <div id="edit-kegel-container" style="display: none; margin-bottom: 1rem; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.85rem;">Contraction (s)</label>
+                    <input type="number" id="edit-ex-kegel-on" class="search-bar" style="width: 100%; border-radius: 8px; padding: 10px;" min="1" step="1" value="5">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.85rem;">Relâchement (s)</label>
+                    <input type="number" id="edit-ex-kegel-off" class="search-bar" style="width: 100%; border-radius: 8px; padding: 10px;" min="1" step="1" value="5">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Repos entre séries (secs)</label>
+                <input type="number" id="edit-ex-repos" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="0" step="5">
+            </div>
+
+            <button class="btn-action" onclick="saveEditEx()" style="width: 100%;">SAUVEGARDER</button>
         </div>
     </div>
 
