@@ -81,7 +81,5 @@ Ce document sert à suivre l'avancement du projet FitTrack Pro, répertorier les
   - Ajouter des fichiers audio locaux ou la possibilité de désactiver complètement le son dans les "Paramètres".
 - [ ] **Génération d'images d'exercices hors ligne** :
   - Remplacer l'appel API dynamique `ui-avatars.com` par une méthode générant des canvas hors ligne (pour éviter qu'une image manque sans connexion).
-- [ ] **Script de génération Backend (Optionnel)** :
-  - Créer/Remettre en place les scripts Python (`process_exercices.py`, `process_plans.py`, etc.) pour faciliter la conversion d'un fichier Excel/CSV local en JSON, au lieu d'utiliser exclusivement Google Apps Script.
-- [ ] **Refactoring (Optionnel mais recommandé si l'app grossit)** :
-  - Séparer le CSS, le HTML et le JavaScript de `index.html` dans des fichiers distincts (`styles.css`, `app.js`).
+- [x] **Refactoring (Optionnel mais recommandé si l'app grossit)** :
+  - Séparer le CSS, le HTML et le JavaScript de `index.html` dans des fichiers distincts (`style.css`, `app.js`).
