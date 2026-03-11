@@ -24,9 +24,9 @@
             <div class="brand-icon"></div>
             FitTrack Pro
         </div>
-        <button class="nav-item active" onclick="switchTab('plans')">Mes Programmes</button>
-        <button class="nav-item" onclick="switchTab('exercices')">Bibliothèque</button>
-        <button class="nav-item" onclick="switchTab('settings')">Paramètres</button>
+        <button class="nav-item active" onclick="switchTab('plans')" tabindex="0">Mes Programmes</button>
+        <button class="nav-item" onclick="switchTab('exercices')" tabindex="0">Bibliothèque</button>
+        <button class="nav-item" onclick="switchTab('settings')" tabindex="0">Paramètres</button>
     </div>
 
     <!-- Main Content -->
@@ -62,10 +62,10 @@
                     <input type="text" id="api-url" class="search-bar" style="width: 100%; border-radius: 6px;" placeholder="https://script.google.com/macros/s/.../exec">
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 2rem;">
-                    <button onclick="syncData()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; text-transform: uppercase;">
+                    <button id="btn-sync" aria-label="Synchroniser les données avec l'URL" onclick="syncData()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; text-transform: uppercase; transition: opacity 0.3s;">
                         ⬇️ Synchroniser les données
                     </button>
-                    <button onclick="clearData()" style="background-color: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; text-transform: uppercase;">
+                    <button aria-label="Vider les données locales" onclick="clearData()" style="background-color: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; text-transform: uppercase;">
                         🗑️ Vider
                     </button>
                 </div>
@@ -80,7 +80,7 @@
                         <div style="color: var(--text-secondary); font-size: 0.85rem;">Bips de fin de repos et alertes</div>
                     </div>
                     <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
-                        <input type="checkbox" id="toggle-sound" style="opacity: 0; width: 0; height: 0;" onchange="toggleSoundPref()">
+                        <input type="checkbox" id="toggle-sound" aria-label="Activer ou désactiver les effets sonores" style="opacity: 0; width: 0; height: 0;" onchange="toggleSoundPref()">
                         <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--surface-hover); transition: .4s; border-radius: 34px; border: 1px solid var(--border-color);" id="toggle-slider">
                             <span style="position: absolute; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: var(--text-secondary); transition: .4s; border-radius: 50%;" id="toggle-knob"></span>
                         </span>

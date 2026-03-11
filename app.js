@@ -227,7 +227,14 @@
             grid.innerHTML = '';
 
             if (plansToRender.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Aucun programme trouvé.</div>';
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--surface-color); border-radius: var(--card-radius); border: 1px dashed var(--border-color);">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Aucun programme trouvé</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.</p>
+                        <button onclick="switchTab('settings')" class="btn-action" style="max-width: 250px;">ALLER AUX PARAMÈTRES</button>
+                    </div>
+                `;
                 return;
             }
 
@@ -243,7 +250,14 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.style.position = 'relative';
+                card.tabIndex = 0;
                 card.onclick = () => openPlanDetails(plan);
+                card.onkeydown = (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openPlanDetails(plan);
+                    }
+                };
                 card.innerHTML = `
                     ${badge}
                     <div class="card-content">
@@ -268,7 +282,14 @@
             grid.innerHTML = '';
 
             if (exercicesToRender.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Aucun exercice trouvé.</div>';
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--surface-color); border-radius: var(--card-radius); border: 1px dashed var(--border-color);">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🏋️</div>
+                        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Aucun exercice trouvé</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.</p>
+                        <button onclick="switchTab('settings')" class="btn-action" style="max-width: 250px;">ALLER AUX PARAMÈTRES</button>
+                    </div>
+                `;
                 return;
             }
 
@@ -287,7 +308,14 @@
 
                 const card = document.createElement('div');
                 card.className = 'card';
+                card.tabIndex = 0;
                 card.onclick = () => openExerciceDetails(ex); // Changed to be clickable
+                card.onkeydown = (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openExerciceDetails(ex);
+                    }
+                };
                 card.innerHTML = `
                     <div class="card-image-container">
                         <img src="${imgUrl}" alt="${ex.nom}" class="card-image" loading="lazy">
@@ -308,15 +336,26 @@
 
         // Settings / Sync Logic
         async function syncData() {
-            const url = document.getElementById('api-url').value.trim();
+            const urlInput = document.getElementById('api-url');
+            const url = urlInput.value.trim();
+
             if (!url) {
                 showError("Veuillez entrer une URL valide.");
+                urlInput.classList.add('input-error');
+                setTimeout(() => urlInput.classList.remove('input-error'), 500);
+                urlInput.focus();
                 return;
             }
 
             showLoader();
             hideError();
             hideSuccess();
+
+            const syncBtn = document.getElementById('btn-sync');
+            const originalBtnText = syncBtn.innerHTML;
+            syncBtn.innerHTML = '⏳ Chargement...';
+            syncBtn.disabled = true;
+            syncBtn.style.opacity = '0.7';
 
             try {
                 const response = await fetch(url);
@@ -376,6 +415,9 @@
                 showError("Échec de la synchronisation. Vérifiez l'URL et votre connexion internet.");
             } finally {
                 hideLoader();
+                syncBtn.innerHTML = originalBtnText;
+                syncBtn.disabled = false;
+                syncBtn.style.opacity = '1';
             }
         }
 

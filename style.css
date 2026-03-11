@@ -121,6 +121,25 @@
             border-color: var(--accent-color);
         }
 
+        .input-error {
+            animation: shake 0.4s 1 linear;
+            border-color: #ff3333 !important;
+            box-shadow: 0 0 10px rgba(255, 51, 51, 0.3) !important;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        #toggle-sound:focus-visible + #toggle-slider {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 4px;
+        }
+
         /* Grids & Cards */
         .grid {
             display: grid;
@@ -144,6 +163,12 @@
             transform: translateY(-5px) scale(1.02);
             border-color: var(--accent-color);
             box-shadow: 0 8px 30px rgba(178, 255, 5, 0.1);
+        }
+
+        .card:focus-visible {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 4px;
+            border-color: var(--accent-color);
         }
 
         .card-image-container {
@@ -227,7 +252,7 @@
             z-index: 1000;
             opacity: 0;
             pointer-events: none;
-            transition: opacity var(--transition-speed);
+            transition: opacity var(--transition-speed) ease-in-out;
             backdrop-filter: blur(4px);
         }
 
@@ -245,13 +270,15 @@
             border: 1px solid var(--border-color);
             overflow-y: auto;
             position: relative;
-            transform: translateY(20px);
-            transition: transform var(--transition-speed);
+            transform: translateY(20px) scale(0.98);
+            transition: transform var(--transition-speed) ease-in-out, opacity var(--transition-speed) ease-in-out;
             padding: 2.5rem;
+            opacity: 0;
         }
 
         .modal-overlay.active .modal-content {
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
+            opacity: 1;
         }
 
         .close-btn {
@@ -391,6 +418,15 @@
             background-color: var(--accent-hover);
             transform: scale(1.02);
             box-shadow: 0 0 15px var(--accent-dark);
+        }
+
+        .btn-action:focus-visible,
+        .btn-timer:focus-visible,
+        .close-btn:focus-visible,
+        .nav-item:focus-visible,
+        button:focus-visible {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 4px;
         }
 
         .btn-timer {
