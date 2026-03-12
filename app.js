@@ -522,7 +522,11 @@
 
             // Retrieve completion history
             let history = {};
-            try { history = JSON.parse(localStorage.getItem('fitness_history') || '{}'); } catch(e){}
+            try {
+                history = JSON.parse(localStorage.getItem('fitness_history') || '{}');
+            } catch (e) {
+                console.error("Erreur lors de la lecture de l'historique:", e);
+            }
 
             plansToRender.forEach(plan => {
                 const exCount = plan.exercices_ids ? plan.exercices_ids.length : 0;
@@ -811,7 +815,15 @@
                     btn.classList.remove('active-timer');
                     btn.innerHTML = `✅ Repos terminé !`;
                     // Bip simple (facultatif si le navigateur l'autorise)
-                    try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3); } catch(e){}
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        osc.connect(ctx.destination);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.3);
+                    } catch (e) {
+                        console.warn("Audio playback failed:", e);
+                    }
                     setTimeout(() => {
                         if(document.getElementById(buttonId)) {
                              document.getElementById(buttonId).innerHTML = `⏱ Relancer repos (${duration}s)`;
@@ -1206,7 +1218,11 @@
 
             // Mettre à jour l'historique de complétion
             let history = {};
-            try { history = JSON.parse(localStorage.getItem('fitness_history') || '{}'); } catch(e){}
+            try {
+                history = JSON.parse(localStorage.getItem('fitness_history') || '{}');
+            } catch (e) {
+                console.error("Erreur lors de la lecture de l'historique:", e);
+            }
             history[currentWorkout.planId] = (history[currentWorkout.planId] || 0) + 1;
             localStorage.setItem('fitness_history', JSON.stringify(history));
 
