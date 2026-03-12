@@ -187,11 +187,14 @@
         function updateStatusUI() {
             const statusDiv = document.getElementById('sync-status');
             const lastSync = localStorage.getItem('last_sync');
+            statusDiv.innerHTML = '';
             if (lastSync) {
                 const date = new Date(parseInt(lastSync));
-                statusDiv.innerHTML = `✅ Données disponibles hors-ligne<br>Dernière synchronisation : ${date.toLocaleString('fr-FR')}`;
+                const text = `✅ Données disponibles hors-ligne\nDernière synchronisation : ${date.toLocaleString('fr-FR')}`;
+                statusDiv.style.whiteSpace = 'pre-line';
+                statusDiv.textContent = text;
             } else {
-                statusDiv.innerHTML = `⚠️ Aucune donnée n'est actuellement sauvegardée sur cet appareil.`;
+                statusDiv.textContent = `⚠️ Aucune donnée n'est actuellement sauvegardée sur cet appareil.`;
             }
         }
 
@@ -306,14 +309,54 @@
                 const checkBg = isSelected ? 'var(--accent-color)' : 'transparent';
                 const checkTxt = isSelected ? '✓' : '';
 
-                card.innerHTML = `
-                    <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: ${checkBg}; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">${checkTxt}</div>
-                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                    <div style="flex-grow: 1; overflow: hidden;">
-                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series || 3}x${ex.valeur || 10} | ${ex.repos || 60}s</div>
-                    </div>
-                `;
+                const checkCircle = document.createElement('div');
+                checkCircle.className = 'check-circle';
+                checkCircle.style.width = '24px';
+                checkCircle.style.height = '24px';
+                checkCircle.style.borderRadius = '50%';
+                checkCircle.style.border = '2px solid var(--accent-color)';
+                checkCircle.style.backgroundColor = checkBg;
+                checkCircle.style.display = 'flex';
+                checkCircle.style.alignItems = 'center';
+                checkCircle.style.justifyContent = 'center';
+                checkCircle.style.color = 'black';
+                checkCircle.style.fontWeight = 'bold';
+                checkCircle.style.flexShrink = '0';
+                checkCircle.textContent = checkTxt;
+                card.appendChild(checkCircle);
+
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.style.width = '60px';
+                img.style.height = '60px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.flexShrink = '0';
+                img.loading = 'lazy';
+                card.appendChild(img);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.style.flexGrow = '1';
+                contentDiv.style.overflow = 'hidden';
+
+                const cardTitle = document.createElement('div');
+                cardTitle.className = 'card-title';
+                cardTitle.style.marginBottom = '2px';
+                cardTitle.style.fontSize = '1rem';
+                cardTitle.style.whiteSpace = 'nowrap';
+                cardTitle.style.overflow = 'hidden';
+                cardTitle.style.textOverflow = 'ellipsis';
+                cardTitle.textContent = ex.nom;
+                contentDiv.appendChild(cardTitle);
+
+                const cardInfo = document.createElement('div');
+                cardInfo.style.color = 'var(--text-secondary)';
+                cardInfo.style.fontSize = '0.8rem';
+                cardInfo.textContent = `${ex.series || 3}x${ex.valeur || 10} | ${ex.repos || 60}s`;
+                contentDiv.appendChild(cardInfo);
+
+                card.appendChild(contentDiv);
                 grid.appendChild(card);
             });
             updateQuickWorkoutUI();
@@ -453,13 +496,25 @@
                 if (webSuggestions.length > 0) {
                     renderWebSuggestions(webSuggestions);
                 } else {
-                    document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Aucune suggestion trouvée en ligne.</div>';
+                    const grid = document.getElementById('web-exercices-grid');
+                    grid.innerHTML = '';
+                    const msgDiv = document.createElement('div');
+                    msgDiv.style.color = 'var(--text-secondary)';
+                    msgDiv.style.fontSize = '0.9rem';
+                    msgDiv.textContent = 'Aucune suggestion trouvée en ligne.';
+                    grid.appendChild(msgDiv);
                 }
 
             } catch (err) {
                 console.error("Erreur API WGER:", err);
                 document.getElementById('web-loading').style.display = 'none';
-                document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Erreur de connexion à l\'API.</div>';
+                const grid = document.getElementById('web-exercices-grid');
+                grid.innerHTML = '';
+                const msgDiv = document.createElement('div');
+                msgDiv.style.color = 'var(--text-secondary)';
+                msgDiv.style.fontSize = '0.9rem';
+                msgDiv.textContent = "Erreur de connexion à l'API.";
+                grid.appendChild(msgDiv);
             }
         }
 
@@ -491,14 +546,63 @@
                 const checkBg = isSelected ? 'var(--accent-color)' : 'transparent';
                 const checkTxt = isSelected ? '✓' : '';
 
-                card.innerHTML = `
-                    <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: ${checkBg}; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">${checkTxt}</div>
-                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                    <div style="flex-grow: 1; overflow: hidden;">
-                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom} <span class="tag" style="background:rgba(88, 166, 255, 0.2); color:#58a6ff; font-size:0.6rem;">🌐 WEB</span></div>
-                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series}x${ex.valeur} | ${ex.repos}s</div>
-                    </div>
-                `;
+                const checkCircle = document.createElement('div');
+                checkCircle.className = 'check-circle';
+                checkCircle.style.width = '24px';
+                checkCircle.style.height = '24px';
+                checkCircle.style.borderRadius = '50%';
+                checkCircle.style.border = '2px solid var(--accent-color)';
+                checkCircle.style.backgroundColor = checkBg;
+                checkCircle.style.display = 'flex';
+                checkCircle.style.alignItems = 'center';
+                checkCircle.style.justifyContent = 'center';
+                checkCircle.style.color = 'black';
+                checkCircle.style.fontWeight = 'bold';
+                checkCircle.style.flexShrink = '0';
+                checkCircle.textContent = checkTxt;
+                card.appendChild(checkCircle);
+
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.style.width = '60px';
+                img.style.height = '60px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.flexShrink = '0';
+                img.loading = 'lazy';
+                card.appendChild(img);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.style.flexGrow = '1';
+                contentDiv.style.overflow = 'hidden';
+
+                const cardTitle = document.createElement('div');
+                cardTitle.className = 'card-title';
+                cardTitle.style.marginBottom = '2px';
+                cardTitle.style.fontSize = '1rem';
+                cardTitle.style.whiteSpace = 'nowrap';
+                cardTitle.style.overflow = 'hidden';
+                cardTitle.style.textOverflow = 'ellipsis';
+                cardTitle.textContent = ex.nom + ' ';
+
+                const webTag = document.createElement('span');
+                webTag.className = 'tag';
+                webTag.style.background = 'rgba(88, 166, 255, 0.2)';
+                webTag.style.color = '#58a6ff';
+                webTag.style.fontSize = '0.6rem';
+                webTag.textContent = '🌐 WEB';
+                cardTitle.appendChild(webTag);
+
+                contentDiv.appendChild(cardTitle);
+
+                const cardInfo = document.createElement('div');
+                cardInfo.style.color = 'var(--text-secondary)';
+                cardInfo.style.fontSize = '0.8rem';
+                cardInfo.textContent = `${ex.series}x${ex.valeur} | ${ex.repos}s`;
+                contentDiv.appendChild(cardInfo);
+
+                card.appendChild(contentDiv);
                 grid.appendChild(card);
             });
         }
@@ -509,14 +613,41 @@
             grid.innerHTML = '';
 
             if (plansToRender.length === 0) {
-                grid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--surface-color); border-radius: var(--card-radius); border: 1px dashed var(--border-color);">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
-                        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Aucun programme trouvé</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.</p>
-                        <button onclick="switchTab('settings')" class="btn-action" style="max-width: 250px;">ALLER AUX PARAMÈTRES</button>
-                    </div>
-                `;
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.gridColumn = '1 / -1';
+                emptyDiv.style.textAlign = 'center';
+                emptyDiv.style.padding = '4rem 2rem';
+                emptyDiv.style.background = 'var(--surface-color)';
+                emptyDiv.style.borderRadius = 'var(--card-radius)';
+                emptyDiv.style.border = '1px dashed var(--border-color)';
+
+                const emoji = document.createElement('div');
+                emoji.style.fontSize = '3rem';
+                emoji.style.marginBottom = '1rem';
+                emoji.textContent = '📭';
+                emptyDiv.appendChild(emoji);
+
+                const h3 = document.createElement('h3');
+                h3.style.color = 'white';
+                h3.style.marginBottom = '1rem';
+                h3.style.fontSize = '1.5rem';
+                h3.textContent = 'Aucun programme trouvé';
+                emptyDiv.appendChild(h3);
+
+                const p = document.createElement('p');
+                p.style.color = 'var(--text-secondary)';
+                p.style.marginBottom = '2rem';
+                p.textContent = "Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.";
+                emptyDiv.appendChild(p);
+
+                const btn = document.createElement('button');
+                btn.onclick = () => switchTab('settings');
+                btn.className = 'btn-action';
+                btn.style.maxWidth = '250px';
+                btn.textContent = 'ALLER AUX PARAMÈTRES';
+                emptyDiv.appendChild(btn);
+
+                grid.appendChild(emptyDiv);
                 return;
             }
 
@@ -527,7 +658,6 @@
             plansToRender.forEach(plan => {
                 const exCount = plan.exercices_ids ? plan.exercices_ids.length : 0;
                 const completedCount = history[plan.id] || 0;
-                const badge = completedCount > 0 ? `<div style="position: absolute; top: -10px; right: -10px; background: var(--accent-color); color: #000; font-weight: bold; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">${completedCount}</div>` : '';
 
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -540,20 +670,70 @@
                         openPlanDetails(plan);
                     }
                 };
-                card.innerHTML = `
-                    ${badge}
-                    <div class="card-content">
-                        <div class="card-title">${plan.nom}</div>
-                        <div class="card-meta">
-                            <span class="tag" style="background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">${plan.goal}x / sem</span>
-                            <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
-                        </div>
-                        <div class="card-desc">${plan.description}</div>
-                        <div class="card-footer" style="color: var(--accent-color); font-weight: 600;">
-                            <span>VOIR LA SÉANCE →</span>
-                        </div>
-                    </div>
-                `;
+
+                if (completedCount > 0) {
+                    const badge = document.createElement('div');
+                    badge.style.position = 'absolute';
+                    badge.style.top = '-10px';
+                    badge.style.right = '-10px';
+                    badge.style.background = 'var(--accent-color)';
+                    badge.style.color = '#000';
+                    badge.style.fontWeight = 'bold';
+                    badge.style.borderRadius = '50%';
+                    badge.style.width = '30px';
+                    badge.style.height = '30px';
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.justifyContent = 'center';
+                    badge.style.fontSize = '0.8rem';
+                    badge.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+                    badge.style.zIndex = '2';
+                    badge.textContent = completedCount;
+                    card.appendChild(badge);
+                }
+
+                const cardContent = document.createElement('div');
+                cardContent.className = 'card-content';
+
+                const cardTitle = document.createElement('div');
+                cardTitle.className = 'card-title';
+                cardTitle.textContent = plan.nom;
+                cardContent.appendChild(cardTitle);
+
+                const cardMeta = document.createElement('div');
+                cardMeta.className = 'card-meta';
+
+                const goalTag = document.createElement('span');
+                goalTag.className = 'tag';
+                goalTag.style.background = 'rgba(178, 255, 5, 0.15)';
+                goalTag.style.color = 'var(--accent-color)';
+                goalTag.textContent = `${plan.goal}x / sem`;
+                cardMeta.appendChild(goalTag);
+
+                const exCountTag = document.createElement('span');
+                exCountTag.className = 'tag';
+                exCountTag.style.background = 'rgba(88, 166, 255, 0.15)';
+                exCountTag.style.color = '#58a6ff';
+                exCountTag.textContent = `${exCount} exos`;
+                cardMeta.appendChild(exCountTag);
+
+                cardContent.appendChild(cardMeta);
+
+                const cardDesc = document.createElement('div');
+                cardDesc.className = 'card-desc';
+                cardDesc.textContent = plan.description;
+                cardContent.appendChild(cardDesc);
+
+                const cardFooter = document.createElement('div');
+                cardFooter.className = 'card-footer';
+                cardFooter.style.color = 'var(--accent-color)';
+                cardFooter.style.fontWeight = '600';
+                const footerSpan = document.createElement('span');
+                footerSpan.textContent = 'VOIR LA SÉANCE →';
+                cardFooter.appendChild(footerSpan);
+                cardContent.appendChild(cardFooter);
+
+                card.appendChild(cardContent);
                 grid.appendChild(card);
             });
         }
@@ -564,54 +744,148 @@
             grid.innerHTML = '';
 
             if (exercicesToRender.length === 0) {
-                grid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--surface-color); border-radius: var(--card-radius); border: 1px dashed var(--border-color);">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🏋️</div>
-                        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Aucun exercice trouvé</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.</p>
-                        <button onclick="switchTab('settings')" class="btn-action" style="max-width: 250px;">ALLER AUX PARAMÈTRES</button>
-                    </div>
-                `;
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.gridColumn = '1 / -1';
+                emptyDiv.style.textAlign = 'center';
+                emptyDiv.style.padding = '4rem 2rem';
+                emptyDiv.style.background = 'var(--surface-color)';
+                emptyDiv.style.borderRadius = 'var(--card-radius)';
+                emptyDiv.style.border = '1px dashed var(--border-color)';
+
+                const emoji = document.createElement('div');
+                emoji.style.fontSize = '3rem';
+                emoji.style.marginBottom = '1rem';
+                emoji.textContent = '🏋️';
+                emptyDiv.appendChild(emoji);
+
+                const h3 = document.createElement('h3');
+                h3.style.color = 'white';
+                h3.style.marginBottom = '1rem';
+                h3.style.fontSize = '1.5rem';
+                h3.textContent = 'Aucun exercice trouvé';
+                emptyDiv.appendChild(h3);
+
+                const p = document.createElement('p');
+                p.style.color = 'var(--text-secondary)';
+                p.style.marginBottom = '2rem';
+                p.textContent = "Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.";
+                emptyDiv.appendChild(p);
+
+                const btn = document.createElement('button');
+                btn.onclick = () => switchTab('settings');
+                btn.className = 'btn-action';
+                btn.style.maxWidth = '250px';
+                btn.textContent = 'ALLER AUX PARAMÈTRES';
+                emptyDiv.appendChild(btn);
+
+                grid.appendChild(emptyDiv);
                 return;
             }
 
             exercicesToRender.forEach(ex => {
-                const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
-                let importanceTag = '';
-                if (ex.importance) {
-                    let color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
-                    let bg = ex.importance.includes('Haute') ? 'rgba(255,51,51,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(255,179,0,0.15)' : 'rgba(88,166,255,0.15)');
-                    importanceTag = `<span class="tag" style="color:${color}; background:${bg}; border: 1px solid ${color};">${ex.importance}</span>`;
-                }
-
-                let freqTag = ex.frequence ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
-
                 const imgUrl = getExImage(ex);
 
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.tabIndex = 0;
-                card.onclick = () => openExerciceDetails(ex); // Changed to be clickable
+                card.onclick = () => openExerciceDetails(ex);
                 card.onkeydown = (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         openExerciceDetails(ex);
                     }
                 };
-                card.innerHTML = `
-                    <div class="card-image-container">
-                        <img src="${imgUrl}" alt="${ex.nom}" class="card-image" loading="lazy">
-                    </div>
-                    <div class="card-content">
-                        <div class="card-title">${ex.nom}</div>
-                        <div class="card-meta" style="gap: 5px;">${importanceTag} ${freqTag} ${tagsHTML}</div>
-                        <div class="card-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${ex.description}</div>
-                        <div class="card-footer">
-                            <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
-                            <span>⏱ ${ex.repos}s</span>
-                        </div>
-                    </div>
-                `;
+
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'card-image-container';
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.className = 'card-image';
+                img.loading = 'lazy';
+                imgContainer.appendChild(img);
+                card.appendChild(imgContainer);
+
+                const cardContent = document.createElement('div');
+                cardContent.className = 'card-content';
+
+                const cardTitle = document.createElement('div');
+                cardTitle.className = 'card-title';
+                cardTitle.textContent = ex.nom;
+                cardContent.appendChild(cardTitle);
+
+                const cardMeta = document.createElement('div');
+                cardMeta.className = 'card-meta';
+                cardMeta.style.gap = '5px';
+
+                if (ex.importance) {
+                    let color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
+                    let bg = ex.importance.includes('Haute') ? 'rgba(255,51,51,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(255,179,0,0.15)' : 'rgba(88,166,255,0.15)');
+                    const impTag = document.createElement('span');
+                    impTag.className = 'tag';
+                    impTag.style.color = color;
+                    impTag.style.background = bg;
+                    impTag.style.border = `1px solid ${color}`;
+                    impTag.textContent = ex.importance;
+                    cardMeta.appendChild(impTag);
+                }
+
+                if (ex.frequence) {
+                    const freqTag = document.createElement('span');
+                    freqTag.className = 'tag';
+                    freqTag.style.background = 'rgba(255, 255, 255, 0.1)';
+                    freqTag.style.color = 'var(--text-primary)';
+
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('style', 'width:12px; height:12px; margin-right:4px; vertical-align:middle;');
+                    svg.setAttribute('fill', 'none');
+                    svg.setAttribute('stroke', 'currentColor');
+                    svg.setAttribute('viewBox', '0 0 24 24');
+
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('stroke-linecap', 'round');
+                    path.setAttribute('stroke-linejoin', 'round');
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('d', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z');
+
+                    svg.appendChild(path);
+                    freqTag.appendChild(svg);
+
+                    const textNode = document.createTextNode(`${ex.frequence}x / sem`);
+                    freqTag.appendChild(textNode);
+                    cardMeta.appendChild(freqTag);
+                }
+
+                (ex.tags || '').split(',').filter(t => t.trim() !== '').forEach(t => {
+                    const span = document.createElement('span');
+                    span.className = 'tag';
+                    span.textContent = t.trim();
+                    cardMeta.appendChild(span);
+                });
+
+                cardContent.appendChild(cardMeta);
+
+                const cardDesc = document.createElement('div');
+                cardDesc.className = 'card-desc';
+                cardDesc.style.display = '-webkit-box';
+                cardDesc.style.webkitLineClamp = '3';
+                cardDesc.style.webkitBoxOrient = 'vertical';
+                cardDesc.style.overflow = 'hidden';
+                cardDesc.style.textOverflow = 'ellipsis';
+                cardDesc.textContent = ex.description;
+                cardContent.appendChild(cardDesc);
+
+                const cardFooter = document.createElement('div');
+                cardFooter.className = 'card-footer';
+                const footerSpan1 = document.createElement('span');
+                footerSpan1.textContent = `${ex.series} x ${ex.valeur} ${ex.type}`;
+                cardFooter.appendChild(footerSpan1);
+                const footerSpan2 = document.createElement('span');
+                footerSpan2.textContent = `⏱ ${ex.repos}s`;
+                cardFooter.appendChild(footerSpan2);
+                cardContent.appendChild(cardFooter);
+
+                card.appendChild(cardContent);
                 grid.appendChild(card);
             });
         }
@@ -756,7 +1030,13 @@
         // Modal Logic
         function openPlanDetails(plan) {
             document.getElementById('modal-title').textContent = plan.nom;
-            document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
+            const meta = document.getElementById('modal-meta');
+            meta.innerHTML = '';
+            const goalSpan = document.createElement('span');
+            goalSpan.className = 'tag';
+            goalSpan.textContent = `${plan.goal}x / semaine`;
+            meta.appendChild(goalSpan);
+
             document.getElementById('modal-desc').textContent = plan.description;
 
             // Setup "Démarrer" button
@@ -774,16 +1054,61 @@
                         li.className = 'ex-item';
                         li.style.display = 'flex';
                         li.style.gap = '15px';
-                        li.innerHTML = `
-                            <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                            <div style="flex-grow: 1;">
-                                <h4>${index + 1}. ${ex.nom}</h4>
-                                <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
-                                <p style="font-size: 0.95rem;">${ex.description}</p>
-                                ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em; margin-right: 15px;">▶ Trouver la vidéo</a>` : ''}
-                                ${ex.repos > 0 ? `<button class="btn-timer" id="timer-btn-${index}" onclick="startTimer(${ex.repos}, 'timer-btn-${index}')">⏱ Lancer repos (${ex.repos}s)</button>` : ''}
-                            </div>
-                        `;
+
+                        const img = document.createElement('img');
+                        img.src = imgUrl;
+                        img.alt = ex.nom;
+                        img.style.width = '80px';
+                        img.style.height = '80px';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '8px';
+                        img.style.flexShrink = '0';
+                        img.loading = 'lazy';
+                        li.appendChild(img);
+
+                        const contentDiv = document.createElement('div');
+                        contentDiv.style.flexGrow = '1';
+
+                        const h4 = document.createElement('h4');
+                        h4.textContent = `${index + 1}. ${ex.nom}`;
+                        contentDiv.appendChild(h4);
+
+                        const pInfo = document.createElement('p');
+                        pInfo.style.color = 'var(--text-secondary)';
+                        pInfo.style.marginBottom = '8px';
+                        pInfo.style.fontSize = '0.9rem';
+                        pInfo.textContent = `${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s`;
+                        contentDiv.appendChild(pInfo);
+
+                        const pDesc = document.createElement('p');
+                        pDesc.style.fontSize = '0.95rem';
+                        pDesc.textContent = ex.description;
+                        contentDiv.appendChild(pDesc);
+
+                        if (ex.video) {
+                            const aVideo = document.createElement('a');
+                            aVideo.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(ex.video)}`;
+                            aVideo.target = '_blank';
+                            aVideo.style.color = 'var(--accent-color)';
+                            aVideo.style.textDecoration = 'none';
+                            aVideo.style.display = 'inline-block';
+                            aVideo.style.marginTop = '8px';
+                            aVideo.style.fontSize = '0.9em';
+                            aVideo.style.marginRight = '15px';
+                            aVideo.textContent = '▶ Trouver la vidéo';
+                            contentDiv.appendChild(aVideo);
+                        }
+
+                        if (ex.repos > 0) {
+                            const btnTimer = document.createElement('button');
+                            btnTimer.className = 'btn-timer';
+                            btnTimer.id = `timer-btn-${index}`;
+                            btnTimer.onclick = () => startTimer(ex.repos, `timer-btn-${index}`);
+                            btnTimer.textContent = `⏱ Lancer repos (${ex.repos}s)`;
+                            contentDiv.appendChild(btnTimer);
+                        }
+
+                        li.appendChild(contentDiv);
                         list.appendChild(li);
                     }
                 });
@@ -833,13 +1158,29 @@
         function openExerciceDetails(ex) {
             document.getElementById('modal-ex-title').textContent = ex.nom;
 
-            const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
-            document.getElementById('modal-ex-meta').innerHTML = tagsHTML;
+            const tagsContainer = document.getElementById('modal-ex-meta');
+            tagsContainer.innerHTML = '';
+            (ex.tags || '').split(',').filter(t => t.trim() !== '').forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.textContent = t.trim();
+                tagsContainer.appendChild(span);
+            });
 
             const imgUrl = getExImage(ex);
             const imgContainer = document.getElementById('modal-ex-img-container');
             if (imgContainer) {
-                imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem;" loading="lazy">`;
+                imgContainer.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.style.width = '100%';
+                img.style.height = '250px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '12px';
+                img.style.marginBottom = '1.5rem';
+                img.loading = 'lazy';
+                imgContainer.appendChild(img);
             }
 
             document.getElementById('modal-ex-series').textContent = `${ex.series} × ${ex.valeur} ${ex.type}`;
@@ -952,7 +1293,16 @@
                 const imgUrl = getExImage(ex);
                 const imgContainer = document.getElementById('workout-ex-img-container');
                 if (imgContainer) {
-                    imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px;" loading="lazy">`;
+                    imgContainer.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = imgUrl;
+                    img.alt = ex.nom;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '200px';
+                    img.style.objectFit = 'contain';
+                    img.style.borderRadius = '12px';
+                    img.loading = 'lazy';
+                    imgContainer.appendChild(img);
                 }
 
                 // Gestion des timers spécifiques (Isométrie ou Kegel)
@@ -1354,13 +1704,13 @@
         function hideLoader() { document.getElementById('loader').style.display = 'none'; }
         function showError(msg) {
             const el = document.getElementById('error-container');
-            el.innerHTML = msg;
+            el.textContent = msg;
             el.style.display = 'block';
         }
         function hideError() { document.getElementById('error-container').style.display = 'none'; }
         function showSuccess(msg) {
             const el = document.getElementById('success-container');
-            el.innerHTML = msg;
+            el.textContent = msg;
             el.style.display = 'block';
             setTimeout(hideSuccess, 5000);
         }
