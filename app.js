@@ -82,11 +82,14 @@
         function updateStatusUI() {
             const statusDiv = document.getElementById('sync-status');
             const lastSync = localStorage.getItem('last_sync');
+            statusDiv.textContent = '';
             if (lastSync) {
                 const date = new Date(parseInt(lastSync));
-                statusDiv.innerHTML = `✅ Données disponibles hors-ligne<br>Dernière synchronisation : ${date.toLocaleString('fr-FR')}`;
+                statusDiv.appendChild(document.createTextNode(`✅ Données disponibles hors-ligne`));
+                statusDiv.appendChild(document.createElement('br'));
+                statusDiv.appendChild(document.createTextNode(`Dernière synchronisation : ${date.toLocaleString('fr-FR')}`));
             } else {
-                statusDiv.innerHTML = `⚠️ Aucune donnée n'est actuellement sauvegardée sur cet appareil.`;
+                statusDiv.textContent = `⚠️ Aucune donnée n'est actuellement sauvegardée sur cet appareil.`;
             }
         }
 
@@ -127,7 +130,7 @@
             selectedQuickExercices = new Set();
             webSuggestions = [];
             document.getElementById('web-suggestions-container').style.display = 'none';
-            document.getElementById('web-exercices-grid').innerHTML = '';
+            document.getElementById('web-exercices-grid').textContent = '';
             switchTab('quick-workout');
         }
 
@@ -161,23 +164,24 @@
             // Update card styling
             document.querySelectorAll('.quick-ex-card').forEach(card => {
                 const exId = card.dataset.id;
+                const checkCircle = card.querySelector('.check-circle');
                 if (selectedQuickExercices.has(exId)) {
                     card.style.borderColor = 'var(--accent-color)';
                     card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
-                    card.querySelector('.check-circle').style.backgroundColor = 'var(--accent-color)';
-                    card.querySelector('.check-circle').innerHTML = '✓';
+                    checkCircle.style.backgroundColor = 'var(--accent-color)';
+                    checkCircle.textContent = '✓';
                 } else {
                     card.style.borderColor = 'var(--border-color)';
                     card.style.boxShadow = 'none';
-                    card.querySelector('.check-circle').style.backgroundColor = 'transparent';
-                    card.querySelector('.check-circle').innerHTML = '';
+                    checkCircle.style.backgroundColor = 'transparent';
+                    checkCircle.textContent = '';
                 }
             });
         }
 
         function renderQuickWorkoutExercices(exercicesToRender) {
             const grid = document.getElementById('quick-exercices-grid');
-            grid.innerHTML = '';
+            grid.textContent = '';
 
             exercicesToRender.forEach(ex => {
                 const imgUrl = getExImage(ex);
@@ -200,14 +204,56 @@
                 const checkBg = isSelected ? 'var(--accent-color)' : 'transparent';
                 const checkTxt = isSelected ? '✓' : '';
 
-                card.innerHTML = `
-                    <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: ${checkBg}; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">${checkTxt}</div>
-                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                    <div style="flex-grow: 1; overflow: hidden;">
-                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series || 3}x${ex.valeur || 10} | ${ex.repos || 60}s</div>
-                    </div>
-                `;
+                const checkCircle = document.createElement('div');
+                checkCircle.className = 'check-circle';
+                checkCircle.style.width = '24px';
+                checkCircle.style.height = '24px';
+                checkCircle.style.borderRadius = '50%';
+                checkCircle.style.border = '2px solid var(--accent-color)';
+                checkCircle.style.backgroundColor = checkBg;
+                checkCircle.style.display = 'flex';
+                checkCircle.style.alignItems = 'center';
+                checkCircle.style.justifyContent = 'center';
+                checkCircle.style.color = 'black';
+                checkCircle.style.fontWeight = 'bold';
+                checkCircle.style.flexShrink = '0';
+                checkCircle.textContent = checkTxt;
+
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.style.width = '60px';
+                img.style.height = '60px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.flexShrink = '0';
+                img.loading = 'lazy';
+
+                const content = document.createElement('div');
+                content.style.flexGrow = '1';
+                content.style.overflow = 'hidden';
+
+                const title = document.createElement('div');
+                title.className = 'card-title';
+                title.style.marginBottom = '2px';
+                title.style.fontSize = '1rem';
+                title.style.whiteSpace = 'nowrap';
+                title.style.overflow = 'hidden';
+                title.style.textOverflow = 'ellipsis';
+                title.textContent = ex.nom;
+
+                const meta = document.createElement('div');
+                meta.style.color = 'var(--text-secondary)';
+                meta.style.fontSize = '0.8rem';
+                meta.textContent = `${ex.series || 3}x${ex.valeur || 10} | ${ex.repos || 60}s`;
+
+                content.appendChild(title);
+                content.appendChild(meta);
+
+                card.appendChild(checkCircle);
+                card.appendChild(img);
+                card.appendChild(content);
+
                 grid.appendChild(card);
             });
             updateQuickWorkoutUI();
@@ -314,7 +360,8 @@
 
             document.getElementById('web-suggestions-container').style.display = 'block';
             document.getElementById('web-loading').style.display = 'block';
-            document.getElementById('web-exercices-grid').innerHTML = '';
+            const grid = document.getElementById('web-exercices-grid');
+            grid.textContent = '';
             webSuggestions = [];
 
             try {
@@ -347,19 +394,27 @@
                 if (webSuggestions.length > 0) {
                     renderWebSuggestions(webSuggestions);
                 } else {
-                    document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Aucune suggestion trouvée en ligne.</div>';
+                    const noResult = document.createElement('div');
+                    noResult.style.color = 'var(--text-secondary)';
+                    noResult.style.fontSize = '0.9rem';
+                    noResult.textContent = 'Aucune suggestion trouvée en ligne.';
+                    grid.appendChild(noResult);
                 }
 
             } catch (err) {
                 console.error("Erreur API WGER:", err);
                 document.getElementById('web-loading').style.display = 'none';
-                document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Erreur de connexion à l\'API.</div>';
+                const errorDiv = document.createElement('div');
+                errorDiv.style.color = 'var(--text-secondary)';
+                errorDiv.style.fontSize = '0.9rem';
+                errorDiv.textContent = "Erreur de connexion à l'API.";
+                grid.appendChild(errorDiv);
             }
         }
 
         function renderWebSuggestions(suggestions) {
             const grid = document.getElementById('web-exercices-grid');
-            grid.innerHTML = '';
+            grid.textContent = '';
 
             suggestions.forEach(ex => {
                 // Skip if already in local db to avoid duplicates
@@ -385,14 +440,64 @@
                 const checkBg = isSelected ? 'var(--accent-color)' : 'transparent';
                 const checkTxt = isSelected ? '✓' : '';
 
-                card.innerHTML = `
-                    <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: ${checkBg}; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">${checkTxt}</div>
-                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                    <div style="flex-grow: 1; overflow: hidden;">
-                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom} <span class="tag" style="background:rgba(88, 166, 255, 0.2); color:#58a6ff; font-size:0.6rem;">🌐 WEB</span></div>
-                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series}x${ex.valeur} | ${ex.repos}s</div>
-                    </div>
-                `;
+                const checkCircle = document.createElement('div');
+                checkCircle.className = 'check-circle';
+                checkCircle.style.width = '24px';
+                checkCircle.style.height = '24px';
+                checkCircle.style.borderRadius = '50%';
+                checkCircle.style.border = '2px solid var(--accent-color)';
+                checkCircle.style.backgroundColor = checkBg;
+                checkCircle.style.display = 'flex';
+                checkCircle.style.alignItems = 'center';
+                checkCircle.style.justifyContent = 'center';
+                checkCircle.style.color = 'black';
+                checkCircle.style.fontWeight = 'bold';
+                checkCircle.style.flexShrink = '0';
+                checkCircle.textContent = checkTxt;
+
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.style.width = '60px';
+                img.style.height = '60px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.flexShrink = '0';
+                img.loading = 'lazy';
+
+                const content = document.createElement('div');
+                content.style.flexGrow = '1';
+                content.style.overflow = 'hidden';
+
+                const title = document.createElement('div');
+                title.className = 'card-title';
+                title.style.marginBottom = '2px';
+                title.style.fontSize = '1rem';
+                title.style.whiteSpace = 'nowrap';
+                title.style.overflow = 'hidden';
+                title.style.textOverflow = 'ellipsis';
+                title.textContent = ex.nom;
+
+                const tagSpan = document.createElement('span');
+                tagSpan.className = 'tag';
+                tagSpan.style.background = 'rgba(88, 166, 255, 0.2)';
+                tagSpan.style.color = '#58a6ff';
+                tagSpan.style.fontSize = '0.6rem';
+                tagSpan.textContent = ' 🌐 WEB';
+                title.appendChild(tagSpan);
+
+                const meta = document.createElement('div');
+                meta.style.color = 'var(--text-secondary)';
+                meta.style.fontSize = '0.8rem';
+                meta.textContent = `${ex.series}x${ex.valeur} | ${ex.repos}s`;
+
+                content.appendChild(title);
+                content.appendChild(meta);
+
+                card.appendChild(checkCircle);
+                card.appendChild(img);
+                card.appendChild(content);
+
                 grid.appendChild(card);
             });
         }
@@ -400,17 +505,44 @@
         // Render Plans (Programmes)
         function renderPlans(plansToRender) {
             const grid = document.getElementById('plans-grid');
-            grid.innerHTML = '';
+            grid.textContent = '';
 
             if (plansToRender.length === 0) {
-                grid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--surface-color); border-radius: var(--card-radius); border: 1px dashed var(--border-color);">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
-                        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Aucun programme trouvé</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.</p>
-                        <button onclick="switchTab('settings')" class="btn-action" style="max-width: 250px;">ALLER AUX PARAMÈTRES</button>
-                    </div>
-                `;
+                const emptyContainer = document.createElement('div');
+                emptyContainer.style.gridColumn = '1 / -1';
+                emptyContainer.style.textAlign = 'center';
+                emptyContainer.style.padding = '4rem 2rem';
+                emptyContainer.style.background = 'var(--surface-color)';
+                emptyContainer.style.borderRadius = 'var(--card-radius)';
+                emptyContainer.style.border = '1px dashed var(--border-color)';
+
+                const emoji = document.createElement('div');
+                emoji.style.fontSize = '3rem';
+                emoji.style.marginBottom = '1rem';
+                emoji.textContent = '📭';
+
+                const title = document.createElement('h3');
+                title.style.color = 'white';
+                title.style.marginBottom = '1rem';
+                title.style.fontSize = '1.5rem';
+                title.textContent = 'Aucun programme trouvé';
+
+                const p = document.createElement('p');
+                p.style.color = 'var(--text-secondary)';
+                p.style.marginBottom = '2rem';
+                p.textContent = "Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.";
+
+                const btn = document.createElement('button');
+                btn.className = 'btn-action';
+                btn.style.maxWidth = '250px';
+                btn.textContent = 'ALLER AUX PARAMÈTRES';
+                btn.onclick = () => switchTab('settings');
+
+                emptyContainer.appendChild(emoji);
+                emptyContainer.appendChild(title);
+                emptyContainer.appendChild(p);
+                emptyContainer.appendChild(btn);
+                grid.appendChild(emptyContainer);
                 return;
             }
 
@@ -425,7 +557,6 @@
             plansToRender.forEach(plan => {
                 const exCount = plan.exercices_ids ? plan.exercices_ids.length : 0;
                 const completedCount = history[plan.id] || 0;
-                const badge = completedCount > 0 ? `<div style="position: absolute; top: -10px; right: -10px; background: var(--accent-color); color: #000; font-weight: bold; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">${completedCount}</div>` : '';
 
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -438,20 +569,72 @@
                         openPlanDetails(plan);
                     }
                 };
-                card.innerHTML = `
-                    ${badge}
-                    <div class="card-content">
-                        <div class="card-title">${plan.nom}</div>
-                        <div class="card-meta">
-                            <span class="tag" style="background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">${plan.goal}x / sem</span>
-                            <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
-                        </div>
-                        <div class="card-desc">${plan.description}</div>
-                        <div class="card-footer" style="color: var(--accent-color); font-weight: 600;">
-                            <span>VOIR LA SÉANCE →</span>
-                        </div>
-                    </div>
-                `;
+
+                if (completedCount > 0) {
+                    const badge = document.createElement('div');
+                    badge.style.position = 'absolute';
+                    badge.style.top = '-10px';
+                    badge.style.right = '-10px';
+                    badge.style.background = 'var(--accent-color)';
+                    badge.style.color = '#000';
+                    badge.style.fontWeight = 'bold';
+                    badge.style.borderRadius = '50%';
+                    badge.style.width = '30px';
+                    badge.style.height = '30px';
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.justifyContent = 'center';
+                    badge.style.fontSize = '0.8rem';
+                    badge.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+                    badge.style.zIndex = '2';
+                    badge.textContent = completedCount;
+                    card.appendChild(badge);
+                }
+
+                const cardContent = document.createElement('div');
+                cardContent.className = 'card-content';
+
+                const cardTitle = document.createElement('div');
+                cardTitle.className = 'card-title';
+                cardTitle.textContent = plan.nom;
+
+                const cardMeta = document.createElement('div');
+                cardMeta.className = 'card-meta';
+
+                const goalTag = document.createElement('span');
+                goalTag.className = 'tag';
+                goalTag.style.background = 'rgba(178, 255, 5, 0.15)';
+                goalTag.style.color = 'var(--accent-color)';
+                goalTag.textContent = `${plan.goal}x / sem`;
+
+                const exTag = document.createElement('span');
+                exTag.className = 'tag';
+                exTag.style.background = 'rgba(88, 166, 255, 0.15)';
+                exTag.style.color = '#58a6ff';
+                exTag.textContent = `${exCount} exos`;
+
+                cardMeta.appendChild(goalTag);
+                cardMeta.appendChild(exTag);
+
+                const cardDesc = document.createElement('div');
+                cardDesc.className = 'card-desc';
+                cardDesc.textContent = plan.description;
+
+                const cardFooter = document.createElement('div');
+                cardFooter.className = 'card-footer';
+                cardFooter.style.color = 'var(--accent-color)';
+                cardFooter.style.fontWeight = '600';
+
+                const footerSpan = document.createElement('span');
+                footerSpan.textContent = 'VOIR LA SÉANCE →';
+                cardFooter.appendChild(footerSpan);
+
+                cardContent.appendChild(cardTitle);
+                cardContent.appendChild(cardMeta);
+                cardContent.appendChild(cardDesc);
+                cardContent.appendChild(cardFooter);
+
+                card.appendChild(cardContent);
                 grid.appendChild(card);
             });
         }
@@ -459,57 +642,153 @@
         // Render Exercices
         function renderExercices(exercicesToRender) {
             const grid = document.getElementById('exercices-grid');
-            grid.innerHTML = '';
+            grid.textContent = '';
 
             if (exercicesToRender.length === 0) {
-                grid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--surface-color); border-radius: var(--card-radius); border: 1px dashed var(--border-color);">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🏋️</div>
-                        <h3 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Aucun exercice trouvé</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.</p>
-                        <button onclick="switchTab('settings')" class="btn-action" style="max-width: 250px;">ALLER AUX PARAMÈTRES</button>
-                    </div>
-                `;
+                const emptyContainer = document.createElement('div');
+                emptyContainer.style.gridColumn = '1 / -1';
+                emptyContainer.style.textAlign = 'center';
+                emptyContainer.style.padding = '4rem 2rem';
+                emptyContainer.style.background = 'var(--surface-color)';
+                emptyContainer.style.borderRadius = 'var(--card-radius)';
+                emptyContainer.style.border = '1px dashed var(--border-color)';
+
+                const emoji = document.createElement('div');
+                emoji.style.fontSize = '3rem';
+                emoji.style.marginBottom = '1rem';
+                emoji.textContent = '🏋️';
+
+                const title = document.createElement('h3');
+                title.style.color = 'white';
+                title.style.marginBottom = '1rem';
+                title.style.fontSize = '1.5rem';
+                title.textContent = 'Aucun exercice trouvé';
+
+                const p = document.createElement('p');
+                p.style.color = 'var(--text-secondary)';
+                p.style.marginBottom = '2rem';
+                p.textContent = "Vous n'avez pas encore synchronisé vos données ou la recherche n'a donné aucun résultat.";
+
+                const btn = document.createElement('button');
+                btn.className = 'btn-action';
+                btn.style.maxWidth = '250px';
+                btn.textContent = 'ALLER AUX PARAMÈTRES';
+                btn.onclick = () => switchTab('settings');
+
+                emptyContainer.appendChild(emoji);
+                emptyContainer.appendChild(title);
+                emptyContainer.appendChild(p);
+                emptyContainer.appendChild(btn);
+                grid.appendChild(emptyContainer);
                 return;
             }
 
             exercicesToRender.forEach(ex => {
-                const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
-                let importanceTag = '';
-                if (ex.importance) {
-                    let color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
-                    let bg = ex.importance.includes('Haute') ? 'rgba(255,51,51,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(255,179,0,0.15)' : 'rgba(88,166,255,0.15)');
-                    importanceTag = `<span class="tag" style="color:${color}; background:${bg}; border: 1px solid ${color};">${ex.importance}</span>`;
-                }
-
-                let freqTag = ex.frequence ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
-
                 const imgUrl = getExImage(ex);
 
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.tabIndex = 0;
-                card.onclick = () => openExerciceDetails(ex); // Changed to be clickable
+                card.onclick = () => openExerciceDetails(ex);
                 card.onkeydown = (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         openExerciceDetails(ex);
                     }
                 };
-                card.innerHTML = `
-                    <div class="card-image-container">
-                        <img src="${imgUrl}" alt="${ex.nom}" class="card-image" loading="lazy">
-                    </div>
-                    <div class="card-content">
-                        <div class="card-title">${ex.nom}</div>
-                        <div class="card-meta" style="gap: 5px;">${importanceTag} ${freqTag} ${tagsHTML}</div>
-                        <div class="card-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${ex.description}</div>
-                        <div class="card-footer">
-                            <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
-                            <span>⏱ ${ex.repos}s</span>
-                        </div>
-                    </div>
-                `;
+
+                const cardImageContainer = document.createElement('div');
+                cardImageContainer.className = 'card-image-container';
+
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.className = 'card-image';
+                img.loading = 'lazy';
+                cardImageContainer.appendChild(img);
+
+                const cardContent = document.createElement('div');
+                cardContent.className = 'card-content';
+
+                const cardTitle = document.createElement('div');
+                cardTitle.className = 'card-title';
+                cardTitle.textContent = ex.nom;
+
+                const cardMeta = document.createElement('div');
+                cardMeta.className = 'card-meta';
+                cardMeta.style.gap = '5px';
+
+                if (ex.importance) {
+                    let color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
+                    let bg = ex.importance.includes('Haute') ? 'rgba(255,51,51,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(255,179,0,0.15)' : 'rgba(88,166,255,0.15)');
+                    const impTag = document.createElement('span');
+                    impTag.className = 'tag';
+                    impTag.style.color = color;
+                    impTag.style.background = bg;
+                    impTag.style.border = `1px solid ${color}`;
+                    impTag.textContent = ex.importance;
+                    cardMeta.appendChild(impTag);
+                }
+
+                if (ex.frequence) {
+                    const freqTag = document.createElement('span');
+                    freqTag.className = 'tag';
+                    freqTag.style.background = 'rgba(255, 255, 255, 0.1)';
+                    freqTag.style.color = 'var(--text-primary)';
+
+                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svg.setAttribute("style", "width:12px; height:12px; margin-right:4px; vertical-align:middle;");
+                    svg.setAttribute("fill", "none");
+                    svg.setAttribute("stroke", "currentColor");
+                    svg.setAttribute("viewBox", "0 0 24 24");
+
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("stroke-linecap", "round");
+                    path.setAttribute("stroke-linejoin", "round");
+                    path.setAttribute("stroke-width", "2");
+                    path.setAttribute("d", "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z");
+
+                    svg.appendChild(path);
+                    freqTag.appendChild(svg);
+                    freqTag.appendChild(document.createTextNode(`${ex.frequence}x / sem`));
+                    cardMeta.appendChild(freqTag);
+                }
+
+                (ex.tags || '').split(',').filter(t => t.trim() !== '').forEach(t => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag';
+                    tag.textContent = t.trim();
+                    cardMeta.appendChild(tag);
+                });
+
+                const cardDesc = document.createElement('div');
+                cardDesc.className = 'card-desc';
+                cardDesc.style.display = '-webkit-box';
+                cardDesc.style.webkitLineClamp = '3';
+                cardDesc.style.webkitBoxOrient = 'vertical';
+                cardDesc.style.overflow = 'hidden';
+                cardDesc.style.textOverflow = 'ellipsis';
+                cardDesc.textContent = ex.description;
+
+                const cardFooter = document.createElement('div');
+                cardFooter.className = 'card-footer';
+
+                const footerSpan1 = document.createElement('span');
+                footerSpan1.textContent = `${ex.series} x ${ex.valeur} ${ex.type}`;
+
+                const footerSpan2 = document.createElement('span');
+                footerSpan2.textContent = `⏱ ${ex.repos}s`;
+
+                cardFooter.appendChild(footerSpan1);
+                cardFooter.appendChild(footerSpan2);
+
+                cardContent.appendChild(cardTitle);
+                cardContent.appendChild(cardMeta);
+                cardContent.appendChild(cardDesc);
+                cardContent.appendChild(cardFooter);
+
+                card.appendChild(cardImageContainer);
+                card.appendChild(cardContent);
                 grid.appendChild(card);
             });
         }
@@ -532,8 +811,8 @@
             hideSuccess();
 
             const syncBtn = document.getElementById('btn-sync');
-            const originalBtnText = syncBtn.innerHTML;
-            syncBtn.innerHTML = '⏳ Chargement...';
+            const originalBtnText = syncBtn.textContent;
+            syncBtn.textContent = '⏳ Chargement...';
             syncBtn.disabled = true;
             syncBtn.style.opacity = '0.7';
 
@@ -595,7 +874,7 @@
                 showError("Échec de la synchronisation. Vérifiez l'URL et votre connexion internet.");
             } finally {
                 hideLoader();
-                syncBtn.innerHTML = originalBtnText;
+                syncBtn.textContent = originalBtnText;
                 syncBtn.disabled = false;
                 syncBtn.style.opacity = '1';
             }
@@ -654,14 +933,19 @@
         // Modal Logic
         function openPlanDetails(plan) {
             document.getElementById('modal-title').textContent = plan.nom;
-            document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
+            const modalMeta = document.getElementById('modal-meta');
+            modalMeta.textContent = '';
+            const goalTag = document.createElement('span');
+            goalTag.className = 'tag';
+            goalTag.textContent = `${plan.goal}x / semaine`;
+            modalMeta.appendChild(goalTag);
             document.getElementById('modal-desc').textContent = plan.description;
 
             // Setup "Démarrer" button
             document.getElementById('btn-start-workout').onclick = () => startWorkout(plan);
 
             const list = document.getElementById('modal-ex-list');
-            list.innerHTML = '';
+            list.textContent = '';
 
             if (plan.exercices_ids) {
                 plan.exercices_ids.forEach((id, index) => {
@@ -672,16 +956,62 @@
                         li.className = 'ex-item';
                         li.style.display = 'flex';
                         li.style.gap = '15px';
-                        li.innerHTML = `
-                            <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                            <div style="flex-grow: 1;">
-                                <h4>${index + 1}. ${ex.nom}</h4>
-                                <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
-                                <p style="font-size: 0.95rem;">${ex.description}</p>
-                                ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em; margin-right: 15px;">▶ Trouver la vidéo</a>` : ''}
-                                ${ex.repos > 0 ? `<button class="btn-timer" id="timer-btn-${index}" onclick="startTimer(${ex.repos}, 'timer-btn-${index}')">⏱ Lancer repos (${ex.repos}s)</button>` : ''}
-                            </div>
-                        `;
+
+                        const img = document.createElement('img');
+                        img.src = imgUrl;
+                        img.alt = ex.nom;
+                        img.style.width = '80px';
+                        img.style.height = '80px';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '8px';
+                        img.style.flexShrink = '0';
+                        img.loading = 'lazy';
+
+                        const exInfo = document.createElement('div');
+                        exInfo.style.flexGrow = '1';
+
+                        const h4 = document.createElement('h4');
+                        h4.textContent = `${index + 1}. ${ex.nom}`;
+
+                        const p1 = document.createElement('p');
+                        p1.style.color = 'var(--text-secondary)';
+                        p1.style.marginBottom = '8px';
+                        p1.style.fontSize = '0.9rem';
+                        p1.textContent = `${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s`;
+
+                        const p2 = document.createElement('p');
+                        p2.style.fontSize = '0.95rem';
+                        p2.textContent = ex.description;
+
+                        exInfo.appendChild(h4);
+                        exInfo.appendChild(p1);
+                        exInfo.appendChild(p2);
+
+                        if (ex.video) {
+                            const videoLink = document.createElement('a');
+                            videoLink.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(ex.video)}`;
+                            videoLink.target = '_blank';
+                            videoLink.style.color = 'var(--accent-color)';
+                            videoLink.style.textDecoration = 'none';
+                            videoLink.style.display = 'inline-block';
+                            videoLink.style.marginTop = '8px';
+                            videoLink.style.fontSize = '0.9em';
+                            videoLink.style.marginRight = '15px';
+                            videoLink.textContent = '▶ Trouver la vidéo';
+                            exInfo.appendChild(videoLink);
+                        }
+
+                        if (ex.repos > 0) {
+                            const timerBtn = document.createElement('button');
+                            timerBtn.className = 'btn-timer';
+                            timerBtn.id = `timer-btn-${index}`;
+                            timerBtn.textContent = `⏱ Lancer repos (${ex.repos}s)`;
+                            timerBtn.onclick = () => startTimer(ex.repos, `timer-btn-${index}`);
+                            exInfo.appendChild(timerBtn);
+                        }
+
+                        li.appendChild(img);
+                        li.appendChild(exInfo);
                         list.appendChild(li);
                     }
                 });
@@ -699,7 +1029,7 @@
 
             let timeRemaining = duration;
             btn.classList.add('active-timer');
-            btn.innerHTML = `⏳ Repos en cours: ${timeRemaining}s`;
+            btn.textContent = `⏳ Repos en cours: ${timeRemaining}s`;
 
             activeTimers[buttonId] = setInterval(() => {
                 timeRemaining -= 1;
@@ -707,7 +1037,7 @@
                     clearInterval(activeTimers[buttonId]);
                     delete activeTimers[buttonId];
                     btn.classList.remove('active-timer');
-                    btn.innerHTML = `✅ Repos terminé !`;
+                    btn.textContent = `✅ Repos terminé !`;
                     // Bip simple (facultatif si le navigateur l'autorise)
                     try {
                         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -720,11 +1050,11 @@
                     }
                     setTimeout(() => {
                         if(document.getElementById(buttonId)) {
-                             document.getElementById(buttonId).innerHTML = `⏱ Relancer repos (${duration}s)`;
+                             document.getElementById(buttonId).textContent = `⏱ Relancer repos (${duration}s)`;
                         }
                     }, 3000);
                 } else {
-                    btn.innerHTML = `⏳ Repos en cours: ${timeRemaining}s`;
+                    btn.textContent = `⏳ Repos en cours: ${timeRemaining}s`;
                 }
             }, 1000);
         }
@@ -739,13 +1069,29 @@
         function openExerciceDetails(ex) {
             document.getElementById('modal-ex-title').textContent = ex.nom;
 
-            const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
-            document.getElementById('modal-ex-meta').innerHTML = tagsHTML;
+            const modalExMeta = document.getElementById('modal-ex-meta');
+            modalExMeta.textContent = '';
+            (ex.tags || '').split(',').filter(t => t.trim() !== '').forEach(t => {
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.textContent = t.trim();
+                modalExMeta.appendChild(tag);
+            });
 
             const imgUrl = getExImage(ex);
             const imgContainer = document.getElementById('modal-ex-img-container');
             if (imgContainer) {
-                imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem;" loading="lazy">`;
+                imgContainer.textContent = '';
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = ex.nom;
+                img.style.width = '100%';
+                img.style.height = '250px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '12px';
+                img.style.marginBottom = '1.5rem';
+                img.loading = 'lazy';
+                imgContainer.appendChild(img);
             }
 
             document.getElementById('modal-ex-series').textContent = `${ex.series} × ${ex.valeur} ${ex.type}`;
@@ -858,7 +1204,16 @@
                 const imgUrl = getExImage(ex);
                 const imgContainer = document.getElementById('workout-ex-img-container');
                 if (imgContainer) {
-                    imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px;" loading="lazy">`;
+                    imgContainer.textContent = '';
+                    const img = document.createElement('img');
+                    img.src = imgUrl;
+                    img.alt = ex.nom;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '200px';
+                    img.style.objectFit = 'contain';
+                    img.style.borderRadius = '12px';
+                    img.loading = 'lazy';
+                    imgContainer.appendChild(img);
                 }
 
                 // Gestion des timers spécifiques (Isométrie ou Kegel)
@@ -886,7 +1241,7 @@
 
                 // Générer les bulles de séries
                 const setsContainer = document.getElementById('workout-sets-container');
-                setsContainer.innerHTML = '';
+                setsContainer.textContent = '';
                 for (let i = 0; i < ex.series; i++) {
                     const bubble = document.createElement('div');
                     const isCompleted = i < currentWorkout.currentSet;
@@ -904,18 +1259,18 @@
                     if (isCompleted) {
                         bubble.style.backgroundColor = 'var(--accent-color)';
                         bubble.style.color = '#000';
-                        bubble.innerHTML = '✓';
+                        bubble.textContent = '✓';
                         bubble.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.4)';
                     } else if (i === currentWorkout.currentSet) {
                         bubble.style.backgroundColor = 'transparent';
                         bubble.style.border = '2px solid var(--accent-color)';
                         bubble.style.color = 'var(--accent-color)';
-                        bubble.innerHTML = i + 1;
+                        bubble.textContent = i + 1;
                     } else {
                         bubble.style.backgroundColor = 'transparent';
                         bubble.style.border = '2px solid var(--border-color)';
                         bubble.style.color = 'var(--text-secondary)';
-                        bubble.innerHTML = i + 1;
+                        bubble.textContent = i + 1;
                     }
                     setsContainer.appendChild(bubble);
                 }
@@ -1264,13 +1619,13 @@
         function hideLoader() { document.getElementById('loader').style.display = 'none'; }
         function showError(msg) {
             const el = document.getElementById('error-container');
-            el.innerHTML = msg;
+            el.textContent = msg;
             el.style.display = 'block';
         }
         function hideError() { document.getElementById('error-container').style.display = 'none'; }
         function showSuccess(msg) {
             const el = document.getElementById('success-container');
-            el.innerHTML = msg;
+            el.textContent = msg;
             el.style.display = 'block';
             setTimeout(hideSuccess, 5000);
         }
