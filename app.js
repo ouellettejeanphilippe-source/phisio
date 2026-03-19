@@ -21,7 +21,11 @@
 
             // Jouer un petit son de test si on active
             if (soundEnabled) {
-                playBeep(600, 0.1, 'triangle');
+                if (typeof module !== 'undefined' && module.exports && module.exports.playBeep) {
+                    module.exports.playBeep(600, 0.1, 'triangle');
+                } else {
+                    playBeep(600, 0.1, 'triangle');
+                }
             }
         }
 
@@ -1277,7 +1281,7 @@
         function hideSuccess() { document.getElementById('success-container').style.display = 'none'; }
 
         // Service Worker Registration for PWA
-        if ('serviceWorker' in navigator) {
+        if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(registration => {
                     console.log('SW registered: ', registration);
@@ -1288,4 +1292,16 @@
         }
 
         // Start
-        window.onload = init;
+        if (typeof window !== 'undefined') {
+            window.onload = init;
+        }
+
+        if (typeof module !== 'undefined' && module.exports) {
+            module.exports = {
+                toggleSoundPref,
+                updateToggleUI,
+                playBeep,
+                get soundEnabled() { return soundEnabled; },
+                set soundEnabled(val) { soundEnabled = val; }
+            };
+        }
