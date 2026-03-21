@@ -18,15 +18,28 @@
 </head>
 <body>
 
-    <!-- Sidebar -->
+    <!-- Sidebar / Bottom Navigation -->
     <div class="sidebar">
         <div class="brand">
             <div class="brand-icon"></div>
             FitTrack Pro
         </div>
-        <button class="nav-item active" onclick="switchTab('plans')" tabindex="0">Mes Programmes</button>
-        <button class="nav-item" onclick="switchTab('exercices')" tabindex="0">Bibliothèque</button>
-        <button class="nav-item" onclick="switchTab('settings')" tabindex="0">Paramètres</button>
+        <button class="nav-item active" onclick="switchTab('plans')" tabindex="0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <span>Programmes</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('exercices')" tabindex="0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M4 19.5v-15A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 01-2.5-2.5z"></path></svg>
+            <span>Bibliothèque</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('stats')" tabindex="0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M9 9l3 3 3-3 6 6M9 9V5m3 7v-3m3 3V7m6 5v5"></path></svg>
+            <span>Statistiques</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('settings')" tabindex="0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.6.8 1 1.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+            <span>Paramètres</span>
+        </button>
     </div>
 
     <!-- Main Content -->
@@ -53,6 +66,21 @@
             <div class="grid" id="exercices-grid"></div>
         </div>
 
+        <!-- Statistics Section -->
+        <div id="stats-section" class="section">
+            <div class="card" style="max-width: 800px; margin: 0 auto; cursor: default; padding: 2rem;">
+                <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Activité Récente</h2>
+                <div id="stats-heatmap" style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 2rem; justify-content: center; align-items: center; background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 20px;">
+                    <!-- Heatmap dynamically generated -->
+                </div>
+
+                <h3 style="color: white; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; margin-top: 2rem;">Historique des séances</h3>
+                <div id="stats-history-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- History list dynamically generated -->
+                </div>
+            </div>
+        </div>
+
         <!-- Quick Workout Section -->
         <div id="quick-workout-section" class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -73,8 +101,8 @@
 
         <!-- Settings Section -->
         <div id="settings-section" class="section">
-            <div class="card" style="max-width: 600px; margin: 0 auto; cursor: default;">
-                <h2 style="color: white; margin-bottom: 1rem;">Synchronisation Hors-Ligne</h2>
+            <div class="card" style="max-width: 600px; margin: 0 auto; cursor: default; padding: 2rem;">
+                <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Synchronisation</h2>
                 <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
                     Connectez votre application à Google Sheets via Apps Script pour télécharger vos données. Une fois téléchargées, elles seront sauvegardées sur votre appareil et accessibles <strong>sans connexion internet</strong>.
                 </p>
@@ -93,8 +121,8 @@
                 <div id="sync-status" style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); text-align: center;"></div>
             </div>
 
-            <div class="card" style="max-width: 600px; margin: 2rem auto; cursor: default;">
-                <h2 style="color: white; margin-bottom: 1rem;">Préférences</h2>
+            <div class="card" style="max-width: 600px; margin: 2rem auto; cursor: default; padding: 2rem;">
+                <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Préférences</h2>
                 <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 1rem;">
                     <div>
                         <div style="color: white; font-weight: 600;">Effets sonores</div>
@@ -119,7 +147,10 @@
             <div class="card-meta" id="modal-meta"></div>
             <p id="modal-desc" style="font-size: 1.1rem; margin-bottom: 2rem; color: var(--text-primary);"></p>
 
-            <button class="btn-action" id="btn-start-workout" style="margin-bottom: 2rem;">▶ DÉMARRER LA SÉANCE</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 2rem;">
+                <button class="btn-action" id="btn-start-workout" style="flex: 2; margin-top: 0;">▶ DÉMARRER</button>
+                <button class="btn-timer" id="btn-add-calendar" onclick="addPlanToCalendar()" style="flex: 1; margin-top: 0; justify-content: center; font-size: 0.8rem; padding: 16px;">📅 Rappel</button>
+            </div>
 
             <h3 style="color: white; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Exercices de la séance</h3>
             <ul class="ex-list" id="modal-ex-list"></ul>
@@ -138,10 +169,10 @@
         <div id="workout-content" style="flex: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto;">
             <!-- Exercice View -->
             <div id="workout-ex-view" style="display: flex; flex-direction: column; height: 100%;">
-                <h2 id="workout-ex-title" style="font-size: 2.5rem; text-align: center; margin-bottom: 10px; color: white;">Pompes</h2>
-                <div id="workout-ex-meta" style="text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <span class="tag" id="workout-ex-target" style="font-size: 1rem; padding: 6px 12px; background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">3 x 10 reps</span>
-                    <button class="btn-timer" onclick="openEditCurrentEx()" style="margin: 0; padding: 4px 10px; font-size: 0.8rem;">✏️ Modifier</button>
+            <h2 id="workout-ex-title" style="font-size: 3rem; text-align: center; margin-bottom: 10px; color: white; letter-spacing: -1px; margin-top: 2rem;">Pompes</h2>
+            <div id="workout-ex-meta" style="text-align: center; margin-bottom: 2rem; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="tag" id="workout-ex-target" style="font-size: 1.1rem; padding: 8px 16px; background: var(--accent-dark); color: var(--accent-color);">3 x 10 reps</span>
+                <button class="btn-timer" onclick="openEditCurrentEx()" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;">✏️ Modifier</button>
                 </div>
 
                 <div id="workout-ex-img-container" style="text-align: center; margin-bottom: 20px;"></div>
@@ -156,7 +187,7 @@
                                 <circle class="rest-timer-bg" cx="125" cy="125" r="110"></circle>
                                 <circle id="active-timer-circle" class="rest-timer-progress" cx="125" cy="125" r="110" style="stroke-dasharray: 691; stroke-dashoffset: 0;"></circle>
                             </svg>
-                            <div id="workout-active-timer" style="font-size: 3.5rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 20px rgba(178, 255, 5, 0.3);">
+                            <div id="workout-active-timer" style="font-size: 3.5rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 20px var(--accent-dark);">
                                 60
                             </div>
                         </div>
@@ -182,7 +213,7 @@
                         <!-- circumference = 2 * pi * 110 ≈ 691. On utilise dasharray: 700 dans le CSS. -->
                         <circle id="rest-timer-circle" class="rest-timer-progress" cx="125" cy="125" r="110" style="stroke-dasharray: 691; stroke-dashoffset: 0;"></circle>
                     </svg>
-                    <div id="workout-rest-timer" style="font-size: 5rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 20px rgba(178, 255, 5, 0.3);">
+                    <div id="workout-rest-timer" style="font-size: 5rem; font-weight: bold; color: white; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 20px var(--accent-dark);">
                         60
                     </div>
                 </div>
@@ -275,32 +306,39 @@
 
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Type d'objectif</label>
-                <select id="edit-ex-type" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px; background-color: var(--surface-color); color: white;" onchange="updateEditExUI()">
+                <select id="edit-ex-type" class="search-bar" style="width: 100%; border-radius: 12px; font-size: 1.1rem; padding: 12px; background-color: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-color);" onchange="updateEditExUI()">
                     <option value="reps">Répétitions (reps)</option>
                     <option value="secs">Temps de maintien (secs)</option>
                     <option value="kegel">Cycles Respiration/Kegel</option>
+                    <option value="poids">Poids / Charge</option>
+                    <option value="distance">Distance / Cardio</option>
                 </select>
             </div>
 
             <div id="edit-valeur-container" style="margin-bottom: 1rem;">
                 <label id="lbl-edit-ex-valeur" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Valeur (Reps/Secs)</label>
-                <input type="number" id="edit-ex-valeur" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="1" step="1">
+                <input type="number" id="edit-ex-valeur" class="search-bar" style="width: 100%; border-radius: 12px; font-size: 1.1rem; padding: 12px; background-color: rgba(0,0,0,0.5);" min="1" step="1">
+            </div>
+
+            <div id="edit-poids-container" style="display: none; margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Charge / Poids (kg)</label>
+                <input type="number" id="edit-ex-poids" class="search-bar" style="width: 100%; border-radius: 12px; font-size: 1.1rem; padding: 12px; background-color: rgba(0,0,0,0.5);" min="0" step="0.5">
             </div>
 
             <div id="edit-kegel-container" style="display: none; margin-bottom: 1rem; gap: 10px;">
                 <div style="flex: 1;">
                     <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.85rem;">Contraction (s)</label>
-                    <input type="number" id="edit-ex-kegel-on" class="search-bar" style="width: 100%; border-radius: 8px; padding: 10px;" min="1" step="1" value="5">
+                    <input type="number" id="edit-ex-kegel-on" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="1" step="1" value="5">
                 </div>
                 <div style="flex: 1;">
                     <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.85rem;">Relâchement (s)</label>
-                    <input type="number" id="edit-ex-kegel-off" class="search-bar" style="width: 100%; border-radius: 8px; padding: 10px;" min="1" step="1" value="5">
+                    <input type="number" id="edit-ex-kegel-off" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="1" step="1" value="5">
                 </div>
             </div>
 
             <div style="margin-bottom: 2rem;">
                 <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Repos entre séries (secs)</label>
-                <input type="number" id="edit-ex-repos" class="search-bar" style="width: 100%; border-radius: 8px; font-size: 1.1rem; padding: 10px;" min="0" step="5">
+                <input type="number" id="edit-ex-repos" class="search-bar" style="width: 100%; border-radius: 12px; font-size: 1.1rem; padding: 12px; background-color: rgba(0,0,0,0.5);" min="0" step="5">
             </div>
 
             <button class="btn-action" onclick="saveEditEx()" style="width: 100%;">SAUVEGARDER</button>
