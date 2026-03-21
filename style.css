@@ -1,22 +1,25 @@
         :root {
             --bg-color: #000000;
-            --surface-color: #111111;
-            --surface-hover: #1a1a1a;
+            --surface-color: rgba(35, 35, 35, 0.65); /* Translucent dark gray for glass effect */
+            --surface-hover: rgba(55, 55, 55, 0.75);
             --text-primary: #ffffff;
-            --text-secondary: #9e9e9e;
-            --accent-color: #b2ff05; /* Garmin/Fitness neon green */
-            --accent-hover: #8fc700;
-            --accent-dark: rgba(178, 255, 5, 0.15);
-            --border-color: #2a2a2a;
-            --card-radius: 16px;
-            --transition-speed: 0.25s;
+            --text-secondary: #aaaaaa;
+            --accent-color: #6fb2ff; /* Samsung-like soft blue */
+            --accent-hover: #58a6ff;
+            --accent-dark: rgba(111, 178, 255, 0.15);
+            --border-color: rgba(255, 255, 255, 0.08); /* very subtle border */
+            --card-radius: 28px; /* One UI Squircles */
+            --transition-speed: 0.3s;
+            --glass-blur: blur(25px);
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "SamsungOne", "Segoe UI", Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -91,30 +94,44 @@
             margin-left: 260px;
             padding: 2rem 4rem;
             max-width: 1200px;
+            /* Support for scrolling under blurred nav if needed */
+            min-height: 100vh;
         }
 
+        /* One UI Viewing Area (Tall Header) */
         .header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-start;
+            min-height: 25vh; /* Large viewing area */
+            padding-bottom: 2rem;
+            margin-bottom: 1rem;
+            padding-top: calc(var(--safe-area-top) + 2rem);
         }
 
         h1 {
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 1.5rem;
         }
 
         .search-bar {
-            padding: 0.75rem 1rem;
-            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
             border: 1px solid var(--border-color);
             background-color: var(--surface-color);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             color: white;
-            width: 300px;
+            width: 100%;
+            max-width: 400px;
             outline: none;
-            transition: border-color var(--transition-speed);
+            font-size: 1rem;
+            transition: all var(--transition-speed);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         .search-bar:focus {
@@ -149,6 +166,8 @@
 
         .card {
             background-color: var(--surface-color);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border-color);
             border-radius: var(--card-radius);
             transition: all var(--transition-speed);
@@ -156,13 +175,15 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            overflow: hidden; /* Ensure contents respect border radius */
         }
 
         .card:hover {
-            transform: translateY(-5px) scale(1.02);
-            border-color: var(--accent-color);
-            box-shadow: 0 8px 30px rgba(178, 255, 5, 0.1);
+            transform: translateY(-2px);
+            background-color: var(--surface-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
         }
 
         .card:focus-visible {
@@ -173,11 +194,9 @@
 
         .card-image-container {
             width: 100%;
-            height: 160px;
+            height: 180px;
             background-color: #050505;
             position: relative;
-            border-top-left-radius: calc(var(--card-radius) - 1px);
-            border-top-right-radius: calc(var(--card-radius) - 1px);
             overflow: hidden;
         }
 
@@ -185,7 +204,9 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-bottom: 1px solid var(--border-color);
+            /* Soft border fade */
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
         }
 
         .card-content {
@@ -262,7 +283,9 @@
         }
 
         .modal-content {
-            background-color: var(--surface-color);
+            background-color: rgba(25, 25, 25, 0.95);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
             width: 90%;
             max-width: 800px;
             max-height: 90vh;
@@ -270,14 +293,15 @@
             border: 1px solid var(--border-color);
             overflow-y: auto;
             position: relative;
-            transform: translateY(20px) scale(0.98);
-            transition: transform var(--transition-speed) ease-in-out, opacity var(--transition-speed) ease-in-out;
+            transform: translateY(100px);
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
             padding: 2.5rem;
             opacity: 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
         }
 
         .modal-overlay.active .modal-content {
-            transform: translateY(0) scale(1);
+            transform: translateY(0);
             opacity: 1;
         }
 
@@ -390,7 +414,12 @@
         }
         .section.active {
             display: block;
-            animation: fadeIn 0.3s ease;
+            animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Timer Button */
@@ -398,26 +427,24 @@
             background-color: var(--accent-color);
             color: #000;
             border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
+            padding: 16px 24px;
+            border-radius: 50px;
             cursor: pointer;
             font-size: 1rem;
-            font-weight: 700;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             margin-top: 15px;
             transition: all var(--transition-speed);
-            text-transform: uppercase;
-            letter-spacing: 1px;
             width: 100%;
         }
 
         .btn-action:hover {
             background-color: var(--accent-hover);
             transform: scale(1.02);
-            box-shadow: 0 0 15px var(--accent-dark);
+            box-shadow: 0 8px 20px var(--accent-dark);
         }
 
         .btn-action:focus-visible,
@@ -430,13 +457,13 @@
         }
 
         .btn-timer {
-            background-color: transparent;
-            color: var(--text-primary);
-            border: 1px solid var(--accent-color);
-            padding: 8px 16px;
-            border-radius: 20px;
+            background-color: var(--accent-dark);
+            color: var(--accent-color);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
@@ -446,8 +473,7 @@
         }
 
         .btn-timer:hover {
-            background-color: var(--accent-dark);
-            color: var(--accent-color);
+            background-color: rgba(111, 178, 255, 0.25);
         }
 
         .btn-timer.active-timer {
@@ -473,25 +499,25 @@
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
-                padding-bottom: env(safe-area-inset-bottom);
             }
 
             .sidebar {
                 width: 100%;
-                height: calc(70px + env(safe-area-inset-bottom));
+                height: calc(80px + var(--safe-area-bottom));
                 position: fixed;
                 bottom: 0;
                 top: auto;
                 left: 0;
                 flex-direction: row;
                 justify-content: space-around;
-                padding: 0 0 env(safe-area-inset-bottom) 0;
+                align-items: center;
+                padding: 0 10px var(--safe-area-bottom) 10px;
                 z-index: 900;
                 border-right: none;
-                border-top: 1px solid var(--border-color);
-                background-color: rgba(22, 27, 34, 0.95);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
+                border-top: 1px solid rgba(255,255,255,0.05);
+                background-color: rgba(10, 10, 10, 0.85);
+                backdrop-filter: blur(30px);
+                -webkit-backdrop-filter: blur(30px);
             }
 
             .brand {
@@ -500,20 +526,23 @@
 
             .nav-item {
                 margin: 0;
-                border-radius: 0;
+                border-radius: 50px;
                 flex: 1;
+                max-width: 100px;
                 text-align: center;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 10px 0;
-                font-size: 0.85rem;
+                padding: 12px 5px;
+                font-size: 0.75rem;
+                gap: 5px;
             }
 
             .nav-item.active {
                 background-color: transparent;
                 color: var(--accent-color);
-                border-top: 3px solid var(--accent-color);
+                border-top: none;
                 border-left: none;
             }
 
@@ -528,7 +557,7 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 1rem;
-                margin-top: env(safe-area-inset-top);
+                margin-top: 0;
             }
 
             .search-bar {
@@ -540,16 +569,36 @@
                 grid-template-columns: 1fr;
             }
 
+            .modal-overlay {
+                align-items: flex-end; /* Bottom sheet on mobile */
+            }
+
             .modal-content {
                 width: 100%;
-                height: 100%;
-                max-height: 100%;
-                border-radius: 0;
-                padding: calc(1.5rem + env(safe-area-inset-top)) 1.5rem calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem;
+                height: auto;
+                max-height: 92vh;
+                border-radius: 32px 32px 0 0; /* Bottom sheet rounded top corners */
+                padding: 2.5rem 1.5rem calc(2rem + var(--safe-area-bottom)) 1.5rem;
+                margin: 0;
+                transform: translateY(100%);
+            }
+
+            /* Optional handle for bottom sheet */
+            .modal-content::before {
+                content: '';
+                position: absolute;
+                top: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background-color: rgba(255,255,255,0.2);
+                border-radius: 10px;
             }
 
             .modal-title {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
+                margin-top: 0.5rem;
                 margin-right: 2rem;
             }
 
