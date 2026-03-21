@@ -1,13 +1,15 @@
-# Fitness Tracker Pro
+# Fitness Tracker Pro (Version 2.0)
 
-Une application web locale moderne et réactive pour gérer vos programmes d'entraînement.
+Une application web locale ultra-moderne et réactive pour gérer vos programmes d'entraînement, avec une interface inspirée par la fluidité de **Samsung One UI**.
 
 ## Fonctionnalités 🚀
-* **PWA & Mobile-First :** Interface "sharp" qui s'installe sur téléphone comme une vraie application native (grâce au fichier `manifest.json` et au Service Worker `sw.js`).
-* **Mode Sombre (Dark Mode) :** Design élégant, inspiré des meilleures applications de fitness.
-* **Chronomètre de Repos Intégré :** Un chronomètre est disponible directement dans vos programmes.
+* **PWA & Mobile-First :** Interface qui s'installe sur téléphone comme une vraie application native (grâce au fichier `manifest.json` et au Service Worker `sw.js`).
+* **Design "One UI" (Mode Sombre AMOLED) :** Ergonomie pensée pour l'utilisation à une main avec une *Viewing Area* en haut, des *Bottom Sheets* (tiroirs glissants), des "Squircles" (coins extrêmement arrondis), et du glassmorphism (effets de verre dépoli).
+* **Mode "Séance en cours" & Chronomètres :** Suivez vos entraînements étape par étape (répétitions, isométrie, cycles de respiration, **poids/charges**, et **distance**).
+* **Statistiques Avancées :** Suivez votre régularité avec un calendrier *Heatmap* de 30 jours et l'historique détaillé de vos séances récentes.
+* **Rappels d'Entraînement :** Exportez vos programmes en un clic vers votre calendrier natif (Google Agenda, Samsung Calendar) via un fichier `.ics`.
 * **Intégration YouTube :** Trouvez les vidéos de vos exercices en un clic.
-* **Synchronisation Google Sheets :** Synchronisez facilement vos données d'exercices depuis le Cloud !
+* **Synchronisation Google Sheets :** Synchronisez facilement vos données d'exercices depuis le Cloud pour un fonctionnement 100% hors-ligne !
 
 ## Comment installer l'application sur votre téléphone ? 📱
 

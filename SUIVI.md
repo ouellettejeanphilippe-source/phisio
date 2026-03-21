@@ -13,10 +13,11 @@ Ce document sert à suivre l'avancement du projet FitTrack Pro, répertorier les
 
 ## ✅ Fonctionnalités Terminées & Créées
 
-### 1. Interface Web (Frontend)
-- [x] **Design Modern & PWA** : Thème sombre (Garmin-like), PWA responsive pour mobile, tablette et bureau.
-- [x] **Navigation par onglets** : Mes Programmes, Bibliothèque (Exercices), Paramètres.
-- [x] **Recherche en temps réel** : Filtrage des programmes et des exercices par nom, description ou tags.
+### 1. Interface Web (Frontend V2)
+- [x] **Design "Samsung One UI"** : Refonte totale (Squircles, Glassmorphism, Viewing/Interaction Areas) avec fond AMOLED et accents bleus doux.
+- [x] **Bottom Navigation Bar** : Navigation repensée sur mobile (icônes SVG) : Programmes, Bibliothèque, Statistiques, Paramètres.
+- [x] **Bottom Sheets (Modales)** : Modales glissantes depuis le bas de l'écran pour faciliter l'usage à une main.
+- [x] **Recherche en temps réel** : Champs de recherche arrondis en "pilule" avec effet flouté.
 
 ### 2. Bibliothèque des Exercices & Programmes
 - [x] **Affichage en grille (Cartes)** : Affichage détaillé des exercices (images, tags, répétitions) et des programmes.
@@ -29,10 +30,11 @@ Ce document sert à suivre l'avancement du projet FitTrack Pro, répertorier les
 - [x] **Minuteur de repos avec audio** : Minuteur dynamique entre les séries et exercices, avec bips audio de fin de repos.
 - [x] **Écran de fin de séance** : Suivi du nombre d'entraînements complétés (système de badges).
 
-### 4. Gestion des Données & Mode Hors Ligne
-- [x] **Synchronisation Google Apps Script** : Téléchargement dynamique du JSON contenant les exercices et les plans.
-- [x] **Stockage local (`localStorage`)** : Sauvegarde des données de l'API et de l'historique d'entraînement pour un fonctionnement 100% hors ligne.
-- [x] **Service Worker (`sw.js`)** : Mise en cache des assets statiques (`index.html`, icônes, manifest, polices).
+### 4. Gestion des Données, Rappels & Statistiques (V2)
+- [x] **Génération de calendrier (`.ics`)** : Ajout d'un bouton "Rappel" générant un événement local de 1h pour synchronisation Agenda.
+- [x] **Historique avancé (Heatmap)** : Suivi détaillé des dates (`fitness_sessions`) pour générer une carte de chaleur sur 30 jours et une liste des séances récentes.
+- [x] **Stockage local (`localStorage`)** : Sauvegarde des données de l'API (`fitness_data`) et historique (`fitness_sessions`) hors-ligne.
+- [x] **Nouveaux types d'exercices** : Support des charges (Poids en kg) et du cardio (Distance en km).
 
 ---
 
@@ -73,13 +75,9 @@ Ce document sert à suivre l'avancement du projet FitTrack Pro, répertorier les
 
 ## 🚧 Ce qu'il reste à faire / Idées d'améliorations (À Faire)
 
-- [ ] **Gestion avancée de l'historique** :
-  - Créer un graphique ou une vue "Statistiques" détaillant les dates d'entraînement au lieu d'un simple compteur de complétion.
-- [ ] **Gestion des poids et charges** :
-  - Ajouter un champ pour que l'utilisateur puisse noter les poids soulevés pendant la séance et sauvegarder son évolution.
+- [ ] **Suivi d'évolution par exercice** :
+  - Actuellement, on modifie la charge pour "la séance en cours", mais il serait intéressant de sauvegarder la progression (historique du RM max) par exercice.
 - [ ] **Sons personnalisables** :
-  - Ajouter des fichiers audio locaux ou la possibilité de désactiver complètement le son dans les "Paramètres".
+  - Ajouter des fichiers audio locaux pour remplacer les bips générés par oscillateurs (AudioContext).
 - [ ] **Génération d'images d'exercices hors ligne** :
-  - Remplacer l'appel API dynamique `ui-avatars.com` par une méthode générant des canvas hors ligne (pour éviter qu'une image manque sans connexion).
-- [x] **Refactoring (Optionnel mais recommandé si l'app grossit)** :
-  - Séparer le CSS, le HTML et le JavaScript de `index.html` dans des fichiers distincts (`style.css`, `app.js`).
+  - Assurer qu'il y ait toujours un fallback local si l'API WGER ou UI Avatars est injoignable (déjà partiellement traité via les SVGs locaux dans `utils.js`).
