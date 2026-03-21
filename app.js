@@ -1,3 +1,6 @@
+
+        function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(50); }
+
         let db = { exercices: [], plans: [] };
         let currentTab = 'plans';
 
@@ -92,6 +95,7 @@
 
         // Navigation
         function switchTab(tab) {
+            triggerHaptic();
             currentTab = tab;
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(el => el.classList.remove('active'));
@@ -659,6 +663,7 @@
 
         // Modal Logic
         function openPlanDetails(plan) {
+            triggerHaptic();
             currentViewedPlan = plan;
             document.getElementById('modal-title').textContent = plan.nom;
             document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
@@ -779,6 +784,7 @@
         let activeWorkoutTimerInterval = null;
 
         function startWorkout(plan) {
+            triggerHaptic();
             if (!plan.exercices_ids || plan.exercices_ids.length === 0) {
                 alert("Ce programme ne contient aucun exercice.");
                 return;
@@ -937,6 +943,7 @@
         }
 
         function nextWorkoutStep() {
+            triggerHaptic();
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
 
             // On vient de valider une série
@@ -1088,6 +1095,7 @@
 
             // Beep au début du repos (optionnel)
             playBeep(400, 0.1);
+            triggerHaptic();
 
             currentWorkout.restInterval = setInterval(() => {
                 timeRemaining--;
@@ -1113,6 +1121,7 @@
         }
 
         function skipRest() {
+            triggerHaptic();
             advanceAfterRest();
         }
 
