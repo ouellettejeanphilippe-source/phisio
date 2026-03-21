@@ -98,22 +98,25 @@
 
             if(tab === 'plans' && navItems[0]) navItems[0].classList.add('active');
             if(tab === 'exercices' && navItems[1]) navItems[1].classList.add('active');
-            if(tab === 'settings' && navItems[2]) navItems[2].classList.add('active');
+            if(tab === 'stats' && navItems[2]) navItems[2].classList.add('active');
+            if(tab === 'settings' && navItems[3]) navItems[3].classList.add('active');
 
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.getElementById(`${tab}-section`).classList.add('active');
 
             if (tab === 'plans') document.getElementById('page-title').textContent = 'Mes Programmes';
-            else if (tab === 'exercices') document.getElementById('page-title').textContent = 'Bibliothèque d\'exercices';
+            else if (tab === 'exercices') document.getElementById('page-title').textContent = 'Bibliothèque';
+            else if (tab === 'stats') document.getElementById('page-title').textContent = 'Statistiques';
             else if (tab === 'settings') document.getElementById('page-title').textContent = 'Paramètres';
             else if (tab === 'quick-workout') document.getElementById('page-title').textContent = 'Séance Rapide';
 
-            document.getElementById('search-input').style.display = tab === 'settings' ? 'none' : 'block';
+            document.getElementById('search-input').style.display = (tab === 'settings' || tab === 'stats') ? 'none' : 'block';
             document.getElementById('search-input').value = '';
 
             // Reset views
             if (tab === 'plans') renderPlans(db.plans);
             else if (tab === 'exercices') renderExercices(db.exercices);
+            else if (tab === 'stats') renderStats();
             else if (tab === 'settings') updateStatusUI();
             else if (tab === 'quick-workout') renderQuickWorkoutExercices(db.exercices);
         }
@@ -163,7 +166,7 @@
                 const exId = card.dataset.id;
                 if (selectedQuickExercices.has(exId)) {
                     card.style.borderColor = 'var(--accent-color)';
-                    card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
+                    card.style.boxShadow = '0 0 10px var(--accent-dark)';
                     card.querySelector('.check-circle').style.backgroundColor = 'var(--accent-color)';
                     card.querySelector('.check-circle').innerHTML = '✓';
                 } else {
@@ -192,7 +195,7 @@
                 card.style.gap = '15px';
                 if (isSelected) {
                     card.style.borderColor = 'var(--accent-color)';
-                    card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
+                    card.style.boxShadow = '0 0 10px var(--accent-dark)';
                 }
 
                 card.onclick = () => toggleQuickExercice(ex.id);
@@ -377,7 +380,7 @@
                 card.style.gap = '15px';
                 if (isSelected) {
                     card.style.borderColor = 'var(--accent-color)';
-                    card.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.2)';
+                    card.style.boxShadow = '0 0 10px var(--accent-dark)';
                 }
 
                 card.onclick = () => toggleWebExercice(ex.id);
@@ -443,7 +446,7 @@
                     <div class="card-content">
                         <div class="card-title">${plan.nom}</div>
                         <div class="card-meta">
-                            <span class="tag" style="background: rgba(178, 255, 5, 0.15); color: var(--accent-color);">${plan.goal}x / sem</span>
+                            <span class="tag" style="background: var(--accent-dark); color: var(--accent-color);">${plan.goal}x / sem</span>
                             <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
                         </div>
                         <div class="card-desc">${plan.description}</div>
@@ -651,8 +654,12 @@
             }
         }
 
+        // Current Plan global variable for calendar export
+        let currentViewedPlan = null;
+
         // Modal Logic
         function openPlanDetails(plan) {
+            currentViewedPlan = plan;
             document.getElementById('modal-title').textContent = plan.nom;
             document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
             document.getElementById('modal-desc').textContent = plan.description;
@@ -850,6 +857,12 @@
                 let targetText = `${ex.series} x ${ex.valeur} ${ex.type}`;
                 if (ex.type === 'kegel') {
                     targetText = `${ex.series} x ${ex.valeur} cycles (C:${ex.kegel_on || 5}s / R:${ex.kegel_off || 5}s)`;
+                } else if (ex.type === 'poids') {
+                    targetText = `${ex.series} x ${ex.valeur} reps @ ${ex.poids || 0}kg`;
+                } else if (ex.type === 'distance') {
+                    targetText = `${ex.series} x ${ex.valeur} km`;
+                } else if (ex.poids && ex.poids > 0) {
+                    targetText += ` @ ${ex.poids}kg`;
                 }
                 document.getElementById('workout-ex-target').textContent = targetText;
 
@@ -905,7 +918,7 @@
                         bubble.style.backgroundColor = 'var(--accent-color)';
                         bubble.style.color = '#000';
                         bubble.innerHTML = '✓';
-                        bubble.style.boxShadow = '0 0 10px rgba(178, 255, 5, 0.4)';
+                        bubble.style.boxShadow = '0 0 10px var(--accent-dark)';
                     } else if (i === currentWorkout.currentSet) {
                         bubble.style.backgroundColor = 'transparent';
                         bubble.style.border = '2px solid var(--accent-color)';
@@ -1110,18 +1123,111 @@
 
             document.getElementById('workout-controls').style.display = 'none';
 
-            // Mettre à jour l'historique de complétion
+            // Mettre à jour l'historique de complétion avec les dates
             let history = {};
+            let sessions = [];
             try {
                 history = JSON.parse(localStorage.getItem('fitness_history') || '{}');
+                sessions = JSON.parse(localStorage.getItem('fitness_sessions') || '[]');
             } catch (e) {
                 console.error("Erreur lors de la lecture de l'historique:", e);
             }
+
+            // Legacy counter
             history[currentWorkout.planId] = (history[currentWorkout.planId] || 0) + 1;
+
+            // Detailed session log for stats
+            const planDetails = db.plans.find(p => p.id === currentWorkout.planId) || { nom: 'Séance Rapide' };
+            sessions.push({
+                date: new Date().toISOString(),
+                planId: currentWorkout.planId,
+                nom: planDetails.nom
+            });
+
             localStorage.setItem('fitness_history', JSON.stringify(history));
+            localStorage.setItem('fitness_sessions', JSON.stringify(sessions));
 
             // Rafraîchir l'interface (pour le badge)
             renderPlans(db.plans);
+        }
+
+        // --- Stats Rendering ---
+        function renderStats() {
+            const heatmapContainer = document.getElementById('stats-heatmap');
+            const historyListContainer = document.getElementById('stats-history-list');
+
+            heatmapContainer.innerHTML = '';
+            historyListContainer.innerHTML = '';
+
+            let sessions = [];
+            try {
+                sessions = JSON.parse(localStorage.getItem('fitness_sessions') || '[]');
+            } catch (e) {}
+
+            // Heatmap logic (last 30 days)
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            // Create a map of date strings (YYYY-MM-DD) to count
+            const sessionCounts = {};
+            sessions.forEach(s => {
+                const dateStr = new Date(s.date).toISOString().split('T')[0];
+                sessionCounts[dateStr] = (sessionCounts[dateStr] || 0) + 1;
+            });
+
+            for (let i = 29; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const count = sessionCounts[dateStr] || 0;
+
+                const box = document.createElement('div');
+                box.style.width = '24px';
+                box.style.height = '24px';
+                box.style.borderRadius = '6px';
+                box.title = `${dateStr}: ${count} séance(s)`;
+
+                if (count === 0) {
+                    box.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                } else if (count === 1) {
+                    box.style.backgroundColor = 'rgba(111, 178, 255, 0.4)';
+                } else {
+                    box.style.backgroundColor = 'var(--accent-color)';
+                }
+
+                heatmapContainer.appendChild(box);
+            }
+
+            // History list logic (last 10 sessions)
+            const recentSessions = [...sessions].reverse().slice(0, 10);
+
+            if (recentSessions.length === 0) {
+                historyListContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 2rem;">Aucune séance enregistrée pour le moment.</div>';
+                return;
+            }
+
+            recentSessions.forEach(s => {
+                const date = new Date(s.date);
+                const formatter = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+                const item = document.createElement('div');
+                item.style.backgroundColor = 'rgba(0,0,0,0.2)';
+                item.style.border = '1px solid var(--border-color)';
+                item.style.padding = '15px';
+                item.style.borderRadius = '16px';
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+
+                item.innerHTML = `
+                    <div>
+                        <div style="color: white; font-weight: 600;">${s.nom}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: capitalize;">${formatter.format(date)}</div>
+                    </div>
+                    <div style="background: var(--accent-dark); color: var(--accent-color); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">✓ Terminé</div>
+                `;
+                historyListContainer.appendChild(item);
+            });
         }
 
         function finishWorkout() {
@@ -1148,9 +1254,12 @@
             let type = 'reps';
             if (ex.type === 'secs') type = 'secs';
             if (ex.type === 'kegel') type = 'kegel';
+            if (ex.type === 'poids') type = 'poids';
+            if (ex.type === 'distance') type = 'distance';
             document.getElementById('edit-ex-type').value = type;
 
             document.getElementById('edit-ex-valeur').value = ex.valeur;
+            if (document.getElementById('edit-ex-poids')) document.getElementById('edit-ex-poids').value = ex.poids || 0;
             document.getElementById('edit-ex-kegel-on').value = ex.kegel_on || 5;
             document.getElementById('edit-ex-kegel-off').value = ex.kegel_off || 5;
             document.getElementById('edit-ex-repos').value = ex.repos;
@@ -1164,16 +1273,23 @@
             const type = document.getElementById('edit-ex-type').value;
             const lblValeur = document.getElementById('lbl-edit-ex-valeur');
             const kegelContainer = document.getElementById('edit-kegel-container');
+            const poidsContainer = document.getElementById('edit-poids-container');
+
+            kegelContainer.style.display = 'none';
+            if (poidsContainer) poidsContainer.style.display = 'none';
 
             if (type === 'reps') {
                 lblValeur.textContent = "Nombre de répétitions (reps)";
-                kegelContainer.style.display = 'none';
             } else if (type === 'secs') {
                 lblValeur.textContent = "Temps de maintien total (secs)";
-                kegelContainer.style.display = 'none';
             } else if (type === 'kegel') {
                 lblValeur.textContent = "Nombre de cycles (C+R)";
                 kegelContainer.style.display = 'flex';
+            } else if (type === 'poids') {
+                lblValeur.textContent = "Nombre de répétitions (reps)";
+                if (poidsContainer) poidsContainer.style.display = 'block';
+            } else if (type === 'distance') {
+                lblValeur.textContent = "Distance (km)";
             }
         }
 
@@ -1187,8 +1303,10 @@
         function saveEditEx() {
             const series = parseInt(document.getElementById('edit-ex-series').value) || 1;
             const type = document.getElementById('edit-ex-type').value;
-            const valeur = parseInt(document.getElementById('edit-ex-valeur').value) || 1;
+            const valeur = parseFloat(document.getElementById('edit-ex-valeur').value) || 1;
             const repos = parseInt(document.getElementById('edit-ex-repos').value) || 0;
+            let poids = 0;
+            if (document.getElementById('edit-ex-poids')) poids = parseFloat(document.getElementById('edit-ex-poids').value) || 0;
             const kOn = parseInt(document.getElementById('edit-ex-kegel-on').value) || 5;
             const kOff = parseInt(document.getElementById('edit-ex-kegel-off').value) || 5;
 
@@ -1198,6 +1316,7 @@
             ex.type = type;
             ex.valeur = valeur;
             ex.repos = repos;
+            ex.poids = poids;
             if (type === 'kegel') {
                 ex.kegel_on = kOn;
                 ex.kegel_off = kOff;
@@ -1250,11 +1369,66 @@
             document.body.style.overflow = 'auto';
         }
 
+        function addPlanToCalendar() {
+            if (!currentViewedPlan) return;
+
+            // Calculate start and end times (e.g., today at 18:00 for 1 hour)
+            const now = new Date();
+            let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0); // Default to 18:00 today
+            if (now.getHours() >= 18) {
+                 // If it's already past 18:00, schedule for tomorrow
+                 start.setDate(start.getDate() + 1);
+            }
+            const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour duration
+
+            const formatICSDate = (date) => {
+                return date.toISOString().replace(/-|:|\.\d+/g, '');
+            };
+
+            const uid = Date.now().toString() + "@fittrackpro.local";
+            const summary = `Entraînement : ${currentViewedPlan.nom}`;
+            const description = `Programme : ${currentViewedPlan.nom}\\n${currentViewedPlan.description}\\n\\nPréparez-vous à transpirer avec FitTrack Pro !`;
+
+            const icsContent = [
+                "BEGIN:VCALENDAR",
+                "VERSION:2.0",
+                "PRODID:-//FitTrack Pro//FR",
+                "BEGIN:VEVENT",
+                `UID:${uid}`,
+                `DTSTAMP:${formatICSDate(new Date())}`,
+                `DTSTART:${formatICSDate(start)}`,
+                `DTEND:${formatICSDate(end)}`,
+                `SUMMARY:${summary}`,
+                `DESCRIPTION:${description}`,
+                "BEGIN:VALARM",
+                "TRIGGER:-PT30M", // Reminder 30 mins before
+                "ACTION:DISPLAY",
+                "DESCRIPTION:Rappel d'entraînement",
+                "END:VALARM",
+                "END:VEVENT",
+                "END:VCALENDAR"
+            ].join("\n");
+
+            // Create a blob and trigger download
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Workout_${currentViewedPlan.nom.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showSuccess("Événement calendrier généré !");
+        }
+
         function closeModal(event) {
             if (event && event.target !== document.getElementById('modal') && event.target.className !== 'close-btn') {
                 return;
             }
             stopAllTimers();
+            currentViewedPlan = null;
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
