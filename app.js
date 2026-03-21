@@ -189,11 +189,11 @@
                     child.style.background = 'var(--accent-color)';
                     child.style.color = '#000';
                 } else {
-                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 145, 0.15), rgba(255, 199, 95, 0.15))';
-                    child.style.color = '#FFC75F';
+                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 216, 0.15), rgba(111, 178, 255, 0.15))';
+                    child.style.color = '#FF96E5';
                 }
             });
-            handleSearch(); // trigger existing search to combine text and tag filter
+            handleSearch();
         }
 
         function filterQuickByTag(tag) {
@@ -206,8 +206,8 @@
                     child.style.background = 'var(--accent-color)';
                     child.style.color = '#000';
                 } else {
-                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 145, 0.15), rgba(255, 199, 95, 0.15))';
-                    child.style.color = '#FFC75F';
+                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 216, 0.15), rgba(111, 178, 255, 0.15))';
+                    child.style.color = '#FF96E5';
                 }
             });
             handleSearchQuick();
@@ -226,7 +226,6 @@
             }
             renderQuickWorkoutExercices(filtered);
 
-            // Web api search hook
             clearTimeout(searchTimeout);
             if (query.trim().length >= 3) {
                 searchTimeout = setTimeout(() => searchWebAPI(query), 800);
@@ -764,7 +763,6 @@ let currentEditingExIndex = null;
             list.innerHTML = '';
             if (currentViewedPlan.exercices_ids) {
                 currentViewedPlan.exercices_ids.forEach((id, index) => {
-                    // Try to find in exos list to display (deep copy logic moved here)
                     const ex = currentViewedPlan.exercices_objs ? currentViewedPlan.exercices_objs[index] : db.exercices.find(e => e.id === id);
                     if (ex) {
                         const imgUrl = getExImage(ex);
@@ -802,7 +800,6 @@ let currentEditingExIndex = null;
             }
         }
 
-
         let _originalEditExSaveHandler = null;
 
         function openPreWorkoutEdit(index) {
@@ -839,12 +836,9 @@ let currentEditingExIndex = null;
                 _originalEditExSaveHandler = null;
             };
 
-            // Don't close background modal, just stack
             document.getElementById('modal-edit-ex').style.zIndex = "1002";
             document.getElementById('modal-edit-ex').classList.add('active');
         }
-
-
 
         function savePreWorkoutEdit() {
             const index = currentEditingExIndex;
@@ -860,14 +854,49 @@ let currentEditingExIndex = null;
                 if (document.getElementById('edit-ex-kegel-off')) ex.kegel_off = parseInt(document.getElementById('edit-ex-kegel-off').value) || 5;
             }
 
-            // Sync back to ids if needed, but workout engine runs on cloned objects now
             document.getElementById('modal-edit-ex').classList.remove('active');
             renderModalExList();
         }
 
-function openPlanDetails(plan) {
+        function saveAsNewPlan() {
             triggerHaptic();
-            // Deep clone to allow on-the-fly editing without affecting db immediately
+            if (!currentViewedPlan || !currentViewedPlan.exercices_objs || currentViewedPlan.exercices_objs.length === 0) {
+                alert("Impossible de sauvegarder un programme vide.");
+                return;
+            }
+
+            const newPlanName = prompt("Nom du nouveau programme :", currentViewedPlan.nom + " (Modifié)");
+            if (!newPlanName) return;
+
+            const newExercicesIds = [];
+            currentViewedPlan.exercices_objs.forEach(modifiedEx => {
+                const newExId = 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                const exCopy = structuredClone(modifiedEx);
+                exCopy.id = newExId;
+                exCopy.tags = (exCopy.tags || '') + ", Personnalisé";
+
+                db.exercices.push(exCopy);
+                newExercicesIds.push(newExId);
+            });
+
+            const newPlan = {
+                id: 'plan_' + Date.now(),
+                nom: newPlanName,
+                description: currentViewedPlan.description + "\\n(Version personnalisée)",
+                goal: currentViewedPlan.goal,
+                exercices_ids: newExercicesIds
+            };
+
+            db.plans.push(newPlan);
+            localStorage.setItem('fitness_data', JSON.stringify(db));
+
+            showSuccess(`Programme "${newPlanName}" sauvegardé localement !`);
+            closeModal();
+            renderPlans(db.plans);
+        }
+
+        function openPlanDetails(plan) {
+            triggerHaptic();
             currentViewedPlan = structuredClone(plan);
             currentViewedPlan.exercices_objs = currentViewedPlan.exercices_ids.map(id => structuredClone(db.exercices.find(e => e.id === id) || {}));
 
@@ -972,7 +1001,6 @@ function openPlanDetails(plan) {
             }
 
             // Récupérer et cloner les objets exercices pour permettre la modif à la volée
-            // If started from currentViewedPlan which has modified objects, use those. Otherwise pull from DB.
             let exos = [];
             if (plan.exercices_objs) {
                 exos = plan.exercices_objs.map(e => structuredClone(e));
@@ -1562,67 +1590,12 @@ function openPlanDetails(plan) {
         }
 
 
-        function saveAsNewPlan() {
-            triggerHaptic();
-            if (!currentViewedPlan || !currentViewedPlan.exercices_objs || currentViewedPlan.exercices_objs.length === 0) {
-                alert("Impossible de sauvegarder un programme vide.");
-                return;
-            }
-
-            const newPlanName = prompt("Nom du nouveau programme :", currentViewedPlan.nom + " (Modifié)");
-            if (!newPlanName) return;
-
-            // 1. Create a deep copy of the exercises.
-            // Since they are modified, we need to save them as custom local exercises to persist the changes permanently.
-            const newExercicesIds = [];
-            currentViewedPlan.exercices_objs.forEach(modifiedEx => {
-                // Generate a unique ID for this custom variant
-                const newExId = 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-                const exCopy = structuredClone(modifiedEx);
-                exCopy.id = newExId;
-                exCopy.tags = (exCopy.tags || '') + ", Personnalisé";
-
-                db.exercices.push(exCopy);
-                newExercicesIds.push(newExId);
-            });
-
-            // 2. Create the new plan object
-            const newPlan = {
-                id: 'plan_' + Date.now(),
-                nom: newPlanName,
-                description: currentViewedPlan.description + "\n(Version personnalisée)",
-                goal: currentViewedPlan.goal,
-                exercices_ids: newExercicesIds
-            };
-
-            // 3. Save to db and localStorage
-            db.plans.push(newPlan);
-            localStorage.setItem('fitness_data', JSON.stringify(db));
-
-            // 4. Update UI
-            showSuccess(`Programme "${newPlanName}" sauvegardé localement !`);
-            closeModal();
-            renderPlans(db.plans);
-        }
-
-        // --- Add Exercise Flow ---
         function openAddExerciseModal() {
             triggerHaptic();
             document.getElementById('modal-add-ex').style.zIndex = "1002";
             document.getElementById('modal-add-ex').classList.add('active');
 
-            // Build unique tags from db.exercices
-            const tagsSet = new Set();
-            db.exercices.forEach(ex => {
-                if(ex.tags) {
-                    ex.tags.split(',').forEach(t => {
-                        const tag = t.trim();
-                        if(tag) tagsSet.add(tag);
-                    });
-                }
-            });
-            const tags = Array.from(tagsSet).sort();
-
+            const tags = extractTags();
             const tagsContainer = document.getElementById('add-tags-container');
             tagsContainer.innerHTML = `<span class="tag" style="cursor: pointer; background: var(--accent-color); color: #000;" onclick="filterAddByTag('')" id="add-tag-all">Tout</span>`;
 
@@ -1636,7 +1609,6 @@ function openPlanDetails(plan) {
                 tagsContainer.appendChild(span);
             });
 
-            // Reset filter and render
             document.getElementById('search-add-input').value = '';
             filterAddByTag('');
         }
@@ -1654,18 +1626,16 @@ function openPlanDetails(plan) {
             triggerHaptic();
             currentAddFilterTag = tag;
 
-            // Update tag UI
             const container = document.getElementById('add-tags-container');
             Array.from(container.children).forEach(child => {
                 if ((tag === '' && child.id === 'add-tag-all') || child.textContent === tag) {
                     child.style.background = 'var(--accent-color)';
                     child.style.color = '#000';
                 } else {
-                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 145, 0.15), rgba(255, 199, 95, 0.15))';
-                    child.style.color = '#FFC75F';
+                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 216, 0.15), rgba(111, 178, 255, 0.15))';
+                    child.style.color = '#FF96E5';
                 }
             });
-
             handleSearchAdd();
         }
 
@@ -1680,7 +1650,6 @@ function openPlanDetails(plan) {
             if (currentAddFilterTag !== '') {
                 filtered = filtered.filter(e => e.tags && e.tags.includes(currentAddFilterTag));
             }
-
             renderAddExercicesGrid(filtered);
         }
 
@@ -1698,11 +1667,10 @@ function openPlanDetails(plan) {
                 card.style.padding = '10px';
                 card.style.gap = '15px';
                 card.style.marginBottom = '10px';
-                card.style.height = 'auto'; // override default card height
+                card.style.height = 'auto';
 
                 card.onclick = () => {
                     triggerHaptic();
-                    // Add it to the currentViewedPlan
                     if (currentViewedPlan && currentViewedPlan.exercices_ids) {
                         currentViewedPlan.exercices_ids.push(ex.id);
                         currentViewedPlan.exercices_objs.push(structuredClone(ex));
