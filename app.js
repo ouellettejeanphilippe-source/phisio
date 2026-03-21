@@ -1,3 +1,6 @@
+
+        function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(50); }
+
         let db = { exercices: [], plans: [] };
         let currentTab = 'plans';
 
@@ -92,6 +95,7 @@
 
         // Navigation
         function switchTab(tab) {
+            triggerHaptic();
             currentTab = tab;
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(el => el.classList.remove('active'));
@@ -115,13 +119,123 @@
 
             // Reset views
             if (tab === 'plans') renderPlans(db.plans);
-            else if (tab === 'exercices') renderExercices(db.exercices);
+            else if (tab === 'exercices') { renderBiblioTags(); renderExercices(db.exercices); }
             else if (tab === 'stats') renderStats();
             else if (tab === 'settings') updateStatusUI();
-            else if (tab === 'quick-workout') renderQuickWorkoutExercices(db.exercices);
+            else if (tab === 'quick-workout') { renderQuickTags(); renderQuickWorkoutExercices(db.exercices); }
         }
 
         // --- Séance rapide (On the fly) ---
+
+        let currentBiblioFilterTag = '';
+        let currentQuickFilterTag = '';
+
+        function extractTags() {
+            const tagsSet = new Set();
+            db.exercices.forEach(ex => {
+                if(ex.tags) {
+                    ex.tags.split(',').forEach(t => {
+                        const tag = t.trim();
+                        if(tag) tagsSet.add(tag);
+                    });
+                }
+            });
+            return Array.from(tagsSet).sort();
+        }
+
+        function renderBiblioTags() {
+            const tags = extractTags();
+            const container = document.getElementById('biblio-tags-container');
+            if(!container) return;
+
+            container.innerHTML = `<span class="tag" style="cursor: pointer; background: var(--accent-color); color: #000;" onclick="filterBiblioByTag('')" id="biblio-tag-all">Tout</span>`;
+
+            tags.forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.style.cursor = 'pointer';
+                span.style.whiteSpace = 'nowrap';
+                span.textContent = t;
+                span.onclick = () => filterBiblioByTag(t);
+                container.appendChild(span);
+            });
+        }
+
+        function renderQuickTags() {
+            const tags = extractTags();
+            const container = document.getElementById('quick-tags-container');
+            if(!container) return;
+
+            container.innerHTML = `<span class="tag" style="cursor: pointer; background: var(--accent-color); color: #000;" onclick="filterQuickByTag('')" id="quick-tag-all">Tout</span>`;
+
+            tags.forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.style.cursor = 'pointer';
+                span.style.whiteSpace = 'nowrap';
+                span.textContent = t;
+                span.onclick = () => filterQuickByTag(t);
+                container.appendChild(span);
+            });
+        }
+
+        function filterBiblioByTag(tag) {
+            triggerHaptic();
+            currentBiblioFilterTag = tag;
+
+            const container = document.getElementById('biblio-tags-container');
+            Array.from(container.children).forEach(child => {
+                if ((tag === '' && child.id === 'biblio-tag-all') || child.textContent === tag) {
+                    child.style.background = 'var(--accent-color)';
+                    child.style.color = '#000';
+                } else {
+                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 145, 0.15), rgba(255, 199, 95, 0.15))';
+                    child.style.color = '#FFC75F';
+                }
+            });
+            handleSearch(); // trigger existing search to combine text and tag filter
+        }
+
+        function filterQuickByTag(tag) {
+            triggerHaptic();
+            currentQuickFilterTag = tag;
+
+            const container = document.getElementById('quick-tags-container');
+            Array.from(container.children).forEach(child => {
+                if ((tag === '' && child.id === 'quick-tag-all') || child.textContent === tag) {
+                    child.style.background = 'var(--accent-color)';
+                    child.style.color = '#000';
+                } else {
+                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 145, 0.15), rgba(255, 199, 95, 0.15))';
+                    child.style.color = '#FFC75F';
+                }
+            });
+            handleSearchQuick();
+        }
+
+        function handleSearchQuick() {
+            const query = document.getElementById('search-quick-input').value.toLowerCase();
+            let filtered = db.exercices.filter(e =>
+                (e.nom && e.nom.toLowerCase().includes(query)) ||
+                (e.description && e.description.toLowerCase().includes(query)) ||
+                (e.tags && e.tags.toLowerCase().includes(query))
+            );
+
+            if (currentQuickFilterTag !== '') {
+                filtered = filtered.filter(e => e.tags && e.tags.includes(currentQuickFilterTag));
+            }
+            renderQuickWorkoutExercices(filtered);
+
+            // Web api search hook
+            clearTimeout(searchTimeout);
+            if (query.trim().length >= 3) {
+                searchTimeout = setTimeout(() => searchWebAPI(query), 800);
+            } else {
+                document.getElementById('web-suggestions-container').style.display = 'none';
+                webSuggestions = [];
+            }
+        }
+
         let selectedQuickExercices = new Set();
         let webSuggestions = [];
         let searchTimeout = null;
@@ -627,39 +741,136 @@
                 );
                 renderPlans(filtered);
             } else if (currentTab === 'exercices') {
-                const filtered = db.exercices.filter(e =>
+                let filtered = db.exercices.filter(e =>
                     (e.nom && e.nom.toLowerCase().includes(query)) ||
                     (e.description && e.description.toLowerCase().includes(query)) ||
                     (e.tags && e.tags.toLowerCase().includes(query))
                 );
-                renderExercices(filtered);
-            } else if (currentTab === 'quick-workout') {
-                const filtered = db.exercices.filter(e =>
-                    (e.nom && e.nom.toLowerCase().includes(query)) ||
-                    (e.description && e.description.toLowerCase().includes(query)) ||
-                    (e.tags && e.tags.toLowerCase().includes(query))
-                );
-                renderQuickWorkoutExercices(filtered);
-
-                // Trigger web search with debounce
-                clearTimeout(searchTimeout);
-                if (query.trim().length >= 3) {
-                    searchTimeout = setTimeout(() => {
-                        searchWebAPI(query);
-                    }, 800);
-                } else {
-                    document.getElementById('web-suggestions-container').style.display = 'none';
-                    webSuggestions = [];
+                if (currentBiblioFilterTag !== '') {
+                    filtered = filtered.filter(e => e.tags && e.tags.includes(currentBiblioFilterTag));
                 }
-            }
+                renderExercices(filtered);
+            } // handled by handleSearchQuick
         }
 
         // Current Plan global variable for calendar export
         let currentViewedPlan = null;
+let currentEditingExIndex = null;
 
         // Modal Logic
-        function openPlanDetails(plan) {
-            currentViewedPlan = plan;
+
+        function renderModalExList() {
+            const list = document.getElementById('modal-ex-list');
+            list.innerHTML = '';
+            if (currentViewedPlan.exercices_ids) {
+                currentViewedPlan.exercices_ids.forEach((id, index) => {
+                    // Try to find in exos list to display (deep copy logic moved here)
+                    const ex = currentViewedPlan.exercices_objs ? currentViewedPlan.exercices_objs[index] : db.exercices.find(e => e.id === id);
+                    if (ex) {
+                        const imgUrl = getExImage(ex);
+                        const li = document.createElement('li');
+                        li.className = 'ex-item';
+                        li.style.display = 'flex';
+                        li.style.gap = '15px';
+                        li.style.position = 'relative';
+                        li.innerHTML = `
+                            <button onclick="removeExFromPlan(${index})" style="position: absolute; top: -10px; right: -10px; background: #ff3333; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; font-weight: bold;">✕</button>
+                            <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px; flex-shrink: 0;" loading="lazy">
+                            <div style="flex-grow: 1;">
+                                <h4 style="margin: 0;">${index + 1}. ${ex.nom}</h4>
+                                <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">
+                                    <span class="tag" style="padding: 4px 8px; font-size: 0.7rem; cursor: pointer;" onclick="openPreWorkoutEdit(${index})">✏️ ${ex.series}x${ex.valeur} ${ex.type}</span>
+                                    <span class="tag" style="padding: 4px 8px; font-size: 0.7rem; cursor: pointer;" onclick="openPreWorkoutEdit(${index})">⏱ ${ex.repos}s</span>
+                                    ${ex.poids ? `<span class="tag" style="padding: 4px 8px; font-size: 0.7rem; cursor: pointer;" onclick="openPreWorkoutEdit(${index})">⚖️ ${ex.poids}kg</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        list.appendChild(li);
+                    }
+                });
+            }
+        }
+
+
+
+        function removeExFromPlan(index) {
+            triggerHaptic();
+            if (currentViewedPlan && currentViewedPlan.exercices_ids) {
+                currentViewedPlan.exercices_ids.splice(index, 1);
+                currentViewedPlan.exercices_objs.splice(index, 1);
+                renderModalExList();
+            }
+        }
+
+
+        let _originalEditExSaveHandler = null;
+
+        function openPreWorkoutEdit(index) {
+            triggerHaptic();
+            currentEditingExIndex = index;
+            const ex = currentViewedPlan.exercices_objs[index];
+
+            document.getElementById('edit-ex-series').value = ex.series;
+
+            let type = 'reps';
+            if (ex.type === 'secs') type = 'secs';
+            if (ex.type === 'kegel') type = 'kegel';
+            if (ex.type === 'poids') type = 'poids';
+            if (ex.type === 'distance') type = 'distance';
+            document.getElementById('edit-ex-type').value = type;
+
+            document.getElementById('edit-ex-valeur').value = ex.valeur;
+            if (document.getElementById('edit-ex-poids')) document.getElementById('edit-ex-poids').value = ex.poids || 0;
+            if (document.getElementById('edit-ex-kegel-on')) document.getElementById('edit-ex-kegel-on').value = ex.kegel_on || 5;
+            if (document.getElementById('edit-ex-kegel-off')) document.getElementById('edit-ex-kegel-off').value = ex.kegel_off || 5;
+            document.getElementById('edit-ex-repos').value = ex.repos;
+
+            updateEditExUI();
+
+            // Override save action temporarily
+            const saveBtn = document.querySelector('#modal-edit-ex .btn-action');
+            if (!_originalEditExSaveHandler) {
+                _originalEditExSaveHandler = saveBtn.onclick;
+            }
+            saveBtn.onclick = () => {
+                triggerHaptic();
+                savePreWorkoutEdit();
+                saveBtn.onclick = _originalEditExSaveHandler; // restore
+                _originalEditExSaveHandler = null;
+            };
+
+            // Don't close background modal, just stack
+            document.getElementById('modal-edit-ex').style.zIndex = "1002";
+            document.getElementById('modal-edit-ex').classList.add('active');
+        }
+
+
+
+        function savePreWorkoutEdit() {
+            const index = currentEditingExIndex;
+            const ex = currentViewedPlan.exercices_objs[index];
+
+            ex.series = parseInt(document.getElementById('edit-ex-series').value) || 1;
+            ex.type = document.getElementById('edit-ex-type').value;
+            ex.valeur = parseFloat(document.getElementById('edit-ex-valeur').value) || 1;
+            ex.repos = parseInt(document.getElementById('edit-ex-repos').value) || 0;
+            if (document.getElementById('edit-ex-poids')) ex.poids = parseFloat(document.getElementById('edit-ex-poids').value) || 0;
+            if (ex.type === 'kegel') {
+                if (document.getElementById('edit-ex-kegel-on')) ex.kegel_on = parseInt(document.getElementById('edit-ex-kegel-on').value) || 5;
+                if (document.getElementById('edit-ex-kegel-off')) ex.kegel_off = parseInt(document.getElementById('edit-ex-kegel-off').value) || 5;
+            }
+
+            // Sync back to ids if needed, but workout engine runs on cloned objects now
+            document.getElementById('modal-edit-ex').classList.remove('active');
+            renderModalExList();
+        }
+
+function openPlanDetails(plan) {
+            triggerHaptic();
+            // Deep clone to allow on-the-fly editing without affecting db immediately
+            currentViewedPlan = structuredClone(plan);
+            currentViewedPlan.exercices_objs = currentViewedPlan.exercices_ids.map(id => structuredClone(db.exercices.find(e => e.id === id) || {}));
+
             document.getElementById('modal-title').textContent = plan.nom;
             document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
             document.getElementById('modal-desc').textContent = plan.description;
@@ -667,32 +878,7 @@
             // Setup "Démarrer" button
             document.getElementById('btn-start-workout').onclick = () => startWorkout(plan);
 
-            const list = document.getElementById('modal-ex-list');
-            list.innerHTML = '';
-
-            if (plan.exercices_ids) {
-                plan.exercices_ids.forEach((id, index) => {
-                    const ex = db.exercices.find(e => e.id === id);
-                    if (ex) {
-                        const imgUrl = getExImage(ex);
-                        const li = document.createElement('li');
-                        li.className = 'ex-item';
-                        li.style.display = 'flex';
-                        li.style.gap = '15px';
-                        li.innerHTML = `
-                            <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                            <div style="flex-grow: 1;">
-                                <h4>${index + 1}. ${ex.nom}</h4>
-                                <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
-                                <p style="font-size: 0.95rem;">${ex.description}</p>
-                                ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em; margin-right: 15px;">▶ Trouver la vidéo</a>` : ''}
-                                ${ex.repos > 0 ? `<button class="btn-timer" id="timer-btn-${index}" onclick="startTimer(${ex.repos}, 'timer-btn-${index}')">⏱ Lancer repos (${ex.repos}s)</button>` : ''}
-                            </div>
-                        `;
-                        list.appendChild(li);
-                    }
-                });
-            }
+            renderModalExList();
 
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
@@ -779,17 +965,23 @@
         let activeWorkoutTimerInterval = null;
 
         function startWorkout(plan) {
+            triggerHaptic();
             if (!plan.exercices_ids || plan.exercices_ids.length === 0) {
                 alert("Ce programme ne contient aucun exercice.");
                 return;
             }
 
             // Récupérer et cloner les objets exercices pour permettre la modif à la volée
-            const exos = plan.exercices_ids.map(id => {
-                const e = db.exercices.find(ex => ex.id === id);
-                // Utilisation de structuredClone pour une copie profonde plus efficace et sécurisée
-                return e ? structuredClone(e) : null;
-            }).filter(e => e);
+            // If started from currentViewedPlan which has modified objects, use those. Otherwise pull from DB.
+            let exos = [];
+            if (plan.exercices_objs) {
+                exos = plan.exercices_objs.map(e => structuredClone(e));
+            } else {
+                exos = plan.exercices_ids.map(id => {
+                    const e = db.exercices.find(ex => ex.id === id);
+                    return e ? structuredClone(e) : null;
+                }).filter(e => e);
+            }
 
             if (exos.length === 0) return;
 
@@ -937,6 +1129,7 @@
         }
 
         function nextWorkoutStep() {
+            triggerHaptic();
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
 
             // On vient de valider une série
@@ -1088,6 +1281,7 @@
 
             // Beep au début du repos (optionnel)
             playBeep(400, 0.1);
+            triggerHaptic();
 
             currentWorkout.restInterval = setInterval(() => {
                 timeRemaining--;
@@ -1113,6 +1307,7 @@
         }
 
         function skipRest() {
+            triggerHaptic();
             advanceAfterRest();
         }
 
@@ -1299,6 +1494,10 @@
                 return;
             }
             document.getElementById('modal-edit-ex').classList.remove('active');
+            if (_originalEditExSaveHandler) {
+                document.querySelector('#modal-edit-ex .btn-action').onclick = _originalEditExSaveHandler;
+                _originalEditExSaveHandler = null;
+            }
         }
 
         function saveEditEx() {
@@ -1361,6 +1560,169 @@
                 osc.stop(sharedAudioCtx.currentTime + duration);
             } catch (e) { console.log("Audio not supported or allowed yet", e); }
         }
+
+
+        function saveAsNewPlan() {
+            triggerHaptic();
+            if (!currentViewedPlan || !currentViewedPlan.exercices_objs || currentViewedPlan.exercices_objs.length === 0) {
+                alert("Impossible de sauvegarder un programme vide.");
+                return;
+            }
+
+            const newPlanName = prompt("Nom du nouveau programme :", currentViewedPlan.nom + " (Modifié)");
+            if (!newPlanName) return;
+
+            // 1. Create a deep copy of the exercises.
+            // Since they are modified, we need to save them as custom local exercises to persist the changes permanently.
+            const newExercicesIds = [];
+            currentViewedPlan.exercices_objs.forEach(modifiedEx => {
+                // Generate a unique ID for this custom variant
+                const newExId = 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                const exCopy = structuredClone(modifiedEx);
+                exCopy.id = newExId;
+                exCopy.tags = (exCopy.tags || '') + ", Personnalisé";
+
+                db.exercices.push(exCopy);
+                newExercicesIds.push(newExId);
+            });
+
+            // 2. Create the new plan object
+            const newPlan = {
+                id: 'plan_' + Date.now(),
+                nom: newPlanName,
+                description: currentViewedPlan.description + "\n(Version personnalisée)",
+                goal: currentViewedPlan.goal,
+                exercices_ids: newExercicesIds
+            };
+
+            // 3. Save to db and localStorage
+            db.plans.push(newPlan);
+            localStorage.setItem('fitness_data', JSON.stringify(db));
+
+            // 4. Update UI
+            showSuccess(`Programme "${newPlanName}" sauvegardé localement !`);
+            closeModal();
+            renderPlans(db.plans);
+        }
+
+        // --- Add Exercise Flow ---
+        function openAddExerciseModal() {
+            triggerHaptic();
+            document.getElementById('modal-add-ex').style.zIndex = "1002";
+            document.getElementById('modal-add-ex').classList.add('active');
+
+            // Build unique tags from db.exercices
+            const tagsSet = new Set();
+            db.exercices.forEach(ex => {
+                if(ex.tags) {
+                    ex.tags.split(',').forEach(t => {
+                        const tag = t.trim();
+                        if(tag) tagsSet.add(tag);
+                    });
+                }
+            });
+            const tags = Array.from(tagsSet).sort();
+
+            const tagsContainer = document.getElementById('add-tags-container');
+            tagsContainer.innerHTML = `<span class="tag" style="cursor: pointer; background: var(--accent-color); color: #000;" onclick="filterAddByTag('')" id="add-tag-all">Tout</span>`;
+
+            tags.forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.style.cursor = 'pointer';
+                span.style.whiteSpace = 'nowrap';
+                span.textContent = t;
+                span.onclick = () => filterAddByTag(t);
+                tagsContainer.appendChild(span);
+            });
+
+            // Reset filter and render
+            document.getElementById('search-add-input').value = '';
+            filterAddByTag('');
+        }
+
+        function closeAddExerciseModal(event) {
+            if (event && event.target !== document.getElementById('modal-add-ex') && event.target.className !== 'close-btn') {
+                return;
+            }
+            document.getElementById('modal-add-ex').classList.remove('active');
+        }
+
+        let currentAddFilterTag = '';
+
+        function filterAddByTag(tag) {
+            triggerHaptic();
+            currentAddFilterTag = tag;
+
+            // Update tag UI
+            const container = document.getElementById('add-tags-container');
+            Array.from(container.children).forEach(child => {
+                if ((tag === '' && child.id === 'add-tag-all') || child.textContent === tag) {
+                    child.style.background = 'var(--accent-color)';
+                    child.style.color = '#000';
+                } else {
+                    child.style.background = 'linear-gradient(135deg, rgba(255, 111, 145, 0.15), rgba(255, 199, 95, 0.15))';
+                    child.style.color = '#FFC75F';
+                }
+            });
+
+            handleSearchAdd();
+        }
+
+        function handleSearchAdd() {
+            const query = document.getElementById('search-add-input').value.toLowerCase();
+            let filtered = db.exercices.filter(e =>
+                (e.nom && e.nom.toLowerCase().includes(query)) ||
+                (e.description && e.description.toLowerCase().includes(query)) ||
+                (e.tags && e.tags.toLowerCase().includes(query))
+            );
+
+            if (currentAddFilterTag !== '') {
+                filtered = filtered.filter(e => e.tags && e.tags.includes(currentAddFilterTag));
+            }
+
+            renderAddExercicesGrid(filtered);
+        }
+
+        function renderAddExercicesGrid(exercicesToRender) {
+            const grid = document.getElementById('add-exercices-grid');
+            grid.innerHTML = '';
+
+            exercicesToRender.forEach(ex => {
+                const imgUrl = getExImage(ex);
+
+                const card = document.createElement('div');
+                card.className = 'card quick-ex-card';
+                card.style.flexDirection = 'row';
+                card.style.alignItems = 'center';
+                card.style.padding = '10px';
+                card.style.gap = '15px';
+                card.style.marginBottom = '10px';
+                card.style.height = 'auto'; // override default card height
+
+                card.onclick = () => {
+                    triggerHaptic();
+                    // Add it to the currentViewedPlan
+                    if (currentViewedPlan && currentViewedPlan.exercices_ids) {
+                        currentViewedPlan.exercices_ids.push(ex.id);
+                        currentViewedPlan.exercices_objs.push(structuredClone(ex));
+                        renderModalExList();
+                        closeAddExerciseModal();
+                    }
+                };
+
+                card.innerHTML = `
+                    <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: transparent; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">+</div>
+                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
+                    <div style="flex-grow: 1; overflow: hidden;">
+                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series}x${ex.valeur} ${ex.type} | ${ex.repos}s</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
 
         function closeExModal(event) {
             if (event && event.target !== document.getElementById('modal-ex') && event.target.className !== 'close-btn') {

@@ -61,10 +61,15 @@
             <div class="grid" id="plans-grid"></div>
         </div>
 
+
         <!-- Exercices Section -->
         <div id="exercices-section" class="section">
+            <div id="biblio-tags-container" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 20px; scrollbar-width: none;">
+                <!-- Tags injected dynamically -->
+            </div>
             <div class="grid" id="exercices-grid"></div>
         </div>
+
 
         <!-- Statistics Section -->
         <div id="stats-section" class="section">
@@ -81,6 +86,7 @@
             </div>
         </div>
 
+
         <!-- Quick Workout Section -->
         <div id="quick-workout-section" class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -90,7 +96,15 @@
                     <button class="btn-action" onclick="startQuickWorkout()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;" id="btn-start-quick" disabled>DÉMARRER (<span id="quick-count">0</span>)</button>
                 </div>
             </div>
+
+            <input type="text" class="search-bar" id="search-quick-input" placeholder="Rechercher (ex: Jambes)..." oninput="handleSearchQuick()" style="margin-bottom: 1rem; width: 100%; max-width: none;">
+
+            <div id="quick-tags-container" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 15px; scrollbar-width: none;">
+                <!-- Tags injected dynamically -->
+            </div>
+
             <div class="grid" id="quick-exercices-grid" style="margin-bottom: 2rem;"></div>
+
 
             <div id="web-suggestions-container" style="display: none;">
                 <h3 style="color: var(--text-secondary); margin-bottom: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Suggestions Web (En ligne)</h3>
@@ -152,8 +166,32 @@
                 <button class="btn-timer" id="btn-add-calendar" onclick="addPlanToCalendar()" style="flex: 1; margin-top: 0; justify-content: center; font-size: 0.8rem; padding: 16px;">📅 Rappel</button>
             </div>
 
-            <h3 style="color: white; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Exercices de la séance</h3>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                <h3 style="color: white; margin: 0;">Exercices de la séance</h3>
+                <button class="btn-timer" onclick="openAddExerciseModal()" style="margin: 0; padding: 6px 12px; font-size: 0.8rem;">+ Ajouter</button>
+            </div>
             <ul class="ex-list" id="modal-ex-list"></ul>
+            <button class="btn-timer" onclick="saveAsNewPlan()" style="width: 100%; justify-content: center; margin-top: 1rem; padding: 12px; font-size: 0.9rem; background: rgba(255, 199, 95, 0.2); color: #FFC75F; border: 1px dashed #FFC75F;">💾 Sauvegarder comme nouveau programme</button>
+
+        </div>
+    </div>
+
+
+    <!-- Modal for Adding Exercises -->
+    <div class="modal-overlay" id="modal-add-ex" onclick="closeAddExerciseModal(event)" style="z-index: 1001;">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-height: 85vh; display: flex; flex-direction: column;">
+            <button class="close-btn" aria-label="Fermer" onclick="closeAddExerciseModal()">&times;</button>
+            <h2 class="modal-title" style="font-size: 1.5rem; margin-bottom: 1rem;">Ajouter un exercice</h2>
+
+            <input type="text" class="search-bar" id="search-add-input" placeholder="Rechercher (ex: Jambes)..." oninput="handleSearchAdd()" style="margin-bottom: 1rem; width: 100%; max-width: none;">
+
+            <!-- Tags Container -->
+            <div id="add-tags-container" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; scrollbar-width: none;">
+                <!-- Tags injected dynamically -->
+            </div>
+
+            <div class="grid" id="add-exercices-grid" style="grid-template-columns: 1fr; overflow-y: auto; flex: 1; padding-right: 5px;"></div>
         </div>
     </div>
 
