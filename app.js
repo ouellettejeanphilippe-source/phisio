@@ -787,7 +787,8 @@
             // Récupérer et cloner les objets exercices pour permettre la modif à la volée
             const exos = plan.exercices_ids.map(id => {
                 const e = db.exercices.find(ex => ex.id === id);
-                return e ? JSON.parse(JSON.stringify(e)) : null; // Deep copy
+                // Utilisation de structuredClone pour une copie profonde plus efficace et sécurisée
+                return e ? structuredClone(e) : null;
             }).filter(e => e);
 
             if (exos.length === 0) return;
