@@ -611,20 +611,30 @@
                 }
 
                 // Format the API data to match the app's internal structure
-                const formattedExercices = exData.map(ex => ({
-                    id: String(ex.id),
-                    nom: ex.n || "",
-                    tags: ex.t || "",
-                    importance: ex.imp || "",
-                    series: ex.sets || 0,
-                    valeur: ex.val || 0,
-                    type: ex.type || "",
-                    repos: ex.rest || 0,
-                    description: ex.d || "",
-                    video: ex.v || "",
-                    image: ex.image || ex.img || ex.url_image || "",
-                    frequence: ex.frequence || 0
-                }));
+                const formattedExercices = exData.map(ex => {
+                    let type = ex.type || "";
+                    const nomLower = (ex.n || "").toLowerCase();
+
+                    // Auto-correction du type pour les exercices isométriques si manquant ou erroné
+                    if ((!type || type === 'reps') && (nomLower.includes('planche') || nomLower.includes('plank') || nomLower.includes('gainage') || nomLower.includes('isométrie') || nomLower.includes('isometrique'))) {
+                        type = 'secs';
+                    }
+
+                    return {
+                        id: String(ex.id),
+                        nom: ex.n || "",
+                        tags: ex.t || "",
+                        importance: ex.imp || "",
+                        series: ex.sets || 0,
+                        valeur: ex.val || 0,
+                        type: type,
+                        repos: ex.rest || 0,
+                        description: ex.d || "",
+                        video: ex.v || "",
+                        image: ex.image || ex.img || ex.url_image || "",
+                        frequence: ex.frequence || 0
+                    };
+                });
 
                 const formattedPlans = rawData.plans.map(p => ({
                     id: String(p.id),
@@ -1052,6 +1062,14 @@
             }
 
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            // Auto-correction : si c'est une planche mais que le type a été mal importé
+            const nomExLower = ex.nom ? ex.nom.toLowerCase() : "";
+            if (nomExLower.includes('planche') || nomExLower.includes('plank') || nomExLower.includes('gainage') || nomExLower.includes('isométrie')) {
+                if (ex.type !== 'secs' && ex.type !== 'kegel') {
+                    ex.type = 'secs';
+                }
+            }
 
             // Mise à jour de la barre de progression
             document.getElementById('workout-progress').textContent = `${currentWorkout.currentExIndex + 1} / ${currentWorkout.exercices.length}`;
