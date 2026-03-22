@@ -1,22 +1,23 @@
         :root {
             --bg-color: #000000;
-            /* Subtly colored AMOLED background */
-            --bg-gradient: radial-gradient(circle at 15% 50%, rgba(20, 20, 40, 1), #000000 50%), radial-gradient(circle at 85% 30%, rgba(40, 15, 40, 1), #000000 50%);
-            --surface-color: rgba(30, 30, 35, 0.45); /* More transparent for stronger glass effect */
-            --surface-hover: rgba(50, 50, 60, 0.6);
+            /* Deeper AMOLED background with subtle night blue / dark mauve */
+            --bg-gradient: radial-gradient(circle at 15% 50%, rgba(10, 15, 30, 1), #000000 50%), radial-gradient(circle at 85% 30%, rgba(25, 10, 30, 1), #000000 50%);
+            --surface-color: rgba(30, 30, 35, 0.3); /* More transparent for stronger glass effect */
+            --surface-hover: rgba(50, 50, 60, 0.45);
             --text-primary: #ffffff;
             --text-secondary: #a0a0b0;
-            /* Vibrant gradients for accents */
-            --accent-color: #6fb2ff;
-            --accent-gradient: linear-gradient(135deg, #6fb2ff, #a66fff); /* Blue to Purple */
-            --accent-hover: linear-gradient(135deg, #58a6ff, #9958ff);
-            --accent-dark: rgba(111, 178, 255, 0.15);
+            /* Vibrant "Candy" gradients for accents */
+            --accent-color: #9958ff; /* Using middle mauve as base accent fallback */
+            --accent-gradient: linear-gradient(135deg, #6FB2FF, #9958FF, #FF6FD8); /* Blue to Mauve to Pink */
+            --accent-hover: linear-gradient(135deg, #58a6ff, #8a45ff, #ff50c8);
+            --accent-dark: rgba(153, 88, 255, 0.15);
             /* Glossy border effect */
             --border-color: rgba(255, 255, 255, 0.12);
-            --border-gradient: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.02) 100%);
+            --border-gradient: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.05) 100%);
             --card-radius: 32px; /* Smoother squircles */
+            --modal-radius: 40px; /* Stronger squircles for modals */
             --transition-speed: 0.3s;
-            --glass-blur: blur(35px); /* Stronger blur for iOS/One UI feel */
+            --glass-blur: blur(50px) saturate(150%); /* Much stronger blur and saturation for iOS/One UI 8.5 feel */
             --safe-area-top: env(safe-area-inset-top, 0px);
             --safe-area-bottom: env(safe-area-inset-bottom, 0px);
         }
@@ -91,7 +92,7 @@
         }
 
         .nav-item.active {
-            background: linear-gradient(135deg, rgba(111, 178, 255, 0.2), rgba(166, 111, 255, 0.2));
+            background: linear-gradient(135deg, rgba(111, 178, 255, 0.2), rgba(153, 88, 255, 0.2), rgba(255, 111, 216, 0.2));
             color: var(--text-primary);
             border-radius: 16px;
             font-weight: 700;
@@ -108,24 +109,24 @@
             min-height: 100vh;
         }
 
-        /* One UI Viewing Area (Tall Header) */
+        /* One UI Viewing Area (Tall Header) - Densified */
         .header {
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             align-items: flex-start;
-            min-height: 25vh; /* Large viewing area */
-            padding-bottom: 2rem;
+            min-height: 12vh; /* Reduced from 25vh for densification */
+            padding-bottom: 1.5rem;
             margin-bottom: 1rem;
-            padding-top: calc(var(--safe-area-top) + 2rem);
+            padding-top: calc(var(--safe-area-top) + 1.5rem);
         }
 
         h1 {
             font-size: 2.5rem;
             color: white;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 1.5rem;
+            font-weight: 800; /* Bolder */
+            letter-spacing: -1px; /* Tighter */
+            margin-bottom: 1rem;
         }
 
         .search-bar {
@@ -148,6 +149,41 @@
 
         .search-bar:focus {
             border-color: var(--accent-color);
+        }
+
+        /* Tags Filter Container */
+        .tags-container {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 10px;
+            margin-bottom: 1rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tags-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-tag {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--transition-speed);
+        }
+
+        .filter-tag.active {
+            background: var(--accent-gradient);
+            color: #000;
+            border-color: transparent;
+            box-shadow: 0 4px 10px rgba(153, 88, 255, 0.3);
         }
 
         .input-error {
@@ -181,26 +217,27 @@
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border-color);
-            /* simulate gradient border */
-            border-top: 1px solid rgba(255, 255, 255, 0.25);
-            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            /* stronger polished glass reflection */
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: var(--card-radius);
             transition: all var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
             cursor: pointer;
             display: flex;
             flex-direction: column;
             height: 100%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            /* added stronger inset shadow for crystal effect */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4), inset 0 2px 10px rgba(255, 255, 255, 0.1);
             overflow: hidden;
             position: relative;
         }
 
         .card:hover {
-            transform: translateY(-4px) scale(1.01);
+            transform: translateY(-4px) scale(1.02); /* Increased scale on hover */
             background-color: var(--surface-hover);
-            border-top-color: rgba(255, 255, 255, 0.35);
-            border-left-color: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            border-top-color: rgba(255, 255, 255, 0.5);
+            border-left-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 2px 15px rgba(255, 255, 255, 0.15);
         }
 
         .card:active {
@@ -254,7 +291,7 @@
         }
 
         .tag {
-            background: linear-gradient(135deg, rgba(111, 178, 255, 0.15), rgba(166, 111, 255, 0.15));
+            background: linear-gradient(135deg, rgba(111, 178, 255, 0.15), rgba(153, 88, 255, 0.15), rgba(255, 111, 216, 0.15));
             color: var(--text-primary);
             padding: 4px 12px;
             border-radius: 20px;
@@ -306,23 +343,23 @@
         }
 
         .modal-content {
-            background-color: rgba(20, 20, 25, 0.75);
-            backdrop-filter: blur(50px) saturate(150%);
-            -webkit-backdrop-filter: blur(50px) saturate(150%);
+            background-color: rgba(20, 20, 25, 0.6); /* More transparent */
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             width: 90%;
             max-width: 800px;
             max-height: 90vh;
-            border-radius: var(--card-radius);
+            border-radius: var(--modal-radius);
             border: 1px solid var(--border-color);
-            border-top: 1px solid rgba(255, 255, 255, 0.25);
-            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.4); /* Stronger glass reflection */
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
             overflow-y: auto;
             position: relative;
             transform: translateY(100px) scale(0.95);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
             padding: 2.5rem;
             opacity: 0;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.7), inset 0 2px 10px rgba(255, 255, 255, 0.1);
         }
 
         .modal-overlay.active .modal-content {
@@ -469,13 +506,13 @@
             margin-top: 15px;
             transition: all var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
             width: 100%;
-            box-shadow: 0 8px 20px rgba(111, 178, 255, 0.3);
+            box-shadow: 0 8px 20px rgba(153, 88, 255, 0.3);
         }
 
         .btn-action:hover {
             background: var(--accent-hover);
-            transform: scale(1.02) translateY(-2px);
-            box-shadow: 0 12px 25px rgba(111, 178, 255, 0.5);
+            transform: scale(1.03) translateY(-2px);
+            box-shadow: 0 12px 25px rgba(153, 88, 255, 0.5);
         }
 
         .btn-action:active {
@@ -549,13 +586,14 @@
                 padding: 0 10px;
                 z-index: 900;
                 border-right: none;
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                border-top: 1px solid rgba(255, 255, 255, 0.25);
+                border: 1px solid var(--border-color);
+                border-top: 1px solid rgba(255, 255, 255, 0.4);
+                border-left: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 40px;
-                background-color: rgba(20, 20, 25, 0.8);
-                backdrop-filter: blur(50px) saturate(150%);
-                -webkit-backdrop-filter: blur(50px) saturate(150%);
-                box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05);
+                background-color: rgba(20, 20, 25, 0.6);
+                backdrop-filter: var(--glass-blur);
+                -webkit-backdrop-filter: var(--glass-blur);
+                box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 2px 10px rgba(255,255,255,0.1);
             }
 
             .brand {
@@ -579,9 +617,11 @@
 
             .nav-item.active {
                 background-color: transparent;
+                background: none;
                 color: var(--accent-color);
                 border-top: none;
                 border-left: none;
+                box-shadow: none;
             }
 
             .main-content {

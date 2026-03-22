@@ -63,6 +63,7 @@
 
         <!-- Exercices Section -->
         <div id="exercices-section" class="section">
+            <div id="exercices-tags-container" class="tags-container"></div>
             <div class="grid" id="exercices-grid"></div>
         </div>
 
@@ -90,6 +91,7 @@
                     <button class="btn-action" onclick="startQuickWorkout()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;" id="btn-start-quick" disabled>DÉMARRER (<span id="quick-count">0</span>)</button>
                 </div>
             </div>
+            <div id="quick-tags-container" class="tags-container"></div>
             <div class="grid" id="quick-exercices-grid" style="margin-bottom: 2rem;"></div>
 
             <div id="web-suggestions-container" style="display: none;">
@@ -147,10 +149,12 @@
             <div class="card-meta" id="modal-meta"></div>
             <p id="modal-desc" style="font-size: 1.1rem; margin-bottom: 2rem; color: var(--text-primary);"></p>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 2rem;">
+            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
                 <button class="btn-action" id="btn-start-workout" style="flex: 2; margin-top: 0;">▶ DÉMARRER</button>
                 <button class="btn-timer" id="btn-add-calendar" onclick="addPlanToCalendar()" style="flex: 1; margin-top: 0; justify-content: center; font-size: 0.8rem; padding: 16px;">📅 Rappel</button>
             </div>
+
+            <button class="btn-timer" id="btn-save-plan" onclick="saveTempPlan()" style="width: 100%; justify-content: center; margin-bottom: 2rem; margin-top: 0; font-size: 0.9rem; padding: 12px; background: rgba(255,255,255,0.05); color: white; border: 1px dashed var(--border-color);">💾 SAUVEGARDER COMME NOUVEAU PROGRAMME</button>
 
             <h3 style="color: white; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Exercices de la séance</h3>
             <ul class="ex-list" id="modal-ex-list"></ul>
@@ -290,6 +294,19 @@
             </div>
 
             <button class="btn-action" onclick="saveQuickWorkoutSettings()" style="width: 100%;">APPLIQUER</button>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Ex to Session -->
+    <div class="modal-overlay" id="modal-add-ex" onclick="closeAddExModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <button class="close-btn" aria-label="Fermer" onclick="closeAddExModal()">&times;</button>
+            <h2 class="modal-title" style="margin-bottom: 1rem;">Ajouter un exercice</h2>
+
+            <input type="text" class="search-bar" id="search-modal-add" placeholder="Rechercher..." oninput="handleModalSearch()" style="margin-bottom: 1rem;">
+            <div id="modal-add-tags-container" class="tags-container" style="flex-shrink: 0;"></div>
+
+            <div class="grid" id="modal-add-grid" style="overflow-y: auto; padding-bottom: 2rem; flex-grow: 1; grid-template-columns: 1fr;"></div>
         </div>
     </div>
 

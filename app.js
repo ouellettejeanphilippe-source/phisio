@@ -4,6 +4,12 @@
         let db = { exercices: [], plans: [] };
         let currentTab = 'plans';
 
+        let activeTagFilters = {
+            exercices: null, // null means "Tous"
+            quick: null,
+            modalAdd: null
+        };
+
         // Variables pour la séance en cours
         let currentWorkout = {
             planId: null,
@@ -119,10 +125,67 @@
 
             // Reset views
             if (tab === 'plans') renderPlans(db.plans);
-            else if (tab === 'exercices') renderExercices(db.exercices);
+            else if (tab === 'exercices') {
+                renderTagsFilter('exercices-tags-container', db.exercices, 'exercices');
+                handleSearch();
+            }
             else if (tab === 'stats') renderStats();
             else if (tab === 'settings') updateStatusUI();
-            else if (tab === 'quick-workout') renderQuickWorkoutExercices(db.exercices);
+            else if (tab === 'quick-workout') {
+                renderTagsFilter('quick-tags-container', db.exercices, 'quick');
+                handleSearch();
+            }
+        }
+
+        function extractUniqueTags(exercicesData) {
+            const tagSet = new Set();
+            exercicesData.forEach(ex => {
+                if (ex.tags) {
+                    ex.tags.split(',').forEach(t => {
+                        const trimmed = t.trim();
+                        if (trimmed) tagSet.add(trimmed);
+                    });
+                }
+            });
+            return Array.from(tagSet).sort();
+        }
+
+        function renderTagsFilter(containerId, dataArray, filterContext) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            const tags = extractUniqueTags(dataArray);
+            if (tags.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+
+            // Button "Tous"
+            const btnTous = document.createElement('button');
+            btnTous.className = `filter-tag ${activeTagFilters[filterContext] === null ? 'active' : ''}`;
+            btnTous.textContent = 'Tous';
+            btnTous.onclick = () => {
+                triggerHaptic();
+                activeTagFilters[filterContext] = null;
+                renderTagsFilter(containerId, dataArray, filterContext); // re-render to update active classes
+                if(filterContext === 'modalAdd') handleModalSearch(); else handleSearch();
+            };
+            container.appendChild(btnTous);
+
+            tags.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = `filter-tag ${activeTagFilters[filterContext] === tag ? 'active' : ''}`;
+                btn.textContent = tag;
+                btn.onclick = () => {
+                    triggerHaptic();
+                    activeTagFilters[filterContext] = tag;
+                    renderTagsFilter(containerId, dataArray, filterContext);
+                    if(filterContext === 'modalAdd') handleModalSearch(); else handleSearch();
+                };
+                container.appendChild(btn);
+            });
         }
 
         // --- Séance rapide (On the fly) ---
@@ -139,6 +202,7 @@
         }
 
         function toggleQuickExercice(exId) {
+            triggerHaptic();
             if (selectedQuickExercices.has(exId)) {
                 selectedQuickExercices.delete(exId);
             } else {
@@ -234,14 +298,7 @@
             // Now it acts like a normal quick exercice
             toggleQuickExercice(ex.id);
 
-            // Re-render respecting search query
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = db.exercices.filter(e =>
-                (e.nom && e.nom.toLowerCase().includes(query)) ||
-                (e.description && e.description.toLowerCase().includes(query)) ||
-                (e.tags && e.tags.toLowerCase().includes(query))
-            );
-            renderQuickWorkoutExercices(filtered);
+            handleSearch();
 
             renderWebSuggestions(webSuggestions); // Re-render to update checkmark
         }
@@ -249,6 +306,7 @@
         let quickWorkoutDefaults = { series: 3, reps: 10, repos: 60 };
 
         function openQuickWorkoutSettings() {
+            triggerHaptic();
             document.getElementById('quick-set-series').value = quickWorkoutDefaults.series;
             document.getElementById('quick-set-reps').value = quickWorkoutDefaults.reps;
             document.getElementById('quick-set-repos').value = quickWorkoutDefaults.repos;
@@ -259,10 +317,12 @@
             if (event && event.target !== document.getElementById('modal-quick-settings') && event.target.className !== 'close-btn') {
                 return;
             }
+            triggerHaptic();
             document.getElementById('modal-quick-settings').classList.remove('active');
         }
 
         function saveQuickWorkoutSettings() {
+            triggerHaptic();
             quickWorkoutDefaults.series = parseInt(document.getElementById('quick-set-series').value) || 3;
             quickWorkoutDefaults.reps = parseInt(document.getElementById('quick-set-reps').value) || 10;
             quickWorkoutDefaults.repos = parseInt(document.getElementById('quick-set-repos').value) || 60;
@@ -281,20 +341,14 @@
             });
             localStorage.setItem('fitness_data', JSON.stringify(db));
 
-            // Re-render respecting search query
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = db.exercices.filter(e =>
-                (e.nom && e.nom.toLowerCase().includes(query)) ||
-                (e.description && e.description.toLowerCase().includes(query)) ||
-                (e.tags && e.tags.toLowerCase().includes(query))
-            );
-            renderQuickWorkoutExercices(filtered);
+            handleSearch();
 
             closeQuickWorkoutSettings();
             showSuccess("Paramètres appliqués aux exercices sélectionnés.");
         }
 
         function startQuickWorkout() {
+            triggerHaptic();
             if (selectedQuickExercices.size === 0) return;
 
             // Create a fake plan object
@@ -523,6 +577,7 @@
 
         // Settings / Sync Logic
         async function syncData() {
+            triggerHaptic();
             const urlInput = document.getElementById('api-url');
             const url = urlInput.value.trim();
 
@@ -609,6 +664,7 @@
         }
 
         function clearData() {
+            triggerHaptic();
             if (confirm("Voulez-vous vraiment effacer toutes les données sauvegardées sur cet appareil ?")) {
                 localStorage.removeItem('fitness_data');
                 localStorage.removeItem('last_sync');
@@ -620,7 +676,7 @@
             }
         }
 
-        // Search logic
+        // Search & Filter logic
         function handleSearch() {
             const query = document.getElementById('search-input').value.toLowerCase();
 
@@ -631,18 +687,24 @@
                 );
                 renderPlans(filtered);
             } else if (currentTab === 'exercices') {
-                const filtered = db.exercices.filter(e =>
-                    (e.nom && e.nom.toLowerCase().includes(query)) ||
-                    (e.description && e.description.toLowerCase().includes(query)) ||
-                    (e.tags && e.tags.toLowerCase().includes(query))
-                );
+                const activeTag = activeTagFilters['exercices'];
+                const filtered = db.exercices.filter(e => {
+                    const matchesQuery = (e.nom && e.nom.toLowerCase().includes(query)) ||
+                                         (e.description && e.description.toLowerCase().includes(query)) ||
+                                         (e.tags && e.tags.toLowerCase().includes(query));
+                    const matchesTag = activeTag ? (e.tags && e.tags.split(',').map(t=>t.trim()).includes(activeTag)) : true;
+                    return matchesQuery && matchesTag;
+                });
                 renderExercices(filtered);
             } else if (currentTab === 'quick-workout') {
-                const filtered = db.exercices.filter(e =>
-                    (e.nom && e.nom.toLowerCase().includes(query)) ||
-                    (e.description && e.description.toLowerCase().includes(query)) ||
-                    (e.tags && e.tags.toLowerCase().includes(query))
-                );
+                const activeTag = activeTagFilters['quick'];
+                const filtered = db.exercices.filter(e => {
+                    const matchesQuery = (e.nom && e.nom.toLowerCase().includes(query)) ||
+                                         (e.description && e.description.toLowerCase().includes(query)) ||
+                                         (e.tags && e.tags.toLowerCase().includes(query));
+                    const matchesTag = activeTag ? (e.tags && e.tags.split(',').map(t=>t.trim()).includes(activeTag)) : true;
+                    return matchesQuery && matchesTag;
+                });
                 renderQuickWorkoutExercices(filtered);
 
                 // Trigger web search with debounce
@@ -658,54 +720,189 @@
             }
         }
 
-        // Current Plan global variable for calendar export
+
+        // Current Plan global variable for calendar export and temp edit
         let currentViewedPlan = null;
+        let currentViewedPlanExercises = [];
 
         // Modal Logic
         function openPlanDetails(plan) {
             triggerHaptic();
             currentViewedPlan = plan;
+
+            // Create a deep clone of the exercises for this specific session preview/edit
+            currentViewedPlanExercises = (plan.exercices_ids || []).map(id => {
+                const e = db.exercices.find(ex => ex.id === id);
+                return e ? structuredClone(e) : null;
+            }).filter(e => e);
+
             document.getElementById('modal-title').textContent = plan.nom;
             document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
             document.getElementById('modal-desc').textContent = plan.description;
 
             // Setup "Démarrer" button
-            document.getElementById('btn-start-workout').onclick = () => startWorkout(plan);
+            document.getElementById('btn-start-workout').onclick = () => {
+                // Créer un "plan" temporaire contenant uniquement les IDs des exercices clonés modifiés.
+                // startWorkout va relire db.exercices. Pour injecter nos modifs, nous appelons startWorkout différemment.
+                startWorkout(plan, currentViewedPlanExercises);
+            };
 
-            const list = document.getElementById('modal-ex-list');
-            list.innerHTML = '';
-
-            if (plan.exercices_ids) {
-                plan.exercices_ids.forEach((id, index) => {
-                    const ex = db.exercices.find(e => e.id === id);
-                    if (ex) {
-                        const imgUrl = getExImage(ex);
-                        const li = document.createElement('li');
-                        li.className = 'ex-item';
-                        li.style.display = 'flex';
-                        li.style.gap = '15px';
-                        li.innerHTML = `
-                            <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
-                            <div style="flex-grow: 1;">
-                                <h4>${index + 1}. ${ex.nom}</h4>
-                                <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">${ex.series} séries de ${ex.valeur} ${ex.type} | Repos: ${ex.repos}s</p>
-                                <p style="font-size: 0.95rem;">${ex.description}</p>
-                                ${ex.video ? `<a href="https://www.youtube.com/results?search_query=${ex.video}" target="_blank" style="color: var(--accent-color); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 0.9em; margin-right: 15px;">▶ Trouver la vidéo</a>` : ''}
-                                ${ex.repos > 0 ? `<button class="btn-timer" id="timer-btn-${index}" onclick="startTimer(${ex.repos}, 'timer-btn-${index}')">⏱ Lancer repos (${ex.repos}s)</button>` : ''}
-                            </div>
-                        `;
-                        list.appendChild(li);
-                    }
-                });
-            }
+            renderPlanExercisesList();
 
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
         }
 
+        function removeTempExercice(index) {
+            triggerHaptic();
+            currentViewedPlanExercises.splice(index, 1);
+            renderPlanExercisesList();
+        }
+
+        function openEditTempEx(index) {
+            triggerHaptic();
+            const ex = currentViewedPlanExercises[index];
+
+            // Re-use the modal-edit-ex, but store the index we are editing
+            document.getElementById('modal-edit-ex').dataset.editingTempIndex = index;
+            document.getElementById('modal-edit-ex').dataset.mode = "temp";
+
+            document.getElementById('edit-ex-series').value = ex.series;
+
+            let type = 'reps';
+            if (ex.type === 'secs') type = 'secs';
+            if (ex.type === 'kegel') type = 'kegel';
+            if (ex.type === 'poids') type = 'poids';
+            if (ex.type === 'distance') type = 'distance';
+            document.getElementById('edit-ex-type').value = type;
+
+            document.getElementById('edit-ex-valeur').value = ex.valeur;
+            if (document.getElementById('edit-ex-poids')) document.getElementById('edit-ex-poids').value = ex.poids || 0;
+            document.getElementById('edit-ex-kegel-on').value = ex.kegel_on || 5;
+            document.getElementById('edit-ex-kegel-off').value = ex.kegel_off || 5;
+            document.getElementById('edit-ex-repos').value = ex.repos;
+
+            updateEditExUI();
+            document.getElementById('modal-edit-ex').classList.add('active');
+        }
+
+        function saveTempPlan() {
+            triggerHaptic();
+            if (currentViewedPlanExercises.length === 0) {
+                alert("Impossible de sauvegarder un programme vide.");
+                return;
+            }
+
+            const newPlanName = prompt("Entrez le nom de ce nouveau programme :", currentViewedPlan ? currentViewedPlan.nom + " (Modifié)" : "Nouveau Programme");
+            if (!newPlanName) return;
+
+            const newPlanIds = [];
+
+            // Pour chaque exercice, on regarde s'il a été modifié par rapport à la base
+            currentViewedPlanExercises.forEach(ex => {
+                const originalEx = db.exercices.find(e => e.id === ex.id);
+                let isModified = false;
+
+                if (!originalEx) {
+                    isModified = true; // C'est un exercice web ou inconnu qui a pu être ajouté
+                } else {
+                    if (ex.series !== originalEx.series ||
+                        ex.valeur !== originalEx.valeur ||
+                        ex.repos !== originalEx.repos ||
+                        ex.poids !== originalEx.poids ||
+                        ex.kegel_on !== originalEx.kegel_on ||
+                        ex.kegel_off !== originalEx.kegel_off ||
+                        ex.type !== originalEx.type) {
+                        isModified = true;
+                    }
+                }
+
+                if (isModified) {
+                    // Créer une nouvelle variante dans db.exercices
+                    const newExId = "custom_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+                    const newEx = structuredClone(ex);
+                    newEx.id = newExId;
+
+                    // Indiquer que c'est une variante dans le nom
+                    if (!newEx.nom.includes("(Variante)")) {
+                        newEx.nom = newEx.nom + " (Variante)";
+                    }
+
+                    db.exercices.push(newEx);
+                    newPlanIds.push(newExId);
+                } else {
+                    // Réutiliser l'ID original
+                    newPlanIds.push(ex.id);
+                }
+            });
+
+            const newPlan = {
+                id: "plan_" + Date.now(),
+                nom: newPlanName,
+                description: currentViewedPlan ? currentViewedPlan.description : "Programme personnalisé.",
+                goal: currentViewedPlan ? currentViewedPlan.goal : 3,
+                exercices_ids: newPlanIds
+            };
+
+            db.plans.push(newPlan);
+            localStorage.setItem('fitness_data', JSON.stringify(db));
+
+            // Rafraîchir l'interface
+            handleSearch();
+
+            closeModal(null);
+            showSuccess("Programme sauvegardé avec succès !");
+        }
+
+        function renderPlanExercisesList() {
+            const list = document.getElementById('modal-ex-list');
+            list.innerHTML = '';
+
+            currentViewedPlanExercises.forEach((ex, index) => {
+                const imgUrl = getExImage(ex);
+                const li = document.createElement('li');
+                li.className = 'ex-item';
+                li.style.display = 'flex';
+                li.style.gap = '15px';
+                li.style.position = 'relative';
+
+                let targetText = `${ex.series} x ${ex.valeur} ${ex.type}`;
+                if (ex.type === 'kegel') {
+                    targetText = `${ex.series} x ${ex.valeur} cycles (C:${ex.kegel_on || 5}s / R:${ex.kegel_off || 5}s)`;
+                } else if (ex.type === 'poids') {
+                    targetText = `${ex.series} x ${ex.valeur} reps @ ${ex.poids || 0}kg`;
+                } else if (ex.type === 'distance') {
+                    targetText = `${ex.series} x ${ex.valeur} km`;
+                } else if (ex.poids && ex.poids > 0) {
+                    targetText += ` @ ${ex.poids}kg`;
+                }
+
+                li.innerHTML = `
+                    <button onclick="removeTempExercice(${index})" style="position: absolute; top: -10px; right: -10px; background: #ff3333; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">✕</button>
+                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
+                    <div style="flex-grow: 1;">
+                        <h4>${index + 1}. ${ex.nom}</h4>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                            <span class="tag" style="background: rgba(255, 255, 255, 0.1); cursor: pointer;" onclick="openEditTempEx(${index})">⚙️ ${targetText}</span>
+                            <span class="tag" style="background: rgba(255, 255, 255, 0.1); cursor: pointer;" onclick="openEditTempEx(${index})">⏱ ${ex.repos}s</span>
+                        </div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${ex.description}</p>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+
+            // Add "+ Ajouter un exercice" button at the end
+            const addBtnLi = document.createElement('li');
+            addBtnLi.style.listStyle = 'none';
+            addBtnLi.innerHTML = `<button class="btn-action" style="background: transparent; border: 2px dashed var(--border-color); color: var(--accent-color); width: 100%; box-shadow: none;" onclick="openAddExModal()">+ AJOUTER UN EXERCICE</button>`;
+            list.appendChild(addBtnLi);
+        }
+
         let activeTimers = {};
 
         function startTimer(duration, buttonId) {
+            triggerHaptic();
             const btn = document.getElementById(buttonId);
             if (!btn || activeTimers[buttonId]) return; // Timer already running
 
@@ -749,6 +946,7 @@
         }
 
         function openExerciceDetails(ex) {
+            triggerHaptic();
             document.getElementById('modal-ex-title').textContent = ex.nom;
 
             const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
@@ -783,21 +981,30 @@
 
         let activeWorkoutTimerInterval = null;
 
-        function startWorkout(plan) {
+        function startWorkout(plan, preClonedExercises = null) {
             triggerHaptic();
-            if (!plan.exercices_ids || plan.exercices_ids.length === 0) {
-                alert("Ce programme ne contient aucun exercice.");
-                return;
+
+            let exos;
+            if (preClonedExercises) {
+                // If we already have a modified clone array from the pre-session modal
+                exos = structuredClone(preClonedExercises);
+            } else {
+                if (!plan.exercices_ids || plan.exercices_ids.length === 0) {
+                    alert("Ce programme ne contient aucun exercice.");
+                    return;
+                }
+                // Récupérer et cloner les objets exercices pour permettre la modif à la volée
+                exos = plan.exercices_ids.map(id => {
+                    const e = db.exercices.find(ex => ex.id === id);
+                    // Utilisation de structuredClone pour une copie profonde plus efficace et sécurisée
+                    return e ? structuredClone(e) : null;
+                }).filter(e => e);
             }
 
-            // Récupérer et cloner les objets exercices pour permettre la modif à la volée
-            const exos = plan.exercices_ids.map(id => {
-                const e = db.exercices.find(ex => ex.id === id);
-                // Utilisation de structuredClone pour une copie profonde plus efficace et sécurisée
-                return e ? structuredClone(e) : null;
-            }).filter(e => e);
-
-            if (exos.length === 0) return;
+            if (!exos || exos.length === 0) {
+                alert("Erreur: aucun exercice valide dans ce programme.");
+                return;
+            }
 
             // Initialiser l'état
             currentWorkout = {
@@ -968,6 +1175,7 @@
 
         // Fonction pour démarrer le timer spécifique à l'exercice (isométrie ou kegel)
         function startActiveWorkoutTimer() {
+            triggerHaptic();
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
             const btn = document.getElementById('btn-start-active-timer');
             const timerEl = document.getElementById('workout-active-timer');
@@ -1241,10 +1449,12 @@
         }
 
         function finishWorkout() {
+            triggerHaptic();
             quitWorkout();
         }
 
         function quitWorkout() {
+            triggerHaptic();
             if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
             if (activeWorkoutTimerInterval) {
                 clearInterval(activeWorkoutTimerInterval);
@@ -1257,7 +1467,10 @@
 
         // --- Edit Exercice On-the-fly ---
         function openEditCurrentEx() {
+            triggerHaptic();
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            document.getElementById('modal-edit-ex').dataset.mode = "workout";
 
             document.getElementById('edit-ex-series').value = ex.series;
 
@@ -1307,10 +1520,12 @@
             if (event && event.target !== document.getElementById('modal-edit-ex') && event.target.className !== 'close-btn') {
                 return;
             }
+            triggerHaptic();
             document.getElementById('modal-edit-ex').classList.remove('active');
         }
 
         function saveEditEx() {
+            triggerHaptic();
             const series = parseInt(document.getElementById('edit-ex-series').value) || 1;
             const type = document.getElementById('edit-ex-type').value;
             const valeur = parseFloat(document.getElementById('edit-ex-valeur').value) || 1;
@@ -1320,20 +1535,38 @@
             const kOn = parseInt(document.getElementById('edit-ex-kegel-on').value) || 5;
             const kOff = parseInt(document.getElementById('edit-ex-kegel-off').value) || 5;
 
-            // Update current workout instance ONLY
-            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
-            ex.series = series;
-            ex.type = type;
-            ex.valeur = valeur;
-            ex.repos = repos;
-            ex.poids = poids;
-            if (type === 'kegel') {
-                ex.kegel_on = kOn;
-                ex.kegel_off = kOff;
-            }
+            const mode = document.getElementById('modal-edit-ex').dataset.mode;
 
-            closeEditExModal();
-            renderWorkoutStep(); // re-render step to apply changes visually
+            if (mode === "temp") {
+                // Update temp clone list
+                const idx = parseInt(document.getElementById('modal-edit-ex').dataset.editingTempIndex);
+                const ex = currentViewedPlanExercises[idx];
+                ex.series = series;
+                ex.type = type;
+                ex.valeur = valeur;
+                ex.repos = repos;
+                ex.poids = poids;
+                if (type === 'kegel') {
+                    ex.kegel_on = kOn;
+                    ex.kegel_off = kOff;
+                }
+                closeEditExModal();
+                renderPlanExercisesList();
+            } else {
+                // Update current workout instance
+                const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+                ex.series = series;
+                ex.type = type;
+                ex.valeur = valeur;
+                ex.repos = repos;
+                ex.poids = poids;
+                if (type === 'kegel') {
+                    ex.kegel_on = kOn;
+                    ex.kegel_off = kOff;
+                }
+                closeEditExModal();
+                renderWorkoutStep(); // re-render step to apply changes visually
+            }
         }
 
         // Utilitaire: Émettre un bip
@@ -1375,11 +1608,13 @@
             if (event && event.target !== document.getElementById('modal-ex') && event.target.className !== 'close-btn') {
                 return;
             }
+            triggerHaptic();
             document.getElementById('modal-ex').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
 
         function addPlanToCalendar() {
+            triggerHaptic();
             if (!currentViewedPlan) return;
 
             // Calculate start and end times (e.g., today at 18:00 for 1 hour)
@@ -1437,10 +1672,86 @@
             if (event && event.target !== document.getElementById('modal') && event.target.className !== 'close-btn') {
                 return;
             }
+            triggerHaptic();
             stopAllTimers();
             currentViewedPlan = null;
+            currentViewedPlanExercises = [];
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
+        }
+
+        // --- Add Exercice to Plan Modal ---
+        function openAddExModal() {
+            triggerHaptic();
+            document.getElementById('search-modal-add').value = '';
+            renderTagsFilter('modal-add-tags-container', db.exercices, 'modalAdd');
+            handleModalSearch();
+            document.getElementById('modal-add-ex').classList.add('active');
+        }
+
+        function closeAddExModal(event) {
+            if (event && event.target !== document.getElementById('modal-add-ex') && event.target.className !== 'close-btn') {
+                return;
+            }
+            triggerHaptic();
+            document.getElementById('modal-add-ex').classList.remove('active');
+        }
+
+        function handleModalSearch() {
+            const query = document.getElementById('search-modal-add').value.toLowerCase();
+            const activeTag = activeTagFilters['modalAdd'];
+
+            const filtered = db.exercices.filter(e => {
+                const matchesQuery = (e.nom && e.nom.toLowerCase().includes(query)) ||
+                                     (e.description && e.description.toLowerCase().includes(query)) ||
+                                     (e.tags && e.tags.toLowerCase().includes(query));
+                const matchesTag = activeTag ? (e.tags && e.tags.split(',').map(t=>t.trim()).includes(activeTag)) : true;
+                return matchesQuery && matchesTag;
+            });
+
+            renderModalAddExercices(filtered);
+        }
+
+        function addExerciceToTempPlan(ex) {
+            triggerHaptic();
+            // Clone the exercice and push it to the temp list
+            currentViewedPlanExercises.push(structuredClone(ex));
+            renderPlanExercisesList();
+            closeAddExModal();
+        }
+
+        function renderModalAddExercices(exercicesToRender) {
+            const grid = document.getElementById('modal-add-grid');
+            grid.innerHTML = '';
+
+            if (exercicesToRender.length === 0) {
+                grid.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem;">Aucun exercice trouvé.</div>';
+                return;
+            }
+
+            exercicesToRender.forEach(ex => {
+                const imgUrl = getExImage(ex);
+                const card = document.createElement('div');
+                card.className = 'card quick-ex-card';
+                card.style.flexDirection = 'row';
+                card.style.alignItems = 'center';
+                card.style.padding = '10px';
+                card.style.gap = '15px';
+                card.style.cursor = 'pointer';
+                card.style.marginBottom = '10px'; // Stacked vertically
+
+                card.onclick = () => addExerciceToTempPlan(ex);
+
+                card.innerHTML = `
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dark); color: var(--accent-color); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; flex-shrink: 0;">+</div>
+                    <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
+                    <div style="flex-grow: 1; overflow: hidden;">
+                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series}x${ex.valeur} ${ex.type} | ${ex.repos}s</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
 
         // Utilities
