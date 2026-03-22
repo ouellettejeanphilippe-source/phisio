@@ -194,6 +194,15 @@
                 <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; flex: 1; display: flex; flex-direction: column;">
                     <p id="workout-ex-desc" style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 20px;"></p>
 
+                    <!-- Interactive Reps Tracking Section -->
+                    <div id="workout-interactive-reps-section" style="display: none; flex-direction: column; align-items: center; margin-bottom: 20px;">
+                        <button id="btn-toggle-reps-mode" class="btn-timer" style="margin-bottom: 15px; font-size: 0.8rem; padding: 8px 16px; border: 1px dashed var(--accent-color);" onclick="toggleRepsMode()">🔢 Activer le mode "Compter chaque rep"</button>
+                        <button id="btn-rep-counter" class="btn-action" style="display: none; width: 250px; height: 100px; border-radius: 20px; font-size: 1.5rem; font-weight: 800; flex-direction: column; line-height: 1.2; box-shadow: 0 10px 30px var(--accent-dark);" onclick="countRep()">
+                            <span style="font-size: 0.9rem; font-weight: normal; opacity: 0.8;">TAPPER POUR COMPTER</span>
+                            <span id="rep-counter-display">0 / 10</span>
+                        </button>
+                    </div>
+
                     <!-- Isometry / Breathing Timer Section -->
                     <div id="workout-active-timer-section" style="display: none; flex-direction: column; align-items: center; margin-bottom: 20px;">
                         <div class="rest-timer-ring" style="width: 200px; height: 200px; margin-bottom: 10px;">
@@ -206,7 +215,11 @@
                             </div>
                         </div>
                         <div id="workout-active-timer-phase" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color); text-transform: uppercase;">MAINTENIR</div>
-                        <button id="btn-start-active-timer" class="btn-action" style="max-width: 200px; margin-top: 15px; font-size: 0.9rem;" onclick="startActiveWorkoutTimer()">▶ DÉMARRER LE TIMER</button>
+
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button id="btn-start-active-timer" class="btn-action" style="max-width: 200px; font-size: 0.9rem; margin-top: 0;" onclick="startActiveWorkoutTimer()">▶ DÉMARRER LE TIMER</button>
+                            <button id="btn-pause-active-timer" class="btn-timer" style="display: none; width: auto; font-size: 0.9rem; margin-top: 0; padding: 0 20px;" onclick="togglePauseActiveTimer()">⏸ PAUSE</button>
+                        </div>
                     </div>
 
                     <h3 style="text-align: center; color: white; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">Séries complétées</h3>
@@ -218,7 +231,10 @@
 
             <!-- Rest View -->
             <div id="workout-rest-view" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: fadeIn 0.5s ease;">
-                <h2 style="color: var(--accent-color); font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;">Repos</h2>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
+                    <h2 style="color: var(--accent-color); font-size: 2rem; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Repos</h2>
+                    <button id="btn-pause-rest-timer" class="btn-timer" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;" onclick="togglePauseRestTimer()">⏸ PAUSE</button>
+                </div>
 
                 <div class="rest-timer-ring">
                     <svg class="rest-timer-svg" viewBox="0 0 250 250">
