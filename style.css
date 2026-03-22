@@ -139,6 +139,25 @@
             transition: color 0.3s ease;
         }
 
+        /* Spotlight Search Container */
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            pointer-events: none;
+            transition: color 0.3s ease;
+        }
+
         .search-bar {
             padding: 1rem 3rem; /* Extra padding for icon and clear button */
             border-radius: 12px;
