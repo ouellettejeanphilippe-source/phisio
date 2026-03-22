@@ -114,14 +114,12 @@
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.getElementById(`${tab}-section`).classList.add('active');
 
-            if (tab === 'plans') document.getElementById('page-title').textContent = 'Mes Programmes';
-            else if (tab === 'exercices') document.getElementById('page-title').textContent = 'Bibliothèque';
-            else if (tab === 'stats') document.getElementById('page-title').textContent = 'Statistiques';
-            else if (tab === 'settings') document.getElementById('page-title').textContent = 'Paramètres';
-            else if (tab === 'quick-workout') document.getElementById('page-title').textContent = 'Séance Rapide';
-
-            document.getElementById('search-input').style.display = (tab === 'settings' || tab === 'stats') ? 'none' : 'block';
+            const searchContainer = document.getElementById('search-container');
+            if (searchContainer) {
+                searchContainer.style.display = (tab === 'settings' || tab === 'stats') ? 'none' : 'flex';
+            }
             document.getElementById('search-input').value = '';
+            document.getElementById('clear-search-btn').classList.remove('visible');
 
             // Reset views
             if (tab === 'plans') renderPlans(db.plans);
@@ -677,8 +675,24 @@
         }
 
         // Search & Filter logic
+        function clearSearch() {
+            triggerHaptic();
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = '';
+            searchInput.focus();
+            handleSearch();
+        }
+
         function handleSearch() {
-            const query = document.getElementById('search-input').value.toLowerCase();
+            const inputEl = document.getElementById('search-input');
+            const query = inputEl.value.toLowerCase();
+            const clearBtn = document.getElementById('clear-search-btn');
+
+            if (query.length > 0) {
+                clearBtn.classList.add('visible');
+            } else {
+                clearBtn.classList.remove('visible');
+            }
 
             if (currentTab === 'plans') {
                 const filtered = db.plans.filter(p =>
@@ -1107,6 +1121,7 @@
                     document.getElementById('active-timer-circle').style.transition = 'none';
                     document.getElementById('active-timer-circle').style.strokeDashoffset = '0';
                     document.getElementById('active-timer-circle').style.stroke = 'var(--accent-color)';
+                    document.getElementById('active-timer-circle').classList.remove('active-timer-glow-red', 'active-timer-glow-green'); // Reset any glow
                 } else {
                     activeTimerSection.style.display = 'none';
                 }
@@ -1196,6 +1211,7 @@
                 let timeRemaining = parseInt(ex.valeur);
                 circleEl.style.transition = 'stroke-dashoffset 1s linear';
                 phaseEl.textContent = "MAINTENIR";
+                circleEl.classList.add('active-timer-glow-red'); // Glowing red for isometry
 
                 playBeep(400, 0.2); // Start beep
 
@@ -1228,7 +1244,8 @@
 
                 timerEl.textContent = currentCycle;
                 phaseEl.textContent = `CONTRACTER (1/${totalCycles})`;
-                circleEl.style.stroke = '#ff3333'; // Rouge pour contraction
+                circleEl.classList.remove('active-timer-glow-green');
+                circleEl.classList.add('active-timer-glow-red'); // Rouge glow
                 playBeep(600, 0.3); // High beep for contract
 
                 activeWorkoutTimerInterval = setInterval(() => {
@@ -1251,13 +1268,15 @@
                             }
                             phaseTimeLeft = tOn;
                             phaseEl.textContent = `CONTRACTER (${currentCycle}/${totalCycles})`;
-                            circleEl.style.stroke = '#ff3333';
+                            circleEl.classList.remove('active-timer-glow-green');
+                            circleEl.classList.add('active-timer-glow-red');
                             playBeep(600, 0.3);
                         } else {
                             // On passe au relâchement du cycle EN COURS
                             phaseTimeLeft = tOff;
                             phaseEl.textContent = `RELÂCHER (${currentCycle}/${totalCycles})`;
-                            circleEl.style.stroke = '#3fb950'; // Vert pour relâchement
+                            circleEl.classList.remove('active-timer-glow-red');
+                            circleEl.classList.add('active-timer-glow-green'); // Vert glow pour relâchement
                             playBeep(400, 0.3); // Low beep for relax
                         }
                     }
@@ -1373,9 +1392,11 @@
         function renderStats() {
             const heatmapContainer = document.getElementById('stats-heatmap');
             const historyListContainer = document.getElementById('stats-history-list');
+            const weeklyChartContainer = document.getElementById('stats-weekly-chart');
 
             heatmapContainer.innerHTML = '';
             historyListContainer.innerHTML = '';
+            weeklyChartContainer.innerHTML = '';
 
             let sessions = [];
             try {
@@ -1393,6 +1414,58 @@
                 sessionCounts[dateStr] = (sessionCounts[dateStr] || 0) + 1;
             });
 
+            // Weekly Chart Logic (Last 7 days)
+            const daysOfWeek = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+            const maxDailySessions = Math.max(...Object.values(sessionCounts), 1); // Avoid div by zero
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const count = sessionCounts[dateStr] || 0;
+
+                const dayName = daysOfWeek[d.getDay()];
+
+                // Height ratio (max height = 100px)
+                const height = count > 0 ? Math.max((count / maxDailySessions) * 100, 15) : 5;
+
+                const col = document.createElement('div');
+                col.style.display = 'flex';
+                col.style.flexDirection = 'column';
+                col.style.alignItems = 'center';
+                col.style.gap = '8px';
+                col.style.width = '30px';
+
+                const bar = document.createElement('div');
+                bar.style.width = '16px';
+                bar.style.height = '0px'; // Start at 0 for animation
+                bar.style.borderRadius = '8px';
+                bar.style.transition = 'height 1s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+                if (count === 0) {
+                    bar.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                } else {
+                    bar.style.background = 'var(--accent-gradient)';
+                    bar.style.boxShadow = '0 0 10px rgba(153, 88, 255, 0.4)';
+                }
+
+                // Trigger animation after append
+                setTimeout(() => {
+                    bar.style.height = `${height}px`;
+                }, 50 * (6 - i)); // Staggered animation
+
+                const label = document.createElement('div');
+                label.textContent = dayName;
+                label.style.fontSize = '0.75rem';
+                label.style.color = count > 0 ? 'white' : 'var(--text-secondary)';
+                label.style.fontWeight = count > 0 ? 'bold' : 'normal';
+
+                col.appendChild(bar);
+                col.appendChild(label);
+                weeklyChartContainer.appendChild(col);
+            }
+
+            // Heatmap generation
             for (let i = 29; i >= 0; i--) {
                 const d = new Date(today);
                 d.setDate(d.getDate() - i);
@@ -1782,5 +1855,71 @@
             });
         }
 
+        // Swipe to dismiss logic for modals
+        function initSwipeToDismiss() {
+            const modals = document.querySelectorAll('.modal-overlay');
+
+            modals.forEach(overlay => {
+                const content = overlay.querySelector('.modal-content');
+                if (!content) return;
+
+                let startY = 0;
+                let currentY = 0;
+                let isDragging = false;
+
+                content.addEventListener('touchstart', (e) => {
+                    // Only start drag if we are at the very top of the modal scroll
+                    if (content.scrollTop > 0) return;
+
+                    startY = e.touches[0].clientY;
+                    isDragging = true;
+                    content.classList.add('dragging');
+                }, { passive: true });
+
+                content.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+
+                    const y = e.touches[0].clientY;
+                    const deltaY = y - startY;
+
+                    // Only allow dragging downwards
+                    if (deltaY > 0) {
+                        currentY = deltaY;
+                        content.style.transform = `translateY(${deltaY}px)`;
+                        // Prevent scrolling while dragging down
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                content.addEventListener('touchend', () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    content.classList.remove('dragging');
+
+                    // Threshold to close (e.g., 100px)
+                    if (currentY > 100) {
+                        // Close modal based on ID
+                        const modalId = overlay.id;
+                        if (modalId === 'modal') closeModal();
+                        else if (modalId === 'modal-ex') closeExModal();
+                        else if (modalId === 'modal-quick-settings') closeQuickWorkoutSettings();
+                        else if (modalId === 'modal-add-ex') closeAddExModal();
+                        else if (modalId === 'modal-edit-ex') closeEditExModal();
+                        else {
+                            overlay.classList.remove('active');
+                            document.body.style.overflow = 'auto';
+                        }
+                    }
+
+                    // Reset transform to allow CSS transitions to take over
+                    content.style.transform = '';
+                    currentY = 0;
+                });
+            });
+        }
+
         // Start
-        window.onload = init;
+        window.onload = () => {
+            init();
+            initSwipeToDismiss();
+        };
