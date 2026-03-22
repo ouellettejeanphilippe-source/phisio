@@ -673,6 +673,14 @@
             animation: pulse 1.5s infinite;
         }
 
+        /* Mode Interactif Reps Toggle State */
+        #btn-toggle-reps-mode.active-timer {
+            background-color: transparent !important;
+            border-color: #ff3333 !important;
+            color: #ff3333 !important;
+            animation: none;
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-dark); }
             50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(178, 255, 5, 0); }

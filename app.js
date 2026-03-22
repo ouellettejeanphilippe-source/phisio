@@ -994,6 +994,12 @@
         // ==========================================
 
         let activeWorkoutTimerInterval = null;
+        let isWorkoutTimerPaused = false;
+        let isRestTimerPaused = false;
+
+        // Mode Reps Manuelles
+        let isInteractiveRepsModeActive = false;
+        let currentInteractiveRepsCount = 0;
 
         function startWorkout(plan, preClonedExercises = null) {
             triggerHaptic();
@@ -1102,12 +1108,40 @@
                     imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px;" loading="lazy">`;
                 }
 
+                // Gestion des compteurs manuels
+                const interactiveRepsSection = document.getElementById('workout-interactive-reps-section');
+                const btnToggleRepsMode = document.getElementById('btn-toggle-reps-mode');
+                const btnRepCounter = document.getElementById('btn-rep-counter');
+                const btnNextStep = document.getElementById('btn-next-step');
+
+                // Réinitialiser le mode à chaque changement d'étape (ou d'exercice)
+                isInteractiveRepsModeActive = false;
+                currentInteractiveRepsCount = 0;
+                btnToggleRepsMode.innerHTML = '🔢 Activer le mode "Compter chaque rep"';
+                btnToggleRepsMode.classList.remove('active-timer');
+                btnRepCounter.style.display = 'none';
+                btnNextStep.style.display = 'flex'; // Toujours s'assurer que le bouton valider la série est visible par défaut
+
+                if (ex.type === 'reps' || ex.type === 'poids' || !ex.type) {
+                    interactiveRepsSection.style.display = 'flex';
+                    btnToggleRepsMode.style.display = 'inline-flex';
+                    document.getElementById('rep-counter-display').textContent = `0 / ${ex.valeur}`;
+                } else {
+                    interactiveRepsSection.style.display = 'none';
+                }
+
                 // Gestion des timers spécifiques (Isométrie ou Kegel)
                 const activeTimerSection = document.getElementById('workout-active-timer-section');
                 if (ex.type === 'secs' || ex.type === 'kegel') {
                     activeTimerSection.style.display = 'flex';
                     const phaseEl = document.getElementById('workout-active-timer-phase');
                     const btnStartTimer = document.getElementById('btn-start-active-timer');
+                const btnPauseTimer = document.getElementById('btn-pause-active-timer');
+
+                isWorkoutTimerPaused = false;
+                btnPauseTimer.style.display = 'none';
+                btnPauseTimer.innerHTML = '⏸ PAUSE';
+                btnPauseTimer.classList.remove('active-timer');
 
                     if (ex.type === 'kegel') {
                         document.getElementById('workout-active-timer').textContent = ex.valeur;
@@ -1193,11 +1227,14 @@
             triggerHaptic();
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
             const btn = document.getElementById('btn-start-active-timer');
+            const btnPause = document.getElementById('btn-pause-active-timer');
             const timerEl = document.getElementById('workout-active-timer');
             const circleEl = document.getElementById('active-timer-circle');
             const phaseEl = document.getElementById('workout-active-timer-phase');
 
             btn.style.display = 'none'; // Cacher le bouton Démarrer
+            btnPause.style.display = 'flex'; // Afficher le bouton Pause
+            isWorkoutTimerPaused = false;
 
             const circumference = 691;
             circleEl.style.transition = 'none';
@@ -1216,6 +1253,13 @@
                 playBeep(400, 0.2); // Start beep
 
                 activeWorkoutTimerInterval = setInterval(() => {
+                    if (isWorkoutTimerPaused) {
+                        circleEl.style.transition = 'none';
+                        return;
+                    } else {
+                        circleEl.style.transition = 'stroke-dashoffset 1s linear';
+                    }
+
                     timeRemaining--;
                     timerEl.textContent = timeRemaining;
 
@@ -1228,7 +1272,11 @@
                         clearInterval(activeWorkoutTimerInterval);
                         playBeep(800, 0.5); // End beep
                         phaseEl.textContent = "TERMINÉ";
-                        document.getElementById('btn-next-step').click(); // Auto-valider la série
+                        btnPause.style.display = 'none'; // Cacher pause
+                        circleEl.classList.remove('active-timer-glow-red');
+
+                        // Wait for manual validation instead of auto-clicking
+                        showSuccess("Temps écoulé ! Validez la série.");
                     }
                 }, 1000);
 
@@ -1249,6 +1297,8 @@
                 playBeep(600, 0.3); // High beep for contract
 
                 activeWorkoutTimerInterval = setInterval(() => {
+                    if (isWorkoutTimerPaused) return;
+
                     phaseTimeLeft--;
 
                     if (phaseTimeLeft <= 0) {
@@ -1263,7 +1313,11 @@
                                 clearInterval(activeWorkoutTimerInterval);
                                 playBeep(800, 0.6); // End beep
                                 phaseEl.textContent = "TERMINÉ";
-                                document.getElementById('btn-next-step').click(); // Auto-valider la série
+                                btnPause.style.display = 'none';
+                                circleEl.classList.remove('active-timer-glow-red', 'active-timer-glow-green');
+
+                                // Wait for manual validation
+                                showSuccess("Cycles terminés ! Validez la série.");
                                 return;
                             }
                             phaseTimeLeft = tOn;
@@ -1281,6 +1335,83 @@
                         }
                     }
                 }, 1000);
+            }
+        }
+
+        function toggleRepsMode() {
+            triggerHaptic();
+            isInteractiveRepsModeActive = !isInteractiveRepsModeActive;
+            const btnToggle = document.getElementById('btn-toggle-reps-mode');
+            const btnRepCounter = document.getElementById('btn-rep-counter');
+            const btnNextStep = document.getElementById('btn-next-step');
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            if (isInteractiveRepsModeActive) {
+                btnToggle.innerHTML = '❌ Désactiver le mode "Compter"';
+                btnToggle.classList.add('active-timer');
+
+                // Show counter button, hide regular next button
+                btnRepCounter.style.display = 'flex';
+                btnNextStep.style.display = 'none';
+
+                currentInteractiveRepsCount = 0;
+                document.getElementById('rep-counter-display').textContent = `0 / ${ex.valeur}`;
+            } else {
+                btnToggle.innerHTML = '🔢 Activer le mode "Compter chaque rep"';
+                btnToggle.classList.remove('active-timer');
+
+                // Hide counter button, show regular next button
+                btnRepCounter.style.display = 'none';
+                btnNextStep.style.display = 'flex';
+            }
+        }
+
+        function countRep() {
+            triggerHaptic();
+            if (!isInteractiveRepsModeActive) return;
+
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+            currentInteractiveRepsCount++;
+
+            // Play a pleasant beep for each rep
+            playBeep(500 + (currentInteractiveRepsCount * 20), 0.1, 'triangle');
+
+            document.getElementById('rep-counter-display').textContent = `${currentInteractiveRepsCount} / ${ex.valeur}`;
+
+            // Add a little pop animation class dynamically
+            const btn = document.getElementById('btn-rep-counter');
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => { btn.style.transform = ''; }, 100);
+
+            if (currentInteractiveRepsCount >= ex.valeur) {
+                // Goal reached! Play success sound and proceed
+                setTimeout(() => {
+                    playBeep(800, 0.4);
+                    // Automatically trigger the next step
+                    document.getElementById('btn-next-step').style.display = 'flex'; // show briefly
+                    document.getElementById('btn-next-step').click();
+                }, 300);
+            }
+        }
+
+        function togglePauseActiveTimer() {
+            triggerHaptic();
+            isWorkoutTimerPaused = !isWorkoutTimerPaused;
+            const btnPause = document.getElementById('btn-pause-active-timer');
+            const phaseEl = document.getElementById('workout-active-timer-phase');
+
+            if (isWorkoutTimerPaused) {
+                btnPause.innerHTML = '▶ REPRENDRE';
+                btnPause.classList.add('active-timer');
+                phaseEl.dataset.originalText = phaseEl.textContent;
+                phaseEl.textContent = "EN PAUSE";
+                document.getElementById('active-timer-circle').style.transition = 'none'; // Stop circle animation
+            } else {
+                btnPause.innerHTML = '⏸ PAUSE';
+                btnPause.classList.remove('active-timer');
+                if (phaseEl.dataset.originalText) {
+                    phaseEl.textContent = phaseEl.dataset.originalText;
+                }
             }
         }
 
@@ -1308,7 +1439,14 @@
             let timeRemaining = duration;
             const timerEl = document.getElementById('workout-rest-timer');
             const circleEl = document.getElementById('rest-timer-circle');
+            const btnPause = document.getElementById('btn-pause-rest-timer');
             const circumference = 691; // 2 * pi * 110 (rayon)
+
+            isRestTimerPaused = false;
+            if (btnPause) {
+                btnPause.innerHTML = '⏸ PAUSE';
+                btnPause.classList.remove('active-timer');
+            }
 
             timerEl.textContent = timeRemaining;
             circleEl.style.transition = 'none'; // Désactiver la transition pour reset instantané
@@ -1325,6 +1463,13 @@
             triggerHaptic();
 
             currentWorkout.restInterval = setInterval(() => {
+                if (isRestTimerPaused) {
+                    circleEl.style.transition = 'none';
+                    return;
+                } else {
+                    circleEl.style.transition = 'stroke-dashoffset 1s linear';
+                }
+
                 timeRemaining--;
                 timerEl.textContent = timeRemaining;
 
@@ -1345,6 +1490,21 @@
                     advanceAfterRest();
                 }
             }, 1000);
+        }
+
+        function togglePauseRestTimer() {
+            triggerHaptic();
+            isRestTimerPaused = !isRestTimerPaused;
+            const btnPause = document.getElementById('btn-pause-rest-timer');
+
+            if (isRestTimerPaused) {
+                btnPause.innerHTML = '▶ REPRENDRE';
+                btnPause.classList.add('active-timer');
+                document.getElementById('rest-timer-circle').style.transition = 'none';
+            } else {
+                btnPause.innerHTML = '⏸ PAUSE';
+                btnPause.classList.remove('active-timer');
+            }
         }
 
         function skipRest() {
