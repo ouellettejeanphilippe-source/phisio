@@ -114,12 +114,6 @@
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.getElementById(`${tab}-section`).classList.add('active');
 
-            if (tab === 'plans') document.getElementById('page-title').textContent = 'Mes Programmes';
-            else if (tab === 'exercices') document.getElementById('page-title').textContent = 'Bibliothèque';
-            else if (tab === 'stats') document.getElementById('page-title').textContent = 'Statistiques';
-            else if (tab === 'settings') document.getElementById('page-title').textContent = 'Paramètres';
-            else if (tab === 'quick-workout') document.getElementById('page-title').textContent = 'Séance Rapide';
-
             const searchContainer = document.getElementById('search-container');
             if (searchContainer) {
                 searchContainer.style.display = (tab === 'settings' || tab === 'stats') ? 'none' : 'flex';

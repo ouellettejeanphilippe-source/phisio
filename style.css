@@ -14,8 +14,8 @@
             /* Glossy border effect */
             --border-color: rgba(255, 255, 255, 0.12);
             --border-gradient: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.05) 100%);
-            --card-radius: 32px; /* Smoother squircles */
-            --modal-radius: 40px; /* Stronger squircles for modals */
+            --card-radius: 16px; /* Modern subtle radius */
+            --modal-radius: 20px; /* Modern subtle radius for modals */
             --transition-speed: 0.3s;
             --glass-blur: blur(50px) saturate(150%); /* Much stronger blur and saturation for iOS/One UI 8.5 feel */
             --safe-area-top: env(safe-area-inset-top, 0px);
@@ -115,18 +115,28 @@
             flex-direction: column;
             justify-content: flex-end;
             align-items: flex-start;
-            min-height: 12vh; /* Reduced from 25vh for densification */
             padding-bottom: 1.5rem;
             margin-bottom: 1rem;
-            padding-top: calc(var(--safe-area-top) + 1.5rem);
+            padding-top: calc(var(--safe-area-top) + 2rem);
         }
 
-        h1 {
-            font-size: 2.5rem;
-            color: white;
-            font-weight: 800; /* Bolder */
-            letter-spacing: -1px; /* Tighter */
-            margin-bottom: 1rem;
+        /* Spotlight Search Container */
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            pointer-events: none;
+            transition: color 0.3s ease;
         }
 
         /* Spotlight Search Container */
@@ -150,7 +160,7 @@
 
         .search-bar {
             padding: 1rem 3rem; /* Extra padding for icon and clear button */
-            border-radius: 50px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             border-top: 1px solid rgba(255, 255, 255, 0.15);
             border-left: 1px solid rgba(255, 255, 255, 0.08);
@@ -228,7 +238,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
             padding: 8px 16px;
-            border-radius: 20px;
+            border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
@@ -351,7 +361,7 @@
             background: linear-gradient(135deg, rgba(111, 178, 255, 0.15), rgba(153, 88, 255, 0.15), rgba(255, 111, 216, 0.15));
             color: var(--text-primary);
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: 8px;
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -602,7 +612,7 @@
             color: #000;
             border: none;
             padding: 16px 24px;
-            border-radius: 50px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 1rem;
             font-weight: 700;
@@ -640,7 +650,7 @@
             color: var(--accent-color);
             border: none;
             padding: 10px 18px;
-            border-radius: 30px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 0.9rem;
             font-weight: 600;
@@ -696,7 +706,7 @@
                 border: 1px solid var(--border-color);
                 border-top: 1px solid rgba(255, 255, 255, 0.4);
                 border-left: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 40px;
+                border-radius: 20px;
                 background-color: rgba(20, 20, 25, 0.6);
                 backdrop-filter: var(--glass-blur);
                 -webkit-backdrop-filter: var(--glass-blur);
@@ -709,7 +719,7 @@
 
             .nav-item {
                 margin: 0;
-                border-radius: 50px;
+                border-radius: 12px;
                 flex: 1;
                 max-width: 100px;
                 text-align: center;
@@ -762,7 +772,7 @@
                 width: 100%;
                 height: auto;
                 max-height: 92vh;
-                border-radius: 32px 32px 0 0; /* Bottom sheet rounded top corners */
+                border-radius: 20px 20px 0 0; /* Clean modern top corners */
                 padding: 2.5rem 1.5rem calc(2rem + var(--safe-area-bottom)) 1.5rem;
                 margin: 0;
                 transform: translateY(100%);
