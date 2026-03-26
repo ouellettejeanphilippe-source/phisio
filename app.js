@@ -301,7 +301,7 @@
             renderWebSuggestions(webSuggestions); // Re-render to update checkmark
         }
 
-        let quickWorkoutDefaults = { series: 3, reps: 10, repos: 60 };
+        const quickWorkoutDefaults = { series: 3, reps: 10, repos: 60 };
 
         function openQuickWorkoutSettings() {
             triggerHaptic();
@@ -536,12 +536,12 @@
                 const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
                 let importanceTag = '';
                 if (ex.importance) {
-                    let color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
-                    let bg = ex.importance.includes('Haute') ? 'rgba(255,51,51,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(255,179,0,0.15)' : 'rgba(88,166,255,0.15)');
+                    const color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
+                    const bg = ex.importance.includes('Haute') ? 'rgba(255,51,51,0.15)' : (ex.importance.includes('Moyenne') ? 'rgba(255,179,0,0.15)' : 'rgba(88,166,255,0.15)');
                     importanceTag = `<span class="tag" style="color:${color}; background:${bg}; border: 1px solid ${color};">${ex.importance}</span>`;
                 }
 
-                let freqTag = ex.frequence ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
+                const freqTag = ex.frequence ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); color: var(--text-primary);"><svg style="width:12px; height:12px; margin-right:4px; vertical-align:middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${ex.frequence}x / sem</span>` : '';
 
                 const imgUrl = getExImage(ex);
 
@@ -1870,7 +1870,7 @@
 
             // Calculate start and end times (e.g., today at 18:00 for 1 hour)
             const now = new Date();
-            let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0); // Default to 18:00 today
+            const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0); // Default to 18:00 today
             if (now.getHours() >= 18) {
                  // If it's already past 18:00, schedule for tomorrow
                  start.setDate(start.getDate() + 1);
