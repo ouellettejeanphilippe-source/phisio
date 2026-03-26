@@ -822,9 +822,13 @@
 
             const newPlanIds = [];
 
+            // Créer un index des exercices par ID pour une recherche plus rapide
+            const exMap = new Map();
+            db.exercices.forEach(e => exMap.set(String(e.id), e));
+
             // Pour chaque exercice, on regarde s'il a été modifié par rapport à la base
             currentViewedPlanExercises.forEach(ex => {
-                const originalEx = db.exercices.find(e => e.id === ex.id);
+                const originalEx = exMap.get(String(ex.id));
                 let isModified = false;
 
                 if (!originalEx) {
