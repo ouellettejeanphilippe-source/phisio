@@ -2,11 +2,12 @@ const CACHE_NAME = 'fitness-tracker-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/style.css',
-  '/app.js',
+  '/css/style.css',
+  '/js/app.js',
+  '/js/utils.js',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
 
