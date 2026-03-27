@@ -795,6 +795,23 @@
             renderPlanExercisesList();
         }
 
+        function moveTempExercice(index, direction) {
+            triggerHaptic();
+            if (direction === -1 && index > 0) {
+                // Move up
+                const temp = currentViewedPlanExercises[index];
+                currentViewedPlanExercises[index] = currentViewedPlanExercises[index - 1];
+                currentViewedPlanExercises[index - 1] = temp;
+                renderPlanExercisesList();
+            } else if (direction === 1 && index < currentViewedPlanExercises.length - 1) {
+                // Move down
+                const temp = currentViewedPlanExercises[index];
+                currentViewedPlanExercises[index] = currentViewedPlanExercises[index + 1];
+                currentViewedPlanExercises[index + 1] = temp;
+                renderPlanExercisesList();
+            }
+        }
+
         function openEditTempEx(index) {
             triggerHaptic();
             const ex = currentViewedPlanExercises[index];
@@ -918,8 +935,13 @@
 
                 let eqTag = ex.equipement ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); cursor: default;">🏋️ ${ex.equipement}</span>` : '';
 
+                let upBtn = index > 0 ? `<button onclick="moveTempExercice(${index}, -1)" style="position: absolute; top: 10px; right: 30px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer;">↑</button>` : '';
+                let downBtn = index < currentViewedPlanExercises.length - 1 ? `<button onclick="moveTempExercice(${index}, 1)" style="position: absolute; top: 40px; right: 30px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer;">↓</button>` : '';
+
                 li.innerHTML = `
                     <button onclick="removeTempExercice(${index})" style="position: absolute; top: -10px; right: -10px; background: #ff3333; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">✕</button>
+                    ${upBtn}
+                    ${downBtn}
                     <img src="${imgUrl}" alt="${ex.nom}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
                     <div style="flex-grow: 1;">
                         <h4>${index + 1}. ${ex.nom}</h4>
@@ -1102,6 +1124,7 @@
                 document.getElementById('workout-end-view').style.display = 'none';
 
                 document.getElementById('btn-next-step').style.display = 'none';
+                document.getElementById('workout-controls-secondary').style.display = 'none';
                 document.getElementById('btn-skip-rest').style.display = 'flex';
 
                 // Info sur le prochain exercice
@@ -1119,6 +1142,7 @@
                 document.getElementById('workout-end-view').style.display = 'none';
 
                 document.getElementById('btn-next-step').style.display = 'flex';
+                document.getElementById('workout-controls-secondary').style.display = 'flex';
                 document.getElementById('btn-skip-rest').style.display = 'none';
 
                 document.getElementById('btn-next-step').textContent = 'VALIDER LA SÉRIE';
@@ -1565,6 +1589,154 @@
             advanceAfterRest();
         }
 
+        function skipCurrentExercice() {
+            triggerHaptic();
+            if (confirm("Voulez-vous vraiment passer cet exercice pour cette séance ?")) {
+                // Clear any timers
+                if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
+                if (activeWorkoutTimerInterval) {
+                    clearInterval(activeWorkoutTimerInterval);
+                    activeWorkoutTimerInterval = null;
+                }
+
+                currentWorkout.currentExIndex++;
+                currentWorkout.currentSet = 0;
+                currentWorkout.isResting = false;
+
+                if (currentWorkout.currentExIndex >= currentWorkout.exercices.length) {
+                    showWorkoutEnd();
+                } else {
+                    renderWorkoutStep();
+                }
+            }
+        }
+
+        function delayCurrentExercice() {
+            triggerHaptic();
+            if (currentWorkout.currentExIndex >= currentWorkout.exercices.length - 1) {
+                alert("C'est déjà le dernier exercice de la liste.");
+                return;
+            }
+
+            if (confirm("Déplacer cet exercice à la fin de la séance ?")) {
+                // Clear any timers
+                if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
+                if (activeWorkoutTimerInterval) {
+                    clearInterval(activeWorkoutTimerInterval);
+                    activeWorkoutTimerInterval = null;
+                }
+
+                const currentEx = currentWorkout.exercices.splice(currentWorkout.currentExIndex, 1)[0];
+                currentWorkout.exercices.push(currentEx);
+
+                // Index reste le même, mais ça pointe vers le nouvel exercice qui a pris la place
+                currentWorkout.currentSet = 0;
+                currentWorkout.isResting = false;
+
+                renderWorkoutStep();
+                showSuccess("Exercice déplacé à la fin de la séance.");
+            }
+        }
+
+        function openWorkoutQueue() {
+            triggerHaptic();
+            renderWorkoutQueue();
+            document.getElementById('modal-workout-queue').classList.add('active');
+        }
+
+        function closeWorkoutQueue(event) {
+            if (event && event.target !== document.getElementById('modal-workout-queue') && event.target.className !== 'close-btn') {
+                return;
+            }
+            triggerHaptic();
+            document.getElementById('modal-workout-queue').classList.remove('active');
+
+            // Re-render the workout step in case the immediate next exercise changed
+            if (document.getElementById('workout-screen').style.display !== 'none' && !currentWorkout.isResting) {
+                renderWorkoutStep();
+            } else if (currentWorkout.isResting) {
+                 // Update the "up next" text
+                 const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+                 const nextExName = (currentWorkout.currentSet >= ex.series && currentWorkout.currentExIndex + 1 < currentWorkout.exercices.length)
+                    ? currentWorkout.exercices[currentWorkout.currentExIndex + 1].nom
+                    : `${ex.nom} (Série ${currentWorkout.currentSet + 1}/${ex.series})`;
+                 document.getElementById('workout-next-ex').textContent = nextExName;
+            }
+        }
+
+        function moveWorkoutQueueItem(index, direction) {
+            triggerHaptic();
+            if (direction === -1 && index > currentWorkout.currentExIndex + 1) {
+                // Move up
+                const temp = currentWorkout.exercices[index];
+                currentWorkout.exercices[index] = currentWorkout.exercices[index - 1];
+                currentWorkout.exercices[index - 1] = temp;
+                renderWorkoutQueue();
+            } else if (direction === 1 && index < currentWorkout.exercices.length - 1 && index > currentWorkout.currentExIndex) {
+                // Move down
+                const temp = currentWorkout.exercices[index];
+                currentWorkout.exercices[index] = currentWorkout.exercices[index + 1];
+                currentWorkout.exercices[index + 1] = temp;
+                renderWorkoutQueue();
+            }
+        }
+
+        function renderWorkoutQueue() {
+            const list = document.getElementById('modal-workout-queue-list');
+            list.innerHTML = '';
+
+            currentWorkout.exercices.forEach((ex, index) => {
+                const li = document.createElement('li');
+                li.className = 'ex-item';
+                li.style.display = 'flex';
+                li.style.gap = '15px';
+                li.style.position = 'relative';
+                li.style.alignItems = 'center';
+
+                if (index < currentWorkout.currentExIndex) {
+                    // Already done
+                    li.style.opacity = '0.4';
+                    li.innerHTML = `
+                        <div style="font-weight: bold; width: 30px; text-align: center;">✓</div>
+                        <div style="flex-grow: 1;">
+                            <h4 style="text-decoration: line-through;">${index + 1}. ${ex.nom}</h4>
+                        </div>
+                    `;
+                } else if (index === currentWorkout.currentExIndex) {
+                    // Current
+                    li.style.border = '2px solid var(--accent-color)';
+                    li.style.padding = '10px';
+                    li.style.borderRadius = '12px';
+                    li.innerHTML = `
+                        <div style="font-weight: bold; width: 30px; text-align: center; color: var(--accent-color);">▶</div>
+                        <div style="flex-grow: 1;">
+                            <h4 style="color: var(--accent-color);">${index + 1}. ${ex.nom} (En cours)</h4>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">${ex.series} x ${ex.valeur} ${ex.type}</div>
+                        </div>
+                    `;
+                } else {
+                    // Upcoming
+                    const imgUrl = getExImage(ex);
+
+                    let upBtn = index > currentWorkout.currentExIndex + 1 ? `<button onclick="moveWorkoutQueueItem(${index}, -1)" style="background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 8px; width: 36px; height: 36px; font-weight: bold; cursor: pointer;">↑</button>` : `<div style="width: 36px; height: 36px;"></div>`;
+                    let downBtn = index < currentWorkout.exercices.length - 1 ? `<button onclick="moveWorkoutQueueItem(${index}, 1)" style="background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 8px; width: 36px; height: 36px; font-weight: bold; cursor: pointer;">↓</button>` : `<div style="width: 36px; height: 36px;"></div>`;
+
+                    li.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            ${upBtn}
+                            ${downBtn}
+                        </div>
+                        <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
+                        <div style="flex-grow: 1;">
+                            <h4>${index + 1}. ${ex.nom}</h4>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">${ex.series} x ${ex.valeur} ${ex.type} | ⏱ ${ex.repos}s</div>
+                        </div>
+                    `;
+                }
+                list.appendChild(li);
+            });
+        }
+
         function showWorkoutEnd() {
             document.getElementById('workout-progress').textContent = "Terminé";
             document.getElementById('workout-ex-view').style.display = 'none';
@@ -1887,7 +2059,7 @@
 
                 osc.start();
                 osc.stop(sharedAudioCtx.currentTime + duration);
-            } catch (e) { console.log("Audio not supported or allowed yet", e); }
+            } catch (e) { console.warn("L'audio n'est pas encore supporté ou autorisé", e); }
         }
 
         function closeExModal(event) {
@@ -2060,10 +2232,8 @@
         // Service Worker Registration for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
-                    console.log('SW registered: ', registration);
-                }).catch(registrationError => {
-                    console.log('SW registration failed: ', registrationError);
+                navigator.serviceWorker.register('sw.js').catch(registrationError => {
+                    console.error("L'enregistrement du Service Worker a échoué : ", registrationError);
                 });
             });
         }
@@ -2118,6 +2288,7 @@
                         else if (modalId === 'modal-quick-settings') closeQuickWorkoutSettings();
                         else if (modalId === 'modal-add-ex') closeAddExModal();
                         else if (modalId === 'modal-edit-ex') closeEditExModal();
+                        else if (modalId === 'modal-workout-queue') closeWorkoutQueue();
                         else {
                             overlay.classList.remove('active');
                             document.body.style.overflow = 'auto';

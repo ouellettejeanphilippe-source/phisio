@@ -266,6 +266,11 @@
         <!-- Footer / Controls -->
         <div id="workout-controls" style="padding: 20px; background-color: #050505; border-top: 1px solid var(--border-color);">
             <button id="btn-next-step" onclick="nextWorkoutStep()" class="btn-action" style="margin-top: 0; padding: 20px; font-size: 1.2rem;">SÉRIE SUIVANTE</button>
+            <div style="display: flex; gap: 10px; margin-top: 15px;" id="workout-controls-secondary">
+                <button id="btn-skip-ex" onclick="skipCurrentExercice()" class="btn-timer" style="flex: 1; margin: 0; justify-content: center; padding: 15px; font-size: 1rem; color: #ff5555; border-color: rgba(255, 85, 85, 0.3);">PASSER L'EXO</button>
+                <button id="btn-delay-ex" onclick="delayCurrentExercice()" class="btn-timer" style="flex: 1; margin: 0; justify-content: center; padding: 15px; font-size: 1rem; color: #ffb300; border-color: rgba(255, 179, 0, 0.3);">À PLUS TARD</button>
+                <button id="btn-show-queue" onclick="openWorkoutQueue()" class="btn-timer" style="flex: 1; margin: 0; justify-content: center; padding: 15px; font-size: 1rem;">FILE D'ATTENTE</button>
+            </div>
             <button id="btn-skip-rest" onclick="skipRest()" class="btn-timer" style="width: 100%; justify-content: center; margin-top: 15px; display: none; padding: 15px; font-size: 1rem;">PASSER LE REPOS</button>
         </div>
     </div>
@@ -333,6 +338,16 @@
             <div id="modal-add-tags-container" class="tags-container" style="flex-shrink: 0;"></div>
 
             <div class="grid" id="modal-add-grid" style="overflow-y: auto; padding-bottom: 2rem; flex-grow: 1; grid-template-columns: 1fr;"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Active Workout Queue -->
+    <div class="modal-overlay" id="modal-workout-queue" onclick="closeWorkoutQueue(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <button class="close-btn" aria-label="Fermer" onclick="closeWorkoutQueue()">&times;</button>
+            <h2 class="modal-title" style="margin-bottom: 1rem;">File d'attente</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Réorganisez les exercices restants de cette séance.</p>
+            <ul class="ex-list" id="modal-workout-queue-list" style="overflow-y: auto; flex-grow: 1; margin-bottom: 2rem;"></ul>
         </div>
     </div>
 
