@@ -269,12 +269,13 @@
                 const checkBg = isSelected ? 'var(--accent-color)' : 'transparent';
                 const checkTxt = isSelected ? '✓' : '';
 
+                let titleTags = ex.equipement ? ` <span class="tag" style="background:rgba(255,255,255,0.1); font-size:0.6rem;">🏋️ ${ex.equipement}</span>` : '';
                 card.innerHTML = `
                     <div class="check-circle" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-color); background-color: ${checkBg}; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; flex-shrink: 0;">${checkTxt}</div>
                     <img src="${imgUrl}" alt="${ex.nom}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" loading="lazy">
                     <div style="flex-grow: 1; overflow: hidden;">
-                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom}</div>
-                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series || 3}x${ex.valeur || 10} | ${ex.repos || 60}s</div>
+                        <div class="card-title" style="margin-bottom: 2px; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ex.nom}${titleTags}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.8rem;">${ex.series || 3}x${ex.valeur || 10}${ex.unilateral ? ' par côté' : ''} | ${ex.repos || 60}s</div>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -396,7 +397,11 @@
                             description: "Suggestion importée depuis wger.de",
                             video: baseData.name || "",
                             image: baseData.image ? "https://wger.de" + baseData.image : "",
-                            frequence: 0
+                            frequence: 0,
+                            equipement: "",
+                            unilateral: false,
+                            kegel_on: 5,
+                            kegel_off: 5
                         };
                     });
                 }
@@ -533,7 +538,10 @@
             }
 
             exercicesToRender.forEach(ex => {
-                const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+                let tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+                if (ex.equipement) {
+                    tagsHTML += `<span class="tag">🏋️ ${ex.equipement}</span>`;
+                }
                 let importanceTag = '';
                 if (ex.importance) {
                     let color = ex.importance.includes('Haute') ? '#ff3333' : (ex.importance.includes('Moyenne') ? '#ffb300' : '#58a6ff');
@@ -564,7 +572,7 @@
                         <div class="card-meta" style="gap: 5px;">${importanceTag} ${freqTag} ${tagsHTML}</div>
                         <div class="card-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">${ex.description}</div>
                         <div class="card-footer">
-                            <span>${ex.series} x ${ex.valeur} ${ex.type}</span>
+                            <span>${ex.series} x ${ex.valeur} ${ex.type}${ex.unilateral ? ' par côté' : ''}</span>
                             <span>⏱ ${ex.repos}s</span>
                         </div>
                     </div>
@@ -616,7 +624,7 @@
                     const nomLower = (ex.n || "").toLowerCase();
 
                     // Auto-correction du type pour les exercices isométriques si manquant ou erroné
-                    if ((!type || type === 'reps') && (nomLower.includes('planche') || nomLower.includes('plank') || nomLower.includes('gainage') || nomLower.includes('isométrie') || nomLower.includes('isometrique'))) {
+                    if ((!type || type === 'reps') && (nomLower.includes('planche') || nomLower.includes('plank') || nomLower.includes('gainage') || nomLower.includes('isométrie') || nomLower.includes('isometrique') || nomLower.includes('chaise') || nomLower.includes('l-sit'))) {
                         type = 'secs';
                     }
 
@@ -632,7 +640,11 @@
                         description: ex.d || "",
                         video: ex.v || "",
                         image: ex.image || ex.img || ex.url_image || "",
-                        frequence: ex.frequence || 0
+                        frequence: ex.frequence || 0,
+                        equipement: ex.eq || ex.equipement || "",
+                        unilateral: ex.uni || ex.unilateral ? true : false,
+                        kegel_on: ex.kegel_on || 5,
+                        kegel_off: ex.kegel_off || 5
                     };
                 });
 
@@ -900,6 +912,11 @@
                 } else if (ex.poids && ex.poids > 0) {
                     targetText += ` @ ${ex.poids}kg`;
                 }
+                if (ex.unilateral) {
+                    targetText += " par côté";
+                }
+
+                let eqTag = ex.equipement ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); cursor: default;">🏋️ ${ex.equipement}</span>` : '';
 
                 li.innerHTML = `
                     <button onclick="removeTempExercice(${index})" style="position: absolute; top: -10px; right: -10px; background: #ff3333; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">✕</button>
@@ -909,6 +926,7 @@
                         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
                             <span class="tag" style="background: rgba(255, 255, 255, 0.1); cursor: pointer;" onclick="openEditTempEx(${index})">⚙️ ${targetText}</span>
                             <span class="tag" style="background: rgba(255, 255, 255, 0.1); cursor: pointer;" onclick="openEditTempEx(${index})">⏱ ${ex.repos}s</span>
+                            ${eqTag}
                         </div>
                         <p style="font-size: 0.95rem; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${ex.description}</p>
                     </div>
@@ -973,7 +991,10 @@
             triggerHaptic();
             document.getElementById('modal-ex-title').textContent = ex.nom;
 
-            const tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+            let tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+            if (ex.equipement) {
+                tagsHTML += `<span class="tag">🏋️ ${ex.equipement}</span>`;
+            }
             document.getElementById('modal-ex-meta').innerHTML = tagsHTML;
 
             const imgUrl = getExImage(ex);
@@ -982,7 +1003,7 @@
                 imgContainer.innerHTML = `<img src="${imgUrl}" alt="${ex.nom}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem;" loading="lazy">`;
             }
 
-            document.getElementById('modal-ex-series').textContent = `${ex.series} × ${ex.valeur} ${ex.type}`;
+            document.getElementById('modal-ex-series').textContent = `${ex.series} × ${ex.valeur} ${ex.type}${ex.unilateral ? ' par côté' : ''}`;
             document.getElementById('modal-ex-repos').textContent = `${ex.repos}s`;
             document.getElementById('modal-ex-desc').textContent = ex.description;
 
@@ -1065,7 +1086,7 @@
 
             // Auto-correction : si c'est une planche mais que le type a été mal importé
             const nomExLower = ex.nom ? ex.nom.toLowerCase() : "";
-            if (nomExLower.includes('planche') || nomExLower.includes('plank') || nomExLower.includes('gainage') || nomExLower.includes('isométrie')) {
+            if (nomExLower.includes('planche') || nomExLower.includes('plank') || nomExLower.includes('gainage') || nomExLower.includes('isométrie') || nomExLower.includes('isometrique') || nomExLower.includes('chaise') || nomExLower.includes('l-sit')) {
                 if (ex.type !== 'secs' && ex.type !== 'kegel') {
                     ex.type = 'secs';
                 }
@@ -1116,7 +1137,17 @@
                 } else if (ex.poids && ex.poids > 0) {
                     targetText += ` @ ${ex.poids}kg`;
                 }
+                if (ex.unilateral) {
+                    targetText += " par côté";
+                }
                 document.getElementById('workout-ex-target').textContent = targetText;
+
+                let eqTagHtml = ex.equipement ? `<span class="tag" style="font-size: 1.1rem; padding: 8px 16px; background: rgba(255, 255, 255, 0.1); color: var(--text-primary);">🏋️ ${ex.equipement}</span>` : '';
+                document.getElementById('workout-ex-meta').innerHTML = `
+                    <span class="tag" id="workout-ex-target" style="font-size: 1.1rem; padding: 8px 16px; background: var(--accent-dark); color: var(--accent-color);">${targetText}</span>
+                    ${eqTagHtml}
+                    <button class="btn-timer" onclick="openEditCurrentEx()" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;">✏️ Modifier</button>
+                `;
 
                 document.getElementById('workout-ex-desc').textContent = ex.description;
 
@@ -1293,8 +1324,8 @@
                         btnPause.style.display = 'none'; // Cacher pause
                         circleEl.classList.remove('active-timer-glow-red');
 
-                        // Wait for manual validation instead of auto-clicking
                         showSuccess("Temps écoulé ! Validez la série.");
+                        document.getElementById('btn-next-step').style.display = 'flex';
                     }
                 }, 1000);
 
@@ -1334,8 +1365,8 @@
                                 btnPause.style.display = 'none';
                                 circleEl.classList.remove('active-timer-glow-red', 'active-timer-glow-green');
 
-                                // Wait for manual validation
                                 showSuccess("Cycles terminés ! Validez la série.");
+                                document.getElementById('btn-next-step').style.display = 'flex';
                                 return;
                             }
                             phaseTimeLeft = tOn;
@@ -1417,19 +1448,21 @@
             isWorkoutTimerPaused = !isWorkoutTimerPaused;
             const btnPause = document.getElementById('btn-pause-active-timer');
             const phaseEl = document.getElementById('workout-active-timer-phase');
+            const circleEl = document.getElementById('active-timer-circle');
 
             if (isWorkoutTimerPaused) {
                 btnPause.innerHTML = '▶ REPRENDRE';
                 btnPause.classList.add('active-timer');
                 phaseEl.dataset.originalText = phaseEl.textContent;
                 phaseEl.textContent = "EN PAUSE";
-                document.getElementById('active-timer-circle').style.transition = 'none'; // Stop circle animation
+                circleEl.style.transition = 'none'; // Stop circle animation
             } else {
                 btnPause.innerHTML = '⏸ PAUSE';
                 btnPause.classList.remove('active-timer');
                 if (phaseEl.dataset.originalText) {
                     phaseEl.textContent = phaseEl.dataset.originalText;
                 }
+                circleEl.style.transition = 'stroke-dashoffset 1s linear';
             }
         }
 
@@ -1514,14 +1547,16 @@
             triggerHaptic();
             isRestTimerPaused = !isRestTimerPaused;
             const btnPause = document.getElementById('btn-pause-rest-timer');
+            const circleEl = document.getElementById('rest-timer-circle');
 
             if (isRestTimerPaused) {
                 btnPause.innerHTML = '▶ REPRENDRE';
                 btnPause.classList.add('active-timer');
-                document.getElementById('rest-timer-circle').style.transition = 'none';
+                circleEl.style.transition = 'none';
             } else {
                 btnPause.innerHTML = '⏸ PAUSE';
                 btnPause.classList.remove('active-timer');
+                circleEl.style.transition = 'stroke-dashoffset 1s linear';
             }
         }
 
