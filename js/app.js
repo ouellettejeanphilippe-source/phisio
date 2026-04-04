@@ -289,7 +289,7 @@
             if (!ex) return;
 
             // Save to local DB if not exists
-            if (!db.exercices.find(e => e.id === ex.id)) {
+            if (!db.exercices.some(e => String(e.id) === String(ex.id))) {
                 db.exercices.push(ex);
                 localStorage.setItem('fitness_data', JSON.stringify(db));
             }
@@ -425,9 +425,11 @@
             const grid = document.getElementById('web-exercices-grid');
             grid.innerHTML = '';
 
+            const localIds = new Set(db.exercices.map(e => String(e.id)));
+
             suggestions.forEach(ex => {
                 // Skip if already in local db to avoid duplicates
-                if (db.exercices.find(e => e.id === ex.id)) return;
+                if (localIds.has(String(ex.id))) return;
 
                 const imgUrl = getExImage(ex);
                 const isSelected = selectedQuickExercices.has(ex.id);
@@ -766,9 +768,11 @@
             triggerHaptic();
             currentViewedPlan = plan;
 
+            const exercisesMap = new Map(db.exercices.map(ex => [String(ex.id), ex]));
+
             // Create a deep clone of the exercises for this specific session preview/edit
             currentViewedPlanExercises = (plan.exercices_ids || []).map(id => {
-                const e = db.exercices.find(ex => ex.id === id);
+                const e = exercisesMap.get(String(id));
                 return e ? structuredClone(e) : null;
             }).filter(e => e);
 
@@ -850,10 +854,11 @@
             if (!newPlanName) return;
 
             const newPlanIds = [];
+            const exercisesMap = new Map(db.exercices.map(ex => [String(ex.id), ex]));
 
             // Pour chaque exercice, on regarde s'il a été modifié par rapport à la base
             currentViewedPlanExercises.forEach(ex => {
-                const originalEx = db.exercices.find(e => e.id === ex.id);
+                const originalEx = exercisesMap.get(String(ex.id));
                 let isModified = false;
 
                 if (!originalEx) {
@@ -1066,9 +1071,12 @@
                     alert("Ce programme ne contient aucun exercice.");
                     return;
                 }
+
+                const exercisesMap = new Map(db.exercices.map(ex => [String(ex.id), ex]));
+
                 // Récupérer et cloner les objets exercices pour permettre la modif à la volée
                 exos = plan.exercices_ids.map(id => {
-                    const e = db.exercices.find(ex => ex.id === id);
+                    const e = exercisesMap.get(String(id));
                     // Utilisation de structuredClone pour une copie profonde plus efficace et sécurisée
                     return e ? structuredClone(e) : null;
                 }).filter(e => e);
