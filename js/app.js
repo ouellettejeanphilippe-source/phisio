@@ -2230,7 +2230,7 @@
         function hideSuccess() { document.getElementById('success-container').style.display = 'none'; }
 
         // Service Worker Registration for PWA
-        if ('serviceWorker' in navigator) {
+        if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(registrationError => {
                     console.error("L'enregistrement du Service Worker a échoué : ", registrationError);
@@ -2303,7 +2303,13 @@
         }
 
         // Start
-        window.onload = () => {
-            init();
-            initSwipeToDismiss();
-        };
+        if (typeof window !== 'undefined') {
+            window.onload = () => {
+                init();
+                initSwipeToDismiss();
+            };
+        }
+
+        if (typeof module !== 'undefined' && module.exports) {
+            module.exports = { extractUniqueTags };
+        }
