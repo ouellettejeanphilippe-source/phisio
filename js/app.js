@@ -73,6 +73,10 @@
             if (savedData) {
                 try {
                     db = JSON.parse(savedData);
+                    // Pre-parse tags into arrays for performance
+                    db.exercices.forEach(ex => {
+                        ex.tagsArray = (ex.tags || '').split(',').map(t => t.trim()).filter(t => t !== '');
+                    });
                     renderPlans(db.plans);
                     renderExercices(db.exercices);
                     hideError();
@@ -138,7 +142,9 @@
         function extractUniqueTags(exercicesData) {
             const tagSet = new Set();
             exercicesData.forEach(ex => {
-                if (ex.tags) {
+                if (ex.tagsArray) {
+                    ex.tagsArray.forEach(t => tagSet.add(t));
+                } else if (ex.tags) {
                     ex.tags.split(',').forEach(t => {
                         const trimmed = t.trim();
                         if (trimmed) tagSet.add(trimmed);
@@ -394,6 +400,7 @@
                             valeur: 10,
                             type: "reps",
                             repos: 60,
+                            tagsArray: (baseData.category || "Web").split(',').map(t => t.trim()).filter(t => t !== ''),
                             description: "Suggestion importée depuis wger.de",
                             video: baseData.name || "",
                             image: baseData.image ? "https://wger.de" + baseData.image : "",
@@ -540,7 +547,8 @@
             }
 
             exercicesToRender.forEach(ex => {
-                let tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+                const tags = ex.tagsArray || (ex.tags || '').split(',').map(t => t.trim()).filter(t => t !== '');
+                let tagsHTML = tags.map(t => `<span class="tag">${t}</span>`).join('');
                 if (ex.equipement) {
                     tagsHTML += `<span class="tag">🏋️ ${ex.equipement}</span>`;
                 }
@@ -646,7 +654,8 @@
                         equipement: ex.eq || ex.equipement || "",
                         unilateral: ex.uni || ex.unilateral ? true : false,
                         kegel_on: ex.kegel_on || 5,
-                        kegel_off: ex.kegel_off || 5
+                        kegel_off: ex.kegel_off || 5,
+                        tagsArray: (ex.t || "").split(',').map(t => t.trim()).filter(t => t !== '')
                     };
                 });
 
@@ -730,7 +739,7 @@
                     const matchesQuery = (e.nom && e.nom.toLowerCase().includes(query)) ||
                                          (e.description && e.description.toLowerCase().includes(query)) ||
                                          (e.tags && e.tags.toLowerCase().includes(query));
-                    const matchesTag = activeTag ? (e.tags && e.tags.split(',').map(t=>t.trim()).includes(activeTag)) : true;
+                    const matchesTag = activeTag ? (e.tagsArray && e.tagsArray.includes(activeTag)) : true;
                     return matchesQuery && matchesTag;
                 });
                 renderExercices(filtered);
@@ -740,7 +749,7 @@
                     const matchesQuery = (e.nom && e.nom.toLowerCase().includes(query)) ||
                                          (e.description && e.description.toLowerCase().includes(query)) ||
                                          (e.tags && e.tags.toLowerCase().includes(query));
-                    const matchesTag = activeTag ? (e.tags && e.tags.split(',').map(t=>t.trim()).includes(activeTag)) : true;
+                    const matchesTag = activeTag ? (e.tagsArray && e.tagsArray.includes(activeTag)) : true;
                     return matchesQuery && matchesTag;
                 });
                 renderQuickWorkoutExercices(filtered);
@@ -1018,7 +1027,8 @@
             triggerHaptic();
             document.getElementById('modal-ex-title').textContent = ex.nom;
 
-            let tagsHTML = (ex.tags || '').split(',').filter(t => t.trim() !== '').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+            const tags = ex.tagsArray || (ex.tags || '').split(',').map(t => t.trim()).filter(t => t !== '');
+            let tagsHTML = tags.map(t => `<span class="tag">${t}</span>`).join('');
             if (ex.equipement) {
                 tagsHTML += `<span class="tag">🏋️ ${ex.equipement}</span>`;
             }
@@ -2171,7 +2181,7 @@
                 const matchesQuery = (e.nom && e.nom.toLowerCase().includes(query)) ||
                                      (e.description && e.description.toLowerCase().includes(query)) ||
                                      (e.tags && e.tags.toLowerCase().includes(query));
-                const matchesTag = activeTag ? (e.tags && e.tags.split(',').map(t=>t.trim()).includes(activeTag)) : true;
+                const matchesTag = activeTag ? (e.tagsArray && e.tagsArray.includes(activeTag)) : true;
                 return matchesQuery && matchesTag;
             });
 
