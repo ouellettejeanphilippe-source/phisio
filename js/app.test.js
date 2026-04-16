@@ -5,8 +5,8 @@ const { extractUniqueTags } = require('./app.js');
 test('extractUniqueTags function', async (t) => {
     await t.test('extracts unique tags from exercises', () => {
         const exercises = [
-            { tags: 'Poids du corps, Force' },
-            { tags: 'Force, Cardio' }
+            { tags: 'Poids du corps, Force', tagsArray: ['Poids du corps', 'Force'] },
+            { tags: 'Force, Cardio', tagsArray: ['Force', 'Cardio'] }
         ];
         const result = extractUniqueTags(exercises);
         assert.deepStrictEqual(result, ['Cardio', 'Force', 'Poids du corps']);
@@ -14,7 +14,7 @@ test('extractUniqueTags function', async (t) => {
 
     await t.test('handles exercises without tags', () => {
         const exercises = [
-            { tags: 'Force' },
+            { tags: 'Force', tagsArray: ['Force'] },
             { name: 'No Tags' }
         ];
         const result = extractUniqueTags(exercises);
@@ -23,8 +23,8 @@ test('extractUniqueTags function', async (t) => {
 
     await t.test('handles empty tag strings and extra whitespace', () => {
         const exercises = [
-            { tags: '  Force ,  ' },
-            { tags: ', Poids du corps' }
+            { tags: '  Force ,  ', tagsArray: ['Force'] },
+            { tags: ', Poids du corps', tagsArray: ['Poids du corps'] }
         ];
         const result = extractUniqueTags(exercises);
         assert.deepStrictEqual(result, ['Force', 'Poids du corps']);
@@ -32,7 +32,7 @@ test('extractUniqueTags function', async (t) => {
 
     await t.test('returns sorted tags', () => {
         const exercises = [
-            { tags: 'Z-Tag, A-Tag, M-Tag' }
+            { tags: 'Z-Tag, A-Tag, M-Tag', tagsArray: ['Z-Tag', 'A-Tag', 'M-Tag'] }
         ];
         const result = extractUniqueTags(exercises);
         assert.deepStrictEqual(result, ['A-Tag', 'M-Tag', 'Z-Tag']);
