@@ -2235,13 +2235,13 @@
         function hideLoader() { document.getElementById('loader').style.display = 'none'; }
         function showError(msg) {
             const el = document.getElementById('error-container');
-            el.innerHTML = msg;
+            el.textContent = msg;
             el.style.display = 'block';
         }
         function hideError() { document.getElementById('error-container').style.display = 'none'; }
         function showSuccess(msg) {
             const el = document.getElementById('success-container');
-            el.innerHTML = msg;
+            el.textContent = msg;
             el.style.display = 'block';
             setTimeout(hideSuccess, 5000);
         }
@@ -2329,5 +2329,5 @@
         }
 
         if (typeof module !== 'undefined' && module.exports) {
-            module.exports = { extractUniqueTags };
+            module.exports = { extractUniqueTags, showError, showSuccess };
         }
