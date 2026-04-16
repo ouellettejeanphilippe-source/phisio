@@ -977,51 +977,6 @@
             list.appendChild(addBtnLi);
         }
 
-        let activeTimers = {};
-
-        function startTimer(duration, buttonId) {
-            triggerHaptic();
-            const btn = document.getElementById(buttonId);
-            if (!btn || activeTimers[buttonId]) return; // Timer already running
-
-            let timeRemaining = duration;
-            btn.classList.add('active-timer');
-            btn.innerHTML = `⏳ Repos en cours: ${timeRemaining}s`;
-
-            activeTimers[buttonId] = setInterval(() => {
-                timeRemaining -= 1;
-                if (timeRemaining <= 0) {
-                    clearInterval(activeTimers[buttonId]);
-                    delete activeTimers[buttonId];
-                    btn.classList.remove('active-timer');
-                    btn.innerHTML = `✅ Repos terminé !`;
-                    // Bip simple (facultatif si le navigateur l'autorise)
-                    try {
-                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        const osc = ctx.createOscillator();
-                        osc.connect(ctx.destination);
-                        osc.start();
-                        osc.stop(ctx.currentTime + 0.3);
-                    } catch (e) {
-                        console.warn("Audio playback failed:", e);
-                    }
-                    setTimeout(() => {
-                        if(document.getElementById(buttonId)) {
-                             document.getElementById(buttonId).innerHTML = `⏱ Relancer repos (${duration}s)`;
-                        }
-                    }, 3000);
-                } else {
-                    btn.innerHTML = `⏳ Repos en cours: ${timeRemaining}s`;
-                }
-            }, 1000);
-        }
-
-        function stopAllTimers() {
-            for (let id in activeTimers) {
-                clearInterval(activeTimers[id]);
-            }
-            activeTimers = {};
-        }
 
         function openExerciceDetails(ex) {
             triggerHaptic();
@@ -2149,7 +2104,6 @@
                 return;
             }
             triggerHaptic();
-            stopAllTimers();
             currentViewedPlan = null;
             currentViewedPlanExercises = [];
             document.getElementById('modal').classList.remove('active');
