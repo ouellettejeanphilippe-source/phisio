@@ -2319,5 +2319,5 @@
         }
 
         if (typeof module !== 'undefined' && module.exports) {
-            module.exports = { extractUniqueTags };
+            module.exports = { extractUniqueTags, toggleSoundPref, updateToggleUI };
         }
