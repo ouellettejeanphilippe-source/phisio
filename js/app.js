@@ -11,6 +11,154 @@
         };
 
         // Variables pour la séance en cours
+
+        const WorkoutStrategies = {
+            reps: {
+                getTargetText: (ex) => {
+                    let t = `${ex.series} x ${ex.valeur} reps`;
+                    if (ex.unilateral) t += " par côté";
+                    return t;
+                },
+                setupActiveTimer: () => {},
+                startTimer: () => {}
+            },
+            secs: {
+                getTargetText: (ex) => {
+                    let t = `${ex.series} x ${ex.valeur} secs`;
+                    if (ex.unilateral) t += " par côté";
+                    return t;
+                },
+                setupActiveTimer: (ex, activeTimerSection, phaseEl, btnStartTimer, btnPauseTimer) => {
+                    activeTimerSection.style.display = 'flex';
+                    isWorkoutTimerPaused = false;
+                    btnPauseTimer.style.display = 'none';
+                    btnPauseTimer.innerHTML = '⏸ PAUSE';
+                    btnPauseTimer.classList.remove('active-timer');
+                    document.getElementById('workout-active-timer').textContent = ex.valeur;
+                    phaseEl.textContent = "MAINTENIR";
+                    btnStartTimer.style.display = 'block';
+                    document.getElementById('active-timer-circle').style.transition = 'none';
+                    document.getElementById('active-timer-circle').style.strokeDashoffset = '0';
+                    document.getElementById('active-timer-circle').style.stroke = 'var(--accent-color)';
+                    document.getElementById('active-timer-circle').classList.remove('active-timer-glow-red', 'active-timer-glow-green');
+                },
+                startTimer: (ex, timerEl, phaseEl, circleEl, btnPause, circumference, onFinish) => {
+                    let timeRemaining = parseInt(ex.valeur);
+                    circleEl.style.transition = 'stroke-dashoffset 1s linear';
+                    phaseEl.textContent = "MAINTENIR";
+                    circleEl.classList.add('active-timer-glow-red');
+                    playBeep(400, 0.2);
+                    activeWorkoutTimerInterval = setInterval(() => {
+                        if (isWorkoutTimerPaused) {
+                            circleEl.style.transition = 'none';
+                            return;
+                        } else {
+                            circleEl.style.transition = 'stroke-dashoffset 1s linear';
+                        }
+                        timeRemaining--;
+                        timerEl.textContent = timeRemaining;
+                        const progress = ((ex.valeur - timeRemaining) / ex.valeur);
+                        circleEl.style.strokeDashoffset = circumference * progress;
+                        if (timeRemaining > 0 && timeRemaining <= 3) playBeep(600, 0.1);
+                        if (timeRemaining <= 0) {
+                            clearInterval(activeWorkoutTimerInterval);
+                            playBeep(800, 0.5);
+                            phaseEl.textContent = "TERMINÉ";
+                            btnPause.style.display = 'none';
+                            circleEl.classList.remove('active-timer-glow-red');
+                            circleEl.style.transition = 'none';
+                            circleEl.style.strokeDashoffset = circumference;
+                            if (onFinish) onFinish();
+                        }
+                    }, 1000);
+                }
+            },
+            kegel: {
+                getTargetText: (ex) => {
+                    return `${ex.series} x ${ex.valeur} cycles (C:${ex.kegel_on || 5}s / R:${ex.kegel_off || 5}s)`;
+                },
+                setupActiveTimer: (ex, activeTimerSection, phaseEl, btnStartTimer, btnPauseTimer) => {
+                    activeTimerSection.style.display = 'flex';
+                    isWorkoutTimerPaused = false;
+                    btnPauseTimer.style.display = 'none';
+                    btnPauseTimer.innerHTML = '⏸ PAUSE';
+                    btnPauseTimer.classList.remove('active-timer');
+                    document.getElementById('workout-active-timer').textContent = ex.valeur;
+                    phaseEl.textContent = "PRÊT (CYCLES)";
+                    btnStartTimer.style.display = 'block';
+                    document.getElementById('active-timer-circle').style.transition = 'none';
+                    document.getElementById('active-timer-circle').style.strokeDashoffset = '0';
+                    document.getElementById('active-timer-circle').style.stroke = 'var(--accent-color)';
+                    document.getElementById('active-timer-circle').classList.remove('active-timer-glow-red', 'active-timer-glow-green');
+                },
+                startTimer: (ex, timerEl, phaseEl, circleEl, btnPause, circumference, onFinish) => {
+                    const tOn = parseInt(ex.kegel_on || 5);
+                    const tOff = parseInt(ex.kegel_off || 5);
+                    const totalCycles = parseInt(ex.valeur);
+                    let currentCycle = 1;
+                    let isContracting = true;
+                    let phaseTimeLeft = tOn;
+
+                    timerEl.textContent = currentCycle;
+                    phaseEl.textContent = `CONTRACTER (1/${totalCycles})`;
+                    circleEl.classList.remove('active-timer-glow-green');
+                    circleEl.classList.add('active-timer-glow-red');
+                    playBeep(600, 0.3);
+
+                    activeWorkoutTimerInterval = setInterval(() => {
+                        if (isWorkoutTimerPaused) return;
+                        phaseTimeLeft--;
+                        if (phaseTimeLeft <= 0) {
+                            isContracting = !isContracting;
+                            if (isContracting) {
+                                currentCycle++;
+                                if (currentCycle > totalCycles) {
+                                    clearInterval(activeWorkoutTimerInterval);
+                                    playBeep(800, 0.5);
+                                    phaseEl.textContent = "TERMINÉ";
+                                    btnPause.style.display = 'none';
+                                    circleEl.classList.remove('active-timer-glow-green', 'active-timer-glow-red');
+                                    circleEl.style.strokeDashoffset = circumference;
+                                    if (onFinish) onFinish();
+                                    return;
+                                }
+                                phaseTimeLeft = tOn;
+                                timerEl.textContent = currentCycle;
+                                phaseEl.textContent = `CONTRACTER (${currentCycle}/${totalCycles})`;
+                                circleEl.classList.remove('active-timer-glow-green');
+                                circleEl.classList.add('active-timer-glow-red');
+                                playBeep(600, 0.3);
+                            } else {
+                                phaseTimeLeft = tOff;
+                                phaseEl.textContent = "REPOS";
+                                circleEl.classList.remove('active-timer-glow-red');
+                                circleEl.classList.add('active-timer-glow-green');
+                                playBeep(400, 0.1);
+                            }
+                        }
+                    }, 1000);
+                }
+            },
+            poids: {
+                getTargetText: (ex) => {
+                    let t = `${ex.series} x ${ex.valeur} reps @ ${ex.poids || 0}kg`;
+                    if (ex.unilateral) t += " par côté";
+                    return t;
+                },
+                setupActiveTimer: () => {},
+                startTimer: () => {}
+            },
+            distance: {
+                getTargetText: (ex) => {
+                    let t = `${ex.series} x ${ex.valeur} km`;
+                    if (ex.unilateral) t += " par côté";
+                    return t;
+                },
+                setupActiveTimer: () => {},
+                startTimer: () => {}
+            }
+        };
+
         let currentWorkout = {
             planId: null,
             exercices: [],
@@ -933,18 +1081,11 @@
                 li.style.gap = '15px';
                 li.style.position = 'relative';
 
-                let targetText = `${ex.series} x ${ex.valeur} ${ex.type}`;
-                if (ex.type === 'kegel') {
-                    targetText = `${ex.series} x ${ex.valeur} cycles (C:${ex.kegel_on || 5}s / R:${ex.kegel_off || 5}s)`;
-                } else if (ex.type === 'poids') {
-                    targetText = `${ex.series} x ${ex.valeur} reps @ ${ex.poids || 0}kg`;
-                } else if (ex.type === 'distance') {
-                    targetText = `${ex.series} x ${ex.valeur} km`;
-                } else if (ex.poids && ex.poids > 0) {
-                    targetText += ` @ ${ex.poids}kg`;
-                }
-                if (ex.unilateral) {
-                    targetText += " par côté";
+                const strategy = WorkoutStrategies[ex.type] || WorkoutStrategies['reps'];
+                let targetText = strategy.getTargetText(ex);
+                // Fallback for custom logic (e.g. reps with weight)
+                if ((ex.type === 'reps' || !ex.type) && ex.poids && ex.poids > 0) {
+                    targetText = targetText.replace(" reps", ` reps @ ${ex.poids}kg`);
                 }
 
                 let eqTag = ex.equipement ? `<span class="tag" style="background: rgba(255, 255, 255, 0.1); cursor: default;">🏋️ ${ex.equipement}</span>` : '';
@@ -1124,18 +1265,11 @@
                 document.getElementById('workout-ex-title').textContent = ex.nom;
 
                 // Formater l'objectif selon le type
-                let targetText = `${ex.series} x ${ex.valeur} ${ex.type}`;
-                if (ex.type === 'kegel') {
-                    targetText = `${ex.series} x ${ex.valeur} cycles (C:${ex.kegel_on || 5}s / R:${ex.kegel_off || 5}s)`;
-                } else if (ex.type === 'poids') {
-                    targetText = `${ex.series} x ${ex.valeur} reps @ ${ex.poids || 0}kg`;
-                } else if (ex.type === 'distance') {
-                    targetText = `${ex.series} x ${ex.valeur} km`;
-                } else if (ex.poids && ex.poids > 0) {
-                    targetText += ` @ ${ex.poids}kg`;
-                }
-                if (ex.unilateral) {
-                    targetText += " par côté";
+                const strategy = WorkoutStrategies[ex.type] || WorkoutStrategies['reps'];
+                let targetText = strategy.getTargetText(ex);
+                // Fallback for custom logic (e.g. reps with weight)
+                if ((ex.type === 'reps' || !ex.type) && ex.poids && ex.poids > 0) {
+                    targetText = targetText.replace(" reps", ` reps @ ${ex.poids}kg`);
                 }
                 document.getElementById('workout-ex-target').textContent = targetText;
 
@@ -1178,30 +1312,12 @@
 
                 // Gestion des timers spécifiques (Isométrie ou Kegel)
                 const activeTimerSection = document.getElementById('workout-active-timer-section');
-                if (ex.type === 'secs' || ex.type === 'kegel') {
-                    activeTimerSection.style.display = 'flex';
-                    const phaseEl = document.getElementById('workout-active-timer-phase');
-                    const btnStartTimer = document.getElementById('btn-start-active-timer');
+                const phaseEl = document.getElementById('workout-active-timer-phase');
+                const btnStartTimer = document.getElementById('btn-start-active-timer');
                 const btnPauseTimer = document.getElementById('btn-pause-active-timer');
 
-                isWorkoutTimerPaused = false;
-                btnPauseTimer.style.display = 'none';
-                btnPauseTimer.innerHTML = '⏸ PAUSE';
-                btnPauseTimer.classList.remove('active-timer');
-
-                    if (ex.type === 'kegel') {
-                        document.getElementById('workout-active-timer').textContent = ex.valeur;
-                        phaseEl.textContent = "PRÊT (CYCLES)";
-                    } else {
-                        document.getElementById('workout-active-timer').textContent = ex.valeur;
-                        phaseEl.textContent = "MAINTENIR";
-                    }
-
-                    btnStartTimer.style.display = 'block';
-                    document.getElementById('active-timer-circle').style.transition = 'none';
-                    document.getElementById('active-timer-circle').style.strokeDashoffset = '0';
-                    document.getElementById('active-timer-circle').style.stroke = 'var(--accent-color)';
-                    document.getElementById('active-timer-circle').classList.remove('active-timer-glow-red', 'active-timer-glow-green'); // Reset any glow
+                if (strategy && strategy.setupActiveTimer) {
+                    strategy.setupActiveTimer(ex, activeTimerSection, phaseEl, btnStartTimer, btnPauseTimer);
                 } else {
                     activeTimerSection.style.display = 'none';
                 }
@@ -1289,98 +1405,12 @@
 
             if (activeWorkoutTimerInterval) clearInterval(activeWorkoutTimerInterval);
 
-            if (ex.type === 'secs') {
-                // Logique Isométrie (Temps total)
-                let timeRemaining = parseInt(ex.valeur);
-                circleEl.style.transition = 'stroke-dashoffset 1s linear';
-                phaseEl.textContent = "MAINTENIR";
-                circleEl.classList.add('active-timer-glow-red'); // Glowing red for isometry
-
-                playBeep(400, 0.2); // Start beep
-
-                activeWorkoutTimerInterval = setInterval(() => {
-                    if (isWorkoutTimerPaused) {
-                        circleEl.style.transition = 'none';
-                        return;
-                    } else {
-                        circleEl.style.transition = 'stroke-dashoffset 1s linear';
-                    }
-
-                    timeRemaining--;
-                    timerEl.textContent = timeRemaining;
-
-                    const progress = ((ex.valeur - timeRemaining) / ex.valeur);
-                    circleEl.style.strokeDashoffset = circumference * progress;
-
-                    if (timeRemaining > 0 && timeRemaining <= 3) playBeep(600, 0.1);
-
-                    if (timeRemaining <= 0) {
-                        clearInterval(activeWorkoutTimerInterval);
-                        playBeep(800, 0.5); // End beep
-                        phaseEl.textContent = "TERMINÉ";
-                        btnPause.style.display = 'none'; // Cacher pause
-                        circleEl.classList.remove('active-timer-glow-red');
-
-                        showSuccess("Temps écoulé ! Validez la série.");
-                        document.getElementById('btn-next-step').style.display = 'flex';
-                    }
-                }, 1000);
-
-            } else if (ex.type === 'kegel') {
-                // Logique Cycles Respiration / Kegel
-                const tOn = parseInt(ex.kegel_on || 5);
-                const tOff = parseInt(ex.kegel_off || 5);
-                const totalCycles = parseInt(ex.valeur);
-
-                let currentCycle = 1;
-                let isContracting = true;
-                let phaseTimeLeft = tOn;
-
-                timerEl.textContent = currentCycle;
-                phaseEl.textContent = `CONTRACTER (1/${totalCycles})`;
-                circleEl.classList.remove('active-timer-glow-green');
-                circleEl.classList.add('active-timer-glow-red'); // Rouge glow
-                playBeep(600, 0.3); // High beep for contract
-
-                activeWorkoutTimerInterval = setInterval(() => {
-                    if (isWorkoutTimerPaused) return;
-
-                    phaseTimeLeft--;
-
-                    if (phaseTimeLeft <= 0) {
-                        // Switch Phase
-                        isContracting = !isContracting;
-
-                        if (isContracting) {
-                            // On passe à la contraction du cycle SUIVANT
-                            currentCycle++;
-                            if (currentCycle > totalCycles) {
-                                // Fini !
-                                clearInterval(activeWorkoutTimerInterval);
-                                playBeep(800, 0.6); // End beep
-                                phaseEl.textContent = "TERMINÉ";
-                                btnPause.style.display = 'none';
-                                circleEl.classList.remove('active-timer-glow-red', 'active-timer-glow-green');
-
-                                showSuccess("Cycles terminés ! Validez la série.");
-                                document.getElementById('btn-next-step').style.display = 'flex';
-                                return;
-                            }
-                            phaseTimeLeft = tOn;
-                            phaseEl.textContent = `CONTRACTER (${currentCycle}/${totalCycles})`;
-                            circleEl.classList.remove('active-timer-glow-green');
-                            circleEl.classList.add('active-timer-glow-red');
-                            playBeep(600, 0.3);
-                        } else {
-                            // On passe au relâchement du cycle EN COURS
-                            phaseTimeLeft = tOff;
-                            phaseEl.textContent = `RELÂCHER (${currentCycle}/${totalCycles})`;
-                            circleEl.classList.remove('active-timer-glow-red');
-                            circleEl.classList.add('active-timer-glow-green'); // Vert glow pour relâchement
-                            playBeep(400, 0.3); // Low beep for relax
-                        }
-                    }
-                }, 1000);
+            const strategy = WorkoutStrategies[ex.type];
+            if (strategy && strategy.startTimer) {
+                strategy.startTimer(ex, timerEl, phaseEl, circleEl, btnPause, circumference, () => {
+                    showSuccess("Temps écoulé ! Validez la série.");
+                    document.getElementById('btn-next-step').style.display = 'flex';
+                });
             }
         }
 
@@ -1823,28 +1853,52 @@
                 weeklyChartContainer.appendChild(col);
             }
 
-            // Heatmap generation
-            for (let i = 29; i >= 0; i--) {
-                const d = new Date(today);
-                d.setDate(d.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
-                const count = sessionCounts[dateStr] || 0;
+            // Muscle Heatmap generation
+            // Analyser les muscles ciblés lors des 7 derniers jours
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-                const box = document.createElement('div');
-                box.style.width = '24px';
-                box.style.height = '24px';
-                box.style.borderRadius = '6px';
-                box.title = `${dateStr}: ${count} séance(s)`;
+            const muscleCounts = {};
+            const recentMuscleSessions = sessions.filter(s => new Date(s.date) >= sevenDaysAgo);
 
-                if (count === 0) {
-                    box.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                } else if (count === 1) {
-                    box.style.backgroundColor = 'rgba(111, 178, 255, 0.4)';
-                } else {
-                    box.style.backgroundColor = 'var(--accent-color)';
+            recentMuscleSessions.forEach(s => {
+                const plan = db.plans.find(p => p.id === s.planId);
+                if (plan && plan.exercices_ids) {
+                    plan.exercices_ids.forEach(exId => {
+                        const ex = db.exercices.find(e => String(e.id) === String(exId));
+                        if (ex && ex.tags) {
+                            const exTags = ex.tags.split(',').map(t => t.trim().toLowerCase());
+                            exTags.forEach(tag => {
+                                // Exclure les tags non-musculaires courants si on veut être précis,
+                                // mais pour faire simple, on prend tous les tags d'équipement/muscle.
+                                // Idéalement, il faudrait un champ "muscles" dans la base.
+                                if(tag !== 'poids du corps' && tag !== 'haltères' && tag !== 'barre') {
+                                    muscleCounts[tag] = (muscleCounts[tag] || 0) + 1;
+                                }
+                            });
+                        }
+                    });
                 }
+            });
 
-                heatmapContainer.appendChild(box);
+            if (Object.keys(muscleCounts).length === 0) {
+                heatmapContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; width: 100%;">Pas de données musculaires récentes.</div>';
+            } else {
+                const maxMuscleCount = Math.max(...Object.values(muscleCounts), 1);
+
+                Object.entries(muscleCounts).sort((a, b) => b[1] - a[1]).forEach(([muscle, count]) => {
+                    const box = document.createElement('div');
+                    box.className = 'tag';
+                    // Calcul d'une opacité basée sur la fréquence
+                    const intensity = Math.max(0.2, count / maxMuscleCount);
+                    box.style.background = `rgba(153, 88, 255, ${intensity})`; // Accent color avec opacité dynamique
+                    box.style.color = 'white';
+                    box.style.border = '1px solid rgba(255,255,255,0.2)';
+                    box.style.margin = '2px';
+                    box.title = `${muscle}: ${count} exercice(s) dans les 7 derniers jours`;
+                    box.textContent = muscle.toUpperCase();
+                    heatmapContainer.appendChild(box);
+                });
             }
 
             // History list logic (last 10 sessions)

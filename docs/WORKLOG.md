@@ -5,8 +5,8 @@
 - Préparation de la migration vers le Pattern Stratégie pour le Workout Engine.
 
 ## 📋 À faire
-- Implémenter l'architecture Pattern Stratégie dans `js/app.js`.
-- Développer la Heatmap Musculaire Dynamique.
+- [x] Implémenter l'architecture Pattern Stratégie dans `js/app.js`.
+- [x] Développer la Heatmap Musculaire Dynamique.
 - Mettre en place le "Web Fetching" avancé de médias (GIFs/SVGs).
 - Affiner l'UI avec la "Bottom Island" et le Glassmorphism.
 

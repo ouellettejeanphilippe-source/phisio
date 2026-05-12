@@ -19,3 +19,7 @@ Ce document sert à référencer les décisions techniques, la stack utilisée e
    Le grand bloc `if/else` gérant les types d'exercices dans `app.js` va être refactorisé en un objet de stratégies (`WorkoutStrategies`) pour encapsuler le comportement spécifique à chaque type (reps, secs, kegel, poids, etc.) et faciliter l'extension.
 2. **Synchronisation Offline-First :**
    Maintien du modèle PWA Offline-First mais avec une abstraction plus propre pour gérer l'historique et les statistiques complexes qui seront ajoutés.
+
+### V3 Engine Refactor
+- **Pattern Stratégie**: Implémenté via `WorkoutStrategies` dans `js/app.js` pour simplifier le formatage et la gestion des timers actifs.
+- **Heatmap Musculaire**: Refonte de la heatmap sur les 7 derniers jours pour se concentrer sur les groupes musculaires en extrayant les tags des exercices.
