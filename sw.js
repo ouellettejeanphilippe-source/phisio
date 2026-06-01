@@ -1,10 +1,11 @@
-const CACHE_NAME = 'fitness-tracker-v1';
+const CACHE_NAME = 'fitness-tracker-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/css/style.css',
   '/js/app.js',
   '/js/utils.js',
+  '/js/defaultData.js',
   '/manifest.json',
   '/assets/icon-192.png',
   '/assets/icon-512.png',

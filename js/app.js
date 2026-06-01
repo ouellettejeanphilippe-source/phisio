@@ -217,7 +217,15 @@
             }
 
             // Load Data
-            const savedData = localStorage.getItem('fitness_data');
+            let savedData = localStorage.getItem('fitness_data');
+
+            if (!savedData && typeof DEFAULT_DB !== 'undefined') {
+                // Initial state - no data, but we have default data
+                savedData = JSON.stringify(DEFAULT_DB);
+                localStorage.setItem('fitness_data', savedData);
+                localStorage.setItem('using_default_data', 'true');
+            }
+
             if (savedData) {
                 try {
                     db = JSON.parse(savedData);
@@ -243,9 +251,13 @@
         function updateStatusUI() {
             const statusDiv = document.getElementById('sync-status');
             const lastSync = localStorage.getItem('last_sync');
+            const usingDefault = localStorage.getItem('using_default_data') === 'true';
+
             if (lastSync) {
                 const date = new Date(parseInt(lastSync));
-                statusDiv.innerHTML = `✅ Données disponibles hors-ligne<br>Dernière synchronisation : ${date.toLocaleString('fr-FR')}`;
+                statusDiv.innerHTML = `✅ Données synchronisées disponibles hors-ligne<br>Dernière synchronisation : ${date.toLocaleString('fr-FR')}`;
+            } else if (usingDefault) {
+                statusDiv.innerHTML = `✅ Données par défaut chargées et disponibles hors-ligne.<br>Synchronisez pour obtenir vos propres données.`;
             } else {
                 statusDiv.innerHTML = `⚠️ Aucune donnée n'est actuellement sauvegardée sur cet appareil.`;
             }
@@ -664,7 +676,7 @@
                     <div class="card-content">
                         <div class="card-title">${plan.nom}</div>
                         <div class="card-meta">
-                            <span class="tag" style="background: var(--accent-dark); color: var(--accent-color);">${plan.goal}x / sem</span>
+                            <span class="tag" style="background: var(--accent-dark); color: var(--accent-color);">${plan.goal || 3}x / sem</span>
                             <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
                         </div>
                         <div class="card-desc">${plan.description}</div>
@@ -844,14 +856,30 @@
 
         function clearData() {
             triggerHaptic();
-            if (confirm("Voulez-vous vraiment effacer toutes les données sauvegardées sur cet appareil ?")) {
+            if (confirm("Voulez-vous vraiment effacer les données synchronisées et revenir aux données par défaut ?")) {
                 localStorage.removeItem('fitness_data');
                 localStorage.removeItem('last_sync');
-                db = { exercices: [], plans: [] };
-                renderPlans([]);
-                renderExercices([]);
+                localStorage.removeItem('sync_url');
+
+                // Clear URL input field
+                document.getElementById('api-url').value = '';
+
+                // Ask user if they want to load default data
+                if (typeof DEFAULT_DB !== 'undefined' && confirm("Voulez-vous charger les données par défaut intégrées ? (Annuler pour laisser l'application vide)")) {
+                    db = JSON.parse(JSON.stringify(DEFAULT_DB));
+                    localStorage.setItem('fitness_data', JSON.stringify(db));
+                    localStorage.setItem('using_default_data', 'true');
+                    showSuccess("Données réinitialisées avec succès aux valeurs par défaut.");
+                } else {
+                    db = { exercices: [], plans: [] };
+                    localStorage.setItem('fitness_data', JSON.stringify(db));
+                    localStorage.removeItem('using_default_data');
+                    showSuccess("Données locales effacées avec succès (Application vide).");
+                }
+
+                renderPlans(db.plans);
+                renderExercices(db.exercices);
                 updateStatusUI();
-                showSuccess("Données locales effacées avec succès.");
             }
         }
 
@@ -934,7 +962,7 @@
             }).filter(e => e);
 
             document.getElementById('modal-title').textContent = plan.nom;
-            document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
+            document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal || 3}x / semaine</span>`;
             document.getElementById('modal-desc').textContent = plan.description;
 
             // Setup "Démarrer" button
@@ -2500,7 +2528,7 @@
                             <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px; max-height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
                                 ${res.data.category || 'Catégorie inconnue'}
                             </div>
-                            <button class="btn-action" onclick="importWebExercise(`${res.data.id}`, `${res.data.name.replace(/`/g, '')}`)" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
+                            <button class="btn-action" onclick="importWebExercise('${res.data.id}', '${res.data.name.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
                         `;
                         frag.appendChild(card);
                     });
