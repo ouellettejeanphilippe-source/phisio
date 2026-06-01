@@ -140,4 +140,4 @@ L'application suit scrupuleusement les codes de **Samsung One UI 8.5** et **iOS*
 **Technique**
 - [ ] **Migration vers le Pattern Stratégie** pour la gestion des types d'exercices (voir section 3).
 - [ ] **Virtualisation de Liste** : Si la bibliothèque dépasse 500+ exercices, implémenter un "Virtual Scroller" dans `renderExercices` pour n'afficher dans le DOM que les éléments visibles à l'écran, afin d'économiser la RAM mobile.
-- [ ] **Tests E2E** : Développer des scripts Playwright robustes pour tester automatiquement le flux du Workout Engine (lancement, timers, fin de séance) après chaque mise à jour.
+- [x] **Tests E2E** : Développer des scripts Playwright robustes pour tester automatiquement le flux du Workout Engine (lancement, timers, fin de séance) après chaque mise à jour.
