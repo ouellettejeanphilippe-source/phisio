@@ -217,16 +217,7 @@
             }
 
             // Load Data
-            let savedData = localStorage.getItem('fitness_data');
-
-            if (!savedData && typeof DEFAULT_DB !== 'undefined') {
-                // Initial state - no data, but we have default data
-                savedData = JSON.stringify(DEFAULT_DB);
-                localStorage.setItem('fitness_data', savedData);
-                // We set last_sync to now so it doesn't look completely unset
-                localStorage.setItem('last_sync', Date.now().toString());
-            }
-
+            const savedData = localStorage.getItem('fitness_data');
             if (savedData) {
                 try {
                     db = JSON.parse(savedData);
@@ -2509,7 +2500,7 @@
                             <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px; max-height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
                                 ${res.data.category || 'Catégorie inconnue'}
                             </div>
-                            <button class="btn-action" onclick="importWebExercise('${res.data.id}', '${res.data.name.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
+                            <button class="btn-action" onclick="importWebExercise(`${res.data.id}`, `${res.data.name.replace(/`/g, '')}`)" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
                         `;
                         frag.appendChild(card);
                     });
