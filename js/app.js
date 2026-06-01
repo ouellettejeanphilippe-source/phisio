@@ -1258,6 +1258,7 @@
                 document.getElementById('btn-next-step').style.display = 'flex';
                 document.getElementById('workout-controls-secondary').style.display = 'flex';
                 document.getElementById('btn-skip-rest').style.display = 'none';
+                checkAndShowSmartSurcharge(ex);
 
                 document.getElementById('btn-next-step').textContent = 'VALIDER LA SÉRIE';
 
@@ -1745,6 +1746,7 @@
             document.getElementById('workout-ex-view').style.display = 'none';
             document.getElementById('workout-rest-view').style.display = 'none';
             document.getElementById('workout-end-view').style.display = 'flex';
+            fireConfetti();
 
             document.getElementById('workout-controls').style.display = 'none';
 
@@ -2338,4 +2340,223 @@
 
         if (typeof module !== 'undefined' && module.exports) {
             module.exports = { extractUniqueTags, showError, showSuccess };
+        }
+
+        // Smart Surcharge ("TDAH Friendly")
+        function checkAndShowSmartSurcharge(ex) {
+            const btnSurcharge = document.getElementById('btn-smart-surcharge');
+
+            // On affiche le bouton seulement si l'exercice a une notion de progression (reps, secs, poids)
+            if (['reps', 'secs', 'poids'].includes(ex.type || 'reps')) {
+                btnSurcharge.style.display = 'block';
+
+                let surchargeText = "✨ SURCHARGE: ";
+                if (ex.type === 'poids' || ex.poids > 0) {
+                    surchargeText += "+1 kg";
+                } else if (ex.type === 'secs') {
+                    surchargeText += "+5 secs";
+                } else {
+                    surchargeText += "+1 rep";
+                }
+                btnSurcharge.textContent = surchargeText;
+            } else {
+                btnSurcharge.style.display = 'none';
+            }
+        }
+
+        function applySmartSurcharge() {
+            triggerHaptic();
+            const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
+
+            if (ex.type === 'poids' || ex.poids > 0) {
+                ex.poids = (parseFloat(ex.poids || 0) + 1).toString();
+                showSuccess("Poids augmenté de 1kg ! 💪");
+            } else if (ex.type === 'secs') {
+                ex.valeur = (parseInt(ex.valeur) + 5).toString();
+                showSuccess("Durée augmentée de 5s ! 🔥");
+            } else {
+                ex.valeur = (parseInt(ex.valeur) + 1).toString();
+                showSuccess("Répétitions augmentées de 1 ! 📈");
+            }
+
+            document.getElementById('btn-smart-surcharge').style.display = 'none'; // Hide after use
+            renderWorkoutStep();
+        }
+
+        // Confetti Canvas for Gamification
+        function fireConfetti() {
+            const canvas = document.createElement('canvas');
+            canvas.id = 'confetti-canvas';
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.pointerEvents = 'none';
+            canvas.style.zIndex = '9999';
+            document.body.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const confettis = [];
+            const colors = ['#6FB2FF', '#9958FF', '#FF6FD8', '#3fb950', '#ffb300'];
+
+            for (let i = 0; i < 150; i++) {
+                confettis.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    w: Math.random() * 10 + 5,
+                    h: Math.random() * 10 + 5,
+                    c: colors[Math.floor(Math.random() * colors.length)],
+                    dx: Math.random() * 4 - 2,
+                    dy: Math.random() * 5 + 2,
+                    rot: Math.random() * 360,
+                    rotSpeed: Math.random() * 10 - 5
+                });
+            }
+
+            let animationId;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                for (let c of confettis) {
+                    c.y += c.dy;
+                    c.x += c.dx;
+                    c.rot += c.rotSpeed;
+                    if (c.y < canvas.height) active = true;
+
+                    ctx.save();
+                    ctx.translate(c.x + c.w / 2, c.y + c.h / 2);
+                    ctx.rotate(c.rot * Math.PI / 180);
+                    ctx.fillStyle = c.c;
+                    ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+                    ctx.restore();
+                }
+
+                if (active) {
+                    animationId = requestAnimationFrame(render);
+                } else {
+                    document.body.removeChild(canvas);
+                }
+            }
+            render();
+
+            // Multiple haptic feedback
+            let hapticCount = 0;
+            const hapticInterval = setInterval(() => {
+                triggerHaptic();
+                hapticCount++;
+                if (hapticCount > 5) clearInterval(hapticInterval);
+            }, 150);
+        }
+
+        // Web API Integration (Wger)
+        function openWebSearchModal() {
+            document.getElementById('modal-web-search').classList.add('active');
+            document.getElementById('web-search-input').value = '';
+            document.getElementById('web-search-results').innerHTML = '';
+            setTimeout(() => document.getElementById('web-search-input').focus(), 100);
+        }
+
+        function closeWebSearchModal(e) {
+            if (e && e.target !== document.getElementById('modal-web-search')) return;
+            document.getElementById('modal-web-search').classList.remove('active');
+        }
+
+        async function fetchWebExercises() {
+            const query = document.getElementById('web-search-input').value.trim();
+            if (!query) return;
+
+            const loader = document.getElementById('web-search-loader');
+            const resultsContainer = document.getElementById('web-search-results');
+
+            loader.style.display = 'block';
+            resultsContainer.innerHTML = '';
+
+            try {
+                // Fetching from wger API
+                const response = await fetch(`https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(query)}&language=2`); // 2 = English
+                const data = await response.json();
+
+                loader.style.display = 'none';
+
+                if (data.suggestions && data.suggestions.length > 0) {
+                    // Extract IDs to get details
+                    const results = data.suggestions.slice(0, 10); // Limit to 10
+
+                    if (results.length === 0) {
+                        resultsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; width: 100%;">Aucun résultat trouvé.</p>';
+                        return;
+                    }
+
+                    const frag = document.createDocumentFragment();
+                    results.forEach(res => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.innerHTML = `
+                            <h3 style="color: white; margin-bottom: 10px;">${res.data.name}</h3>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px; max-height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                                ${res.data.category || 'Catégorie inconnue'}
+                            </div>
+                            <button class="btn-action" onclick="importWebExercise(`${res.data.id}`, `${res.data.name.replace(/`/g, '')}`)" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
+                        `;
+                        frag.appendChild(card);
+                    });
+                    resultsContainer.appendChild(frag);
+                } else {
+                    resultsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; width: 100%;">Aucun résultat trouvé.</p>';
+                }
+            } catch (err) {
+                console.error("Erreur Web Fetch:", err);
+                loader.style.display = 'none';
+                resultsContainer.innerHTML = '<p style="color: #ff5555; text-align: center; width: 100%;">Erreur de connexion à l\'API. Vérifiez votre connexion internet.</p>';
+            }
+        }
+
+        function importWebExercise(apiId, name) {
+            triggerHaptic();
+
+            // Check if already exists by name
+            if (db.exercices.some(e => e.nom.toLowerCase() === name.toLowerCase())) {
+                showError(`L'exercice "${name}" existe déjà dans votre bibliothèque.`);
+                return;
+            }
+
+            // Create a local db format exercise
+            const newExId = Date.now().toString();
+            const newEx = {
+                id: newExId,
+                nom: name + ' (Web)',
+                description: `Importé depuis le web (ID: ${apiId}). Pensez à modifier les tags et modalités.`,
+                tags: "Import,Web",
+                tagsArray: ["Import", "Web"],
+                type: "reps",
+                series: 3,
+                valeur: 10,
+                repos: 60,
+                equipement: "Au choix",
+                unilateral: false
+            };
+
+            db.exercices.push(newEx);
+
+            // Save to local storage for persistence
+            try {
+                const storedDb = JSON.parse(localStorage.getItem('fitness_data') || '{"exercices":[],"plans":[]}');
+                storedDb.exercices.push(newEx);
+                localStorage.setItem('fitness_data', JSON.stringify(storedDb));
+
+                showSuccess(`"${name}" importé avec succès !`);
+                closeWebSearchModal();
+
+                // Refresh list if we are on the exercices tab
+                if (currentTab === 'exercices') {
+                    renderExercicesList();
+                }
+            } catch (e) {
+                console.error("Erreur sauvegarde locale:", e);
+                showError("Impossible de sauvegarder l'exercice.");
+            }
         }
