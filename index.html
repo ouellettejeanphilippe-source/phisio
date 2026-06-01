@@ -68,7 +68,11 @@
 
         <!-- Exercices Section -->
         <div id="exercices-section" class="section">
-            <div id="exercices-tags-container" class="tags-container"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div id="exercices-tags-container" class="tags-container" style="flex: 1; margin-bottom: 0;"></div>
+                <button class="btn-action" onclick="openWebSearchModal()" style="width: auto; margin-left: 10px; margin-top: 0; padding: 10px 15px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);"><svg style="width:16px; height:16px; margin-right:5px; vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> WEB</button>
+            </div>
+
             <div class="grid" id="exercices-grid"></div>
         </div>
 
@@ -266,6 +270,7 @@
         <!-- Footer / Controls -->
         <div id="workout-controls" style="padding: 20px; background-color: #050505; border-top: 1px solid var(--border-color);">
             <button id="btn-next-step" onclick="nextWorkoutStep()" class="btn-action" style="margin-top: 0; padding: 20px; font-size: 1.2rem;">SÉRIE SUIVANTE</button>
+            <button id="btn-smart-surcharge" onclick="applySmartSurcharge()" class="btn-action" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #FF6FD8, #9958FF); font-size: 1rem; padding: 15px; display: none;">✨ SURCHARGE INTELLIGENTE (+1)</button>
             <div style="display: flex; gap: 10px; margin-top: 15px;" id="workout-controls-secondary">
                 <button id="btn-skip-ex" onclick="skipCurrentExercice()" class="btn-timer" style="flex: 1; margin: 0; justify-content: center; padding: 15px; font-size: 1rem; color: #ff5555; border-color: rgba(255, 85, 85, 0.3);">PASSER L'EXO</button>
                 <button id="btn-delay-ex" onclick="delayCurrentExercice()" class="btn-timer" style="flex: 1; margin: 0; justify-content: center; padding: 15px; font-size: 1rem; color: #ffb300; border-color: rgba(255, 179, 0, 0.3);">À PLUS TARD</button>
@@ -405,5 +410,26 @@
 
     <script src="js/utils.js"></script>
     <script src="js/app.js"></script>
+    <!-- Modal for Web API Search -->
+    <div class="modal-overlay" id="modal-web-search" onclick="closeWebSearchModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" aria-label="Fermer" onclick="closeWebSearchModal()">&times;</button>
+            <h2 class="modal-title" style="margin-bottom: 1rem;"><svg style="width:24px; height:24px; margin-right:10px; vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Recherche Web API</h2>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="web-search-input" class="search-bar" style="flex: 1; border-radius: 8px;" placeholder="Ex: Push up, Squat..." onkeypress="if(event.key === 'Enter') fetchWebExercises()">
+                <button class="btn-action" onclick="fetchWebExercises()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;">CHERCHER</button>
+            </div>
+
+            <div id="web-search-loader" style="display: none; text-align: center; margin: 20px 0;">
+                <div class="loader" style="display: inline-block;"></div>
+                <p style="color: var(--text-secondary); margin-top: 10px;">Interrogation de l'API Wger...</p>
+            </div>
+
+            <div class="grid" id="web-search-results" style="max-height: 400px; overflow-y: auto;">
+                <!-- Results injected here -->
+            </div>
+        </div>
+    </div>
 </body>
 </html>
