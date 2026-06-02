@@ -2500,7 +2500,7 @@
                             <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px; max-height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
                                 ${res.data.category || 'Catégorie inconnue'}
                             </div>
-                            <button class="btn-action" onclick="importWebExercise(`${res.data.id}`, `${res.data.name.replace(/`/g, '')}`)" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
+                            <button class="btn-action" onclick="importWebExercise('${res.data.id}', '${res.data.name.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
                         `;
                         frag.appendChild(card);
                     });
