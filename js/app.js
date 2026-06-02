@@ -2,6 +2,9 @@
         function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(50); }
 
         let db = { exercices: [], plans: [] };
+        let activeWorkoutTimerInterval = null;
+        let isWorkoutTimerPaused = false;
+        let isRestTimerPaused = false;
         let currentTab = 'plans';
 
         let activeTagFilters = {
@@ -264,7 +267,14 @@
             if(tab === 'settings' && navItems[3]) navItems[3].classList.add('active');
 
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-            document.getElementById(`${tab}-section`).classList.add('active');
+
+            const section = document.getElementById(`${tab}-section`);
+            if (section) {
+                section.classList.add('active');
+            } else {
+                console.warn(`Section not found for tab: ${tab}`);
+            }
+
 
             const searchContainer = document.getElementById('search-container');
             if (searchContainer) {
@@ -1157,9 +1167,6 @@
         // MOTEUR DE SÉANCE D'ENTRAÎNEMENT (WORKOUT)
         // ==========================================
 
-        let activeWorkoutTimerInterval = null;
-        let isWorkoutTimerPaused = false;
-        let isRestTimerPaused = false;
 
         // Mode Reps Manuelles
         let isInteractiveRepsModeActive = false;
