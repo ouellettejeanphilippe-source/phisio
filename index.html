@@ -126,9 +126,12 @@
                     <label style="display: block; margin-bottom: 0.5rem; color: white;">URL de l'API (Google Apps Script) :</label>
                     <input type="text" id="api-url" class="search-bar" style="width: 100%; border-radius: 6px;" placeholder="https://script.google.com/macros/s/.../exec">
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 2rem;">
-                    <button id="btn-sync" aria-label="Synchroniser les données avec l'URL" onclick="syncData()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; text-transform: uppercase; transition: opacity 0.3s;">
-                        ⬇️ Synchroniser les données
+                <div style="display: flex; gap: 10px; margin-top: 2rem; flex-wrap: wrap;">
+                    <button id="btn-sync" aria-label="Synchroniser les données avec l'URL" onclick="syncData()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 200px; text-transform: uppercase; transition: opacity 0.3s;">
+                        ⬇️ Synchroniser
+                    </button>
+                    <button aria-label="Exporter les données" onclick="exportDataJSON()" style="background-color: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; text-transform: uppercase;">
+                        📤 Exporter
                     </button>
                     <button aria-label="Vider les données locales" onclick="clearData()" style="background-color: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; text-transform: uppercase;">
                         🗑️ Vider

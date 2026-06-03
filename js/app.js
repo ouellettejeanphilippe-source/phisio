@@ -2,6 +2,629 @@
         function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(50); }
 
         let db = { exercices: [], plans: [] };
+
+const DEFAULT_DATA = {
+    "exercices": [
+        {
+            "id": "1",
+            "nom": "Exercice de Kegel avec Expiration",
+            "tags": "Santé Pelvienne, Respiration, Alta",
+            "series": 2,
+            "valeur": 10,
+            "type": "kegel",
+            "repos": 60,
+            "description": "Contractez le plancher pelvien pendant l'expiration buccale, puis relâchez complètement pendant l'inspiration nasale. Gardez le ventre souple.",
+            "video": "kegel+breathing+physio",
+            "frequence": 5,
+            "kegel_on": 5,
+            "kegel_off": 5
+        },
+        {
+            "id": "2",
+            "nom": "Rotation des hanches assis",
+            "tags": "Santé Pelvienne, Mobilité, Alta",
+            "series": 3,
+            "valeur": 30,
+            "type": "reps",
+            "repos": 30,
+            "description": "Assis, effectuez de rotations avec le bassin pour mobiliser les hanches et le bas du dos.",
+            "video": "seated+ball+hip+rotation",
+            "frequence": 5
+        },
+        {
+            "id": "3",
+            "nom": "Huit de l'infini",
+            "tags": "Thoracique, Mobilité, Alta",
+            "series": 2,
+            "valeur": 20,
+            "type": "reps",
+            "repos": 30,
+            "description": "Maintenez vos mains sur vos coudes opposés et dessinez un chiffre huit horizontal (symbole de l'infini) devant vous. Laissez le tronc suivre.",
+            "video": "thoracic+rotation+paddle",
+            "frequence": 5
+        },
+        {
+            "id": "4",
+            "nom": "Étirement du dos vers l'arrière",
+            "tags": "Postural, Extension, Alta",
+            "series": 3,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "Effectuez une extension du dos en pour ouvrir la cage thoracique et étirer les abdominaux.",
+            "video": "seated+back+extension",
+            "frequence": 5
+        },
+        {
+            "id": "5",
+            "nom": "Équilibre sur ballon de stabilité",
+            "tags": "Stabilité, Core, Alta",
+            "series": 2,
+            "valeur": 60,
+            "type": "secs",
+            "repos": 45,
+            "description": "Maintenez une position stable sur le ballon. Pour augmenter la difficulté, essayez de lever un talon ou un pied légèrement.",
+            "video": "stability+ball+balance",
+            "frequence": 5
+        },
+        {
+            "id": "6",
+            "nom": "Glissement des bras au mur",
+            "tags": "Thoracique, Posture, PDF 1",
+            "series": 2,
+            "valeur": 20,
+            "type": "reps",
+            "repos": 45,
+            "description": "Assis au sol, dos et fesses contre le mur. Appuyez la tête (menton rentré), épaules, coudes et poignets au mur (coudes à 90 degrés). Glissez les bras vers le haut.",
+            "video": "wall+slides+physio",
+            "frequence": 3
+        },
+        {
+            "id": "7",
+            "nom": "Rétraction des omoplates (Bras hauts)",
+            "tags": "Dos, Renforcement, PDF 1",
+            "series": 2,
+            "valeur": 20,
+            "type": "reps",
+            "repos": 45,
+            "description": "Couché sur le ventre, bras allongés vers le haut, pouces vers le plafond. Soulevez coudes et mains en rapprochant et abaissant les omoplates.",
+            "video": "prone+scapular+retraction",
+            "frequence": 3
+        },
+        {
+            "id": "8",
+            "nom": "Rétraction des omoplates (Mains à la tête)",
+            "tags": "Dos, Renforcement, PDF 1",
+            "series": 2,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "Couché sur le ventre, mains derrière la tête. Soulevez les coudes de la surface en rapprochant vos omoplates ensemble sans tirer sur la nuque.",
+            "video": "prone+retraction+hands+head",
+            "frequence": 3
+        },
+        {
+            "id": "9",
+            "nom": "Rétraction des omoplates (Bras en W)",
+            "tags": "Dos, Renforcement, PDF 1",
+            "series": 2,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "Couché sur le ventre, bras vers le haut, coudes fléchis à 90 degrés (forme de W), pouces vers le haut. Soulevez coudes et mains en serrant les omoplates.",
+            "video": "prone+W+raise",
+            "frequence": 3
+        },
+        {
+            "id": "10",
+            "nom": "Planche latérale avec extension et abduction",
+            "tags": "Core, Fessiers, PDF 1",
+            "series": 2,
+            "valeur": 10,
+            "type": "secs",
+            "repos": 45,
+            "description": "En planche latérale sur les genoux, levez la jambe supérieure vers le haut et l'arrière en diagonale avec rotation externe (orteils vers le haut).",
+            "video": "side+plank+abduction",
+            "frequence": 3
+        },
+        {
+            "id": "11",
+            "nom": "Planche latérale avec cercles de jambe",
+            "tags": "Core, Fessiers, PDF 1",
+            "series": 2,
+            "valeur": 10,
+            "type": "secs",
+            "repos": 45,
+            "description": "En planche latérale sur les genoux, jambe supérieure tendue. Effectuez des cercles contrôlés, orteils pointés vers le haut pour engager les fessiers.",
+            "video": "side+plank+circles",
+            "frequence": 3
+        },
+        {
+            "id": "12",
+            "nom": "Redressement assis partiel",
+            "tags": "Abdominaux, Renforcement, PDF 1",
+            "series": 1,
+            "valeur": 15,
+            "type": "reps",
+            "repos": 0,
+            "description": "Couché sur le dos, genoux pliés. Rentrez le menton. Soulevez tête et épaules en dirigeant les mains vers les genoux. Expirez en montant.",
+            "video": "partial+crunch+physio",
+            "frequence": 3
+        },
+        {
+            "id": "13",
+            "nom": "Maintien abdominal isométrique",
+            "tags": "Abdominaux, Stabilité, PDF 1",
+            "series": 1,
+            "valeur": 15,
+            "type": "secs",
+            "repos": 0,
+            "description": "Couché sur le dos, écrasez le sol avec le bas du dos (nombril rentré). Soulevez les épaules et les pieds à quelques centimètres du sol.",
+            "video": "iso+abs+hold",
+            "frequence": 3
+        },
+        {
+            "id": "14",
+            "nom": "Planche avec extension de la hanche",
+            "tags": "Core, Fessiers, PDF 1",
+            "series": 2,
+            "valeur": 15,
+            "type": "secs",
+            "repos": 45,
+            "description": "En planche sur les coudes, soulevez une jambe étendue sans arquer le dos. Maintenez la ligne droite tête-épaules-bassin.",
+            "video": "plank+leg+lift",
+            "frequence": 3
+        },
+        {
+            "id": "15",
+            "nom": "Série 5x5 Scapulaire (Y-U-T-W-I)",
+            "tags": "Épaules, Posture, PDF 2",
+            "series": 5,
+            "valeur": 5,
+            "type": "reps",
+            "repos": 30,
+            "description": "Debout avec élastique. Formez successivement les lettres Y, U, T, W et I. Maintenez chaque position 3 secondes en gardant les omoplates basses.",
+            "video": "YTW+scapular",
+            "frequence": 3
+        },
+        {
+            "id": "16",
+            "nom": "Mouvement I-Y-T à quatre pattes",
+            "tags": "Épaules, Stabilité, PDF 2",
+            "series": 5,
+            "valeur": 3,
+            "type": "reps",
+            "repos": 30,
+            "description": "À quatre pattes, soulevez le bras en avant (I), en diagonale (Y) puis sur le côté (T). Stabilisez bien l'omoplate pendant le mouvement.",
+            "video": "quadruped+IYT",
+            "frequence": 3
+        },
+        {
+            "id": "17",
+            "nom": "Élévations latérales tronc penché",
+            "tags": "Épaules, Dos, PDF 2",
+            "series": 3,
+            "valeur": 12,
+            "type": "reps",
+            "repos": 45,
+            "description": "Genoux fléchis, penché vers l'avant, dos droit. Soulevez les poids sur le côté en ligne avec les épaules sans avancer la tête.",
+            "video": "bent+over+lateral+raises",
+            "frequence": 3
+        },
+        {
+            "id": "18",
+            "nom": "Stabilisation avec adduction horizontale",
+            "tags": "Pectoraux, Stabilité, PDF 2",
+            "series": 3,
+            "valeur": 12,
+            "type": "reps",
+            "repos": 45,
+            "description": "Dos sur le ballon (pont), corps en ligne droite. Levez les poids au plafond puis descendez-les sur les côtés avec coudes légèrement fléchis.",
+            "video": "stability+ball+chest+fly",
+            "frequence": 3
+        },
+        {
+            "id": "19",
+            "nom": "Auto-grandissement postural",
+            "tags": "Posture, Cervical, PDF 3",
+            "series": 1,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 0,
+            "description": "Debout, imaginez une ficelle au sommet de votre tête qui vous tire vers le plafond. Allongez la colonne en respirant normalement.",
+            "video": "auto+grandissement+physio",
+            "frequence": 4
+        },
+        {
+            "id": "20",
+            "nom": "Extension et rétraction avec élastique",
+            "tags": "Dos, Posture, PDF 3",
+            "series": 2,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "Debout, tirez l'élastique vers l'arrière le plus loin possible en collant les omoplates et en reculant les coudes sans monter les épaules.",
+            "video": "band+scapular+retraction",
+            "frequence": 4
+        },
+        {
+            "id": "21",
+            "nom": "Toucher les orteils sur une jambe",
+            "tags": "Équilibre, Jambes, PDF 3",
+            "series": 4,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 30,
+            "description": "En équilibre sur une jambe, penchez-vous vers l'avant (dos droit) pour toucher le sol. Utilisez les ischio-jambiers pour revenir debout.",
+            "video": "single+leg+deadlift",
+            "frequence": 4
+        },
+        {
+            "id": "22",
+            "nom": "Squat bulgare (Pied arrière élevé)",
+            "tags": "Jambes, Fessiers, PDF 3",
+            "series": 4,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "Position de fente, pied arrière élevé sur une marche. Fléchissez les genoux pour abaisser le corps sans déplacer le poids vers l'avant.",
+            "video": "bulgarian+split+squat",
+            "frequence": 4
+        },
+        {
+            "id": "23",
+            "nom": "Planche abdominale classique",
+            "tags": "Core, Renforcement, PDF 3",
+            "series": 1,
+            "valeur": 30,
+            "type": "secs",
+            "repos": 0,
+            "description": "En appui sur coudes et orteils, menton rentré. Soulevez le bassin pour créer une ligne droite. Ne laissez pas le bas du dos s'arquer.",
+            "video": "plank+form",
+            "frequence": 4
+        },
+        {
+            "id": "24",
+            "nom": "Pompes sur genoux (Amplitude de mouvement augmentée)",
+            "tags": "Pectoraux, Renforcement, PDF 3",
+            "series": 3,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 60,
+            "description": "Mains sur haltères, descendez en un bloc (ligne droite tête-genoux). Les haltères permettent de descendre plus bas qu'au sol.",
+            "video": "push+ups+dumbbells",
+            "frequence": 4
+        },
+        {
+            "id": "25",
+            "nom": "Renforcement en extension (Prone)",
+            "tags": "Dos, Chaîne postérieure, PDF 3",
+            "series": 2,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "Couché sur le ventre, bras derrière la tête, menton rentré. Soulevez le haut du corps en rapprochant les omoplates sans lever les pieds.",
+            "video": "prone+back+extension",
+            "frequence": 4
+        },
+        {
+            "id": "26",
+            "nom": "Enfiler l'aiguille (Rotation thoracique)",
+            "tags": "Mobilité, Thoracique, PDF 3",
+            "series": 2,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 30,
+            "description": "À quatre pattes, passez une main sous le corps pour créer une rotation, puis ouvrez grand vers le plafond. Suivez la main du regard.",
+            "video": "thread+the+needle",
+            "frequence": 4
+        },
+        {
+            "id": "27",
+            "nom": "Étirement du muscle trapèze supérieur",
+            "tags": "Cervical, Étirement, PDF 3",
+            "series": 1,
+            "valeur": 30,
+            "type": "secs",
+            "repos": 0,
+            "description": "Bras derrière le dos pour abaisser l'épaule. Inclinez la tête du côté opposé et tournez-la légèrement. Maintenez l'étirement.",
+            "video": "upper+trap+stretch",
+            "frequence": 4
+        },
+        {
+            "id": "28",
+            "nom": "Étirement de l'élévateur de l'omoplate",
+            "tags": "Cervical, Étirement, PDF 3",
+            "series": 1,
+            "valeur": 30,
+            "type": "secs",
+            "repos": 0,
+            "description": "Main derrière la fesse. Tournez la tête à 45 degrés opposés et regardez vers le bas (aisselle). Tirez doucement avec l'autre main.",
+            "video": "levator+scapulae+stretch",
+            "frequence": 4
+        },
+        {
+            "id": "29",
+            "nom": "Mouvement Bird-Dog (Oiseau-Chien)",
+            "tags": "Core, Stabilité, Ajouts",
+            "series": 3,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "À quatre pattes, tendez simultanément le bras et la jambe opposés en gardant le dos parfaitement stable.",
+            "video": "bird+dog",
+            "frequence": 3
+        },
+        {
+            "id": "30",
+            "nom": "Challenge Planche abdominale (2 minutes)",
+            "tags": "Challenge, Core, Ajouts",
+            "series": 1,
+            "valeur": 120,
+            "type": "secs",
+            "repos": 0,
+            "description": "Maintenez la position de planche parfaite. Respirez profondément. Travail de l'endurance musculaire du centre.",
+            "video": "plank+2+minutes",
+            "frequence": 3
+        },
+        {
+            "id": "31",
+            "nom": "Série Y-U-T-W-I sur ballon de stabilité",
+            "tags": "Dos, Épaules, Ajouts",
+            "series": 3,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 45,
+            "description": "Ventre sur le ballon, enchaînez les positions de bras pour renforcer toute la chaîne postérieure et les fixateurs d'omoplates.",
+            "video": "ball+IYT",
+            "frequence": 3
+        },
+        {
+            "id": "32",
+            "nom": "Happy Baby",
+            "tags": "Étirement, Mobilité",
+            "series": 1,
+            "valeur": 300,
+            "type": "secs",
+            "repos": 60,
+            "description": "Happy Baby",
+            "video": "happy+baby+pose",
+            "frequence": 5
+        },
+        {
+            "id": "33",
+            "nom": "Child's pose",
+            "tags": "Étirement, Mobilité",
+            "series": 1,
+            "valeur": 300,
+            "type": "secs",
+            "repos": 60,
+            "description": "Child's pose",
+            "video": "childs+pose",
+            "frequence": 5
+        },
+        {
+            "id": "34",
+            "nom": "Étirement en chevalier",
+            "tags": "Étirement, Jambes",
+            "series": 2,
+            "valeur": 120,
+            "type": "secs",
+            "repos": 30,
+            "description": "Étirer l'aine avec les mains",
+            "video": "kneeling+hip+flexor+stretch",
+            "frequence": 5
+        },
+        {
+            "id": "35",
+            "nom": "Respirations avec lever de jambes",
+            "tags": "Respiration, Core",
+            "series": 3,
+            "valeur": 10,
+            "type": "reps",
+            "repos": 30,
+            "description": "En expirant, remonter les jambes perpendiculaires au sol",
+            "video": "leg+raises+breathing",
+            "frequence": 5
+        },
+        {
+            "id": "36",
+            "nom": "Planche",
+            "tags": "Core, Gainage",
+            "series": 3,
+            "valeur": 60,
+            "type": "secs",
+            "repos": 60,
+            "description": "Planche ben standard",
+            "video": "plank+form",
+            "frequence": 1
+        }
+    ],
+    "plans": [
+        {
+            "id": "p1",
+            "nom": "Santé Pelvienne (Alta)",
+            "description": "Focus plancher pelvien et posture sur ballon.",
+            "goal": 5,
+            "exercices_ids": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "32",
+                "33",
+                "34",
+                "35",
+                "36"
+            ]
+        },
+        {
+            "id": "p2",
+            "nom": "Mobilité Thoracique (PDF 1)",
+            "description": "Ouverture thoracique et renforcement du haut du dos.",
+            "goal": 3,
+            "exercices_ids": [
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "11",
+                "12",
+                "13",
+                "14"
+            ]
+        },
+        {
+            "id": "p3",
+            "nom": "Stabilité Épaules (PDF 2)",
+            "description": "Stabilisation scapulaire et rotateurs avec élastique.",
+            "goal": 3,
+            "exercices_ids": [
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
+        },
+        {
+            "id": "p4",
+            "nom": "Posture & Équilibre (PDF 3)",
+            "description": "Grandissement postural et étirements complets.",
+            "goal": 4,
+            "exercices_ids": [
+                "19",
+                "20",
+                "21",
+                "22",
+                "23",
+                "24",
+                "25",
+                "26",
+                "27",
+                "28"
+            ]
+        },
+        {
+            "id": "p5",
+            "nom": "Core & Chaîne Postérieure",
+            "description": "Gainage profond, Bird-Dog et travail spécifique sur ballon.",
+            "goal": 3,
+            "exercices_ids": [
+                "29",
+                "30",
+                "31"
+            ]
+        },
+        {
+            "id": "p6",
+            "nom": "Routine Lundi",
+            "description": "Pelvien, Thoracique et Posture.",
+            "goal": 1,
+            "exercices_ids": [
+                "1",
+                "2",
+                "3",
+                "6",
+                "7",
+                "19",
+                "23"
+            ]
+        },
+        {
+            "id": "p7",
+            "nom": "Routine Mardi",
+            "description": "Scapulaire, Postural et Core.",
+            "goal": 1,
+            "exercices_ids": [
+                "1",
+                "15",
+                "16",
+                "19",
+                "20",
+                "22",
+                "29"
+            ]
+        },
+        {
+            "id": "p8",
+            "nom": "Routine Mercredi",
+            "description": "Pelvien, Mobilité et Ballon.",
+            "goal": 1,
+            "exercices_ids": [
+                "1",
+                "2",
+                "3",
+                "5",
+                "26",
+                "31"
+            ]
+        },
+        {
+            "id": "p9",
+            "nom": "Routine Jeudi",
+            "description": "Thoracique, Épaules et Gainage.",
+            "goal": 1,
+            "exercices_ids": [
+                "1",
+                "4",
+                "6",
+                "7",
+                "8",
+                "15",
+                "17",
+                "23"
+            ]
+        },
+        {
+            "id": "p10",
+            "nom": "Routine Vendredi",
+            "description": "Postural, Jambes et Étirements.",
+            "goal": 1,
+            "exercices_ids": [
+                "1",
+                "19",
+                "21",
+                "22",
+                "24",
+                "27",
+                "28"
+            ]
+        },
+        {
+            "id": "p11",
+            "nom": "Routine Samedi",
+            "description": "Intensif : Core et Scapulaire.",
+            "goal": 1,
+            "exercices_ids": [
+                "1",
+                "5",
+                "11",
+                "15",
+                "18",
+                "29",
+                "30"
+            ]
+        },
+        {
+            "id": "p12",
+            "nom": "Routine Dimanche",
+            "description": "Récupération : Mobilité et Étirements.",
+            "goal": 1,
+            "exercices_ids": [
+                "1",
+                "3",
+                "19",
+                "26",
+                "27",
+                "28",
+                "31"
+            ]
+        }
+    ]
+};
+
         let activeWorkoutTimerInterval = null;
         let isWorkoutTimerPaused = false;
         let isRestTimerPaused = false;
@@ -235,9 +858,21 @@
                     showError("Erreur lors de la lecture des données locales. Veuillez re-synchroniser.");
                 }
             } else {
-                // Initial state - no data
-                switchTab('settings');
-                showError("Aucune donnée locale trouvée. Veuillez entrer l'URL de votre Google Apps Script et cliquer sur Synchroniser.");
+                // Initial state - load default data
+                try {
+                    db = DEFAULT_DATA;
+                    // Pre-parse tags into arrays for performance
+                    db.exercices.forEach(ex => {
+                        ex.tagsArray = (ex.tags || '').split(',').map(t => t.trim()).filter(t => t !== '');
+                    });
+                    localStorage.setItem('fitness_data', JSON.stringify(db));
+                    renderPlans(db.plans);
+                    renderExercices(db.exercices);
+                    switchTab('plans'); // Fix blank screen
+                    hideError();
+                } catch (e) {
+                    showError("Erreur lors du chargement des données par défaut.");
+                }
             }
 
             hideLoader();
@@ -849,6 +1484,31 @@
                 syncBtn.innerHTML = originalBtnText;
                 syncBtn.disabled = false;
                 syncBtn.style.opacity = '1';
+            }
+        }
+
+
+        function exportDataJSON() {
+            triggerHaptic();
+            const data = localStorage.getItem('fitness_data');
+            if (!data) {
+                showError("Aucune donnée à exporter.");
+                return;
+            }
+            try {
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'fittrack_data_export.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showSuccess("Données exportées avec succès.");
+            } catch (e) {
+                console.error(e);
+                showError("Erreur lors de l'exportation des données.");
             }
         }
 
