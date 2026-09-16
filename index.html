@@ -8,6 +8,7 @@
     <!-- Configuration PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="icon" href="assets/icon-192.png">
     <meta name="theme-color" content="#0d1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -58,9 +59,20 @@
         <div id="success-container" class="error-msg" style="color: #3fb950; background: rgba(63, 185, 80, 0.1); border-color: #3fb950;"></div>
         <div id="loader" class="loader"></div>
 
+        <!-- Bandeau de reprise d'une séance interrompue -->
+        <div id="resume-banner" style="display: none; align-items: center; gap: 12px; flex-wrap: wrap; background: linear-gradient(135deg, rgba(153,88,255,0.18), rgba(111,178,255,0.18)); border: 1px solid rgba(153,88,255,0.45); border-radius: 16px; padding: 14px 16px; margin-bottom: 1.5rem;">
+            <div style="flex: 1; min-width: 200px;">
+                <div style="color: white; font-weight: 700; margin-bottom: 2px;">⏸ Séance interrompue</div>
+                <div id="resume-banner-text" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+            </div>
+            <button class="btn-action" onclick="resumeWorkout()" style="width: auto; margin-top: 0; padding: 10px 18px; font-size: 0.9rem;">REPRENDRE</button>
+            <button class="btn-timer" onclick="discardResumableWorkout()" style="width: auto; margin: 0; padding: 10px 14px; font-size: 0.85rem;">Abandonner</button>
+        </div>
+
         <!-- Plans Section -->
         <div id="plans-section" class="section active">
-            <div style="margin-bottom: 2rem; display: flex; justify-content: flex-end;">
+            <div style="margin-bottom: 2rem; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-timer" onclick="createNewPlan()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem; justify-content: center;">+ NOUVEAU PROGRAMME</button>
                 <button class="btn-action" onclick="openQuickWorkoutSetup()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;">+ SÉANCE RAPIDE</button>
             </div>
             <div class="grid" id="plans-grid"></div>
@@ -70,6 +82,7 @@
         <div id="exercices-section" class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div id="exercices-tags-container" class="tags-container" style="flex: 1; margin-bottom: 0;"></div>
+                <button class="btn-timer" onclick="openExerciseEditor(null)" style="width: auto; margin-left: 10px; margin-top: 0; padding: 10px 15px; font-size: 0.9rem; justify-content: center; white-space: nowrap;">+ NOUVEL EXERCICE</button>
                 <button class="btn-action" onclick="openWebSearchModal()" style="width: auto; margin-left: 10px; margin-top: 0; padding: 10px 15px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);"><svg style="width:16px; height:16px; margin-right:5px; vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> WEB</button>
             </div>
 
@@ -79,6 +92,9 @@
         <!-- Statistics Section -->
         <div id="stats-section" class="section">
             <div class="card" style="max-width: 800px; margin: 0 auto; cursor: default; padding: 2rem;">
+                <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Votre progression</h2>
+                <div id="stats-summary"></div>
+
                 <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Aperçu Hebdomadaire</h2>
                 <div id="stats-weekly-chart" style="display: flex; align-items: flex-end; justify-content: space-around; height: 150px; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 20px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.05);">
                     <!-- Weekly chart dynamically generated -->
@@ -130,14 +146,34 @@
                     <button id="btn-sync" aria-label="Synchroniser les données avec l'URL" onclick="syncData()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 200px; text-transform: uppercase; transition: opacity 0.3s;">
                         ⬇️ Synchroniser
                     </button>
-                    <button aria-label="Exporter les données" onclick="exportDataJSON()" style="background-color: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; text-transform: uppercase;">
+                </div>
+                <div id="sync-status" style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); text-align: center;"></div>
+            </div>
+
+            <div class="card" style="max-width: 600px; margin: 2rem auto; cursor: default; padding: 2rem;">
+                <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Sauvegarde &amp; restauration</h2>
+                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    Vos données vivent dans la mémoire de ce navigateur : elles disparaissent si vous effacez les données du site ou changez d'appareil.
+                    <strong>Exportez régulièrement</strong> — le fichier contient vos programmes, votre historique et toutes vos performances.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button aria-label="Exporter la sauvegarde complète" onclick="exportBackup()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 180px; text-transform: uppercase;">
                         📤 Exporter
                     </button>
-                    <button aria-label="Vider les données locales" onclick="clearData()" style="background-color: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; text-transform: uppercase;">
+                    <button aria-label="Importer une sauvegarde" onclick="triggerImportBackup()" style="background-color: transparent; color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 180px; text-transform: uppercase;">
+                        📥 Importer
+                    </button>
+                    <input type="file" id="import-file-input" accept="application/json,.json" style="display: none;" onchange="handleImportFile(this)">
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <button id="btn-restore-snapshot" aria-label="Restaurer la copie de secours" onclick="restoreSnapshot()" style="display: none; background-color: transparent; color: #ffb300; border: 1px solid rgba(255,179,0,0.4); padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 180px; text-transform: uppercase;">
+                        ↩️ Annuler la dernière opération
+                    </button>
+                    <button aria-label="Vider les données locales" onclick="clearData()" style="background-color: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 180px; text-transform: uppercase;">
                         🗑️ Vider
                     </button>
                 </div>
-                <div id="sync-status" style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); text-align: center;"></div>
+                <div id="storage-info" style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-secondary); text-align: center;"></div>
             </div>
 
             <div class="card" style="max-width: 600px; margin: 2rem auto; cursor: default; padding: 2rem;">
@@ -147,10 +183,23 @@
                         <div style="color: white; font-weight: 600;">Effets sonores</div>
                         <div style="color: var(--text-secondary); font-size: 0.85rem;">Bips de fin de repos et alertes</div>
                     </div>
-                    <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
+                    <label style="position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0;">
                         <input type="checkbox" id="toggle-sound" aria-label="Activer ou désactiver les effets sonores" style="opacity: 0; width: 0; height: 0;" onchange="toggleSoundPref()">
                         <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--surface-hover); transition: .4s; border-radius: 34px; border: 1px solid var(--border-color);" id="toggle-slider">
                             <span style="position: absolute; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: var(--text-secondary); transition: .4s; border-radius: 50%;" id="toggle-knob"></span>
+                        </span>
+                    </label>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                    <div>
+                        <div style="color: white; font-weight: 600;">Reprendre mes dernières charges</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">Chaque séance démarre sur ce que vous avez réellement réalisé la fois précédente</div>
+                    </div>
+                    <label style="position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0;">
+                        <input type="checkbox" id="toggle-prefill" aria-label="Reprendre les valeurs de la dernière séance" style="opacity: 0; width: 0; height: 0;" onchange="togglePrefillPref()">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--surface-hover); transition: .4s; border-radius: 34px; border: 1px solid var(--border-color);" id="prefill-slider">
+                            <span style="position: absolute; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: var(--text-secondary); transition: .4s; border-radius: 50%;" id="prefill-knob"></span>
                         </span>
                     </label>
                 </div>
@@ -170,6 +219,8 @@
                 <button class="btn-action" id="btn-start-workout" style="flex: 2; margin-top: 0;">▶ DÉMARRER</button>
                 <button class="btn-timer" id="btn-add-calendar" onclick="addPlanToCalendar()" style="flex: 1; margin-top: 0; justify-content: center; font-size: 0.8rem; padding: 16px;">📅 Rappel</button>
             </div>
+
+            <div id="plan-actions" style="display: none; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap;"></div>
 
             <button class="btn-timer" id="btn-save-plan" onclick="saveTempPlan()" style="width: 100%; justify-content: center; margin-bottom: 2rem; margin-top: 0; font-size: 0.9rem; padding: 12px; background: rgba(255,255,255,0.05); color: white; border: 1px dashed var(--border-color);">💾 SAUVEGARDER COMME NOUVEAU PROGRAMME</button>
 
@@ -191,10 +242,11 @@
             <!-- Exercice View -->
             <div id="workout-ex-view" style="display: flex; flex-direction: column; height: 100%;">
             <h2 id="workout-ex-title" style="font-size: 3rem; text-align: center; margin-bottom: 10px; color: white; letter-spacing: -1px; margin-top: 2rem;">Pompes</h2>
-            <div id="workout-ex-meta" style="text-align: center; margin-bottom: 2rem; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div id="workout-ex-meta" style="text-align: center; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="tag" id="workout-ex-target" style="font-size: 1.1rem; padding: 8px 16px; background: var(--accent-dark); color: var(--accent-color);">3 x 10 reps</span>
                 <button class="btn-timer" onclick="openEditCurrentEx()" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;">✏️ Modifier</button>
                 </div>
+            <div id="workout-last-perf" style="text-align: center; margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--text-secondary);"></div>
 
                 <div id="workout-ex-img-container" style="text-align: center; margin-bottom: 20px;"></div>
 
@@ -262,11 +314,33 @@
             </div>
 
             <!-- End Screen View -->
-            <div id="workout-end-view" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center;">
-                <div style="font-size: 5rem; margin-bottom: 20px;">🏆</div>
-                <h2 style="color: var(--accent-color); font-size: 2.5rem; margin-bottom: 15px;">SÉANCE TERMINÉE</h2>
-                <p style="color: var(--text-secondary); font-size: 1.2rem; margin-bottom: 40px;">Excellent travail ! La régularité est la clé du succès.</p>
-                <button onclick="finishWorkout()" class="btn-action" style="max-width: 300px;">RETOUR À L'ACCUEIL</button>
+            <div id="workout-end-view" style="display: none; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; text-align: center; overflow-y: auto; padding-top: 20px;">
+                <div style="font-size: 3.5rem; margin-bottom: 10px;">🏆</div>
+                <h2 style="color: var(--accent-color); font-size: 2rem; margin-bottom: 15px;">SÉANCE TERMINÉE</h2>
+
+                <div id="workout-end-summary" style="width: 100%; max-width: 420px;"></div>
+
+                <div style="width: 100%; max-width: 420px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; margin-bottom: 20px; text-align: left;">
+                    <div style="color: white; font-weight: 700; margin-bottom: 12px;">Comment ça s'est passé ?</div>
+
+                    <label for="feedback-effort" style="display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;">
+                        <span>Effort ressenti</span><span id="feedback-effort-value" style="color: var(--accent-color); font-weight: 700;">5</span>
+                    </label>
+                    <input type="range" id="feedback-effort" min="1" max="10" value="5" oninput="updateFeedbackLabels()" style="width: 100%; margin-bottom: 14px; accent-color: var(--accent-color);">
+
+                    <label for="feedback-douleur" style="display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;">
+                        <span>Douleur / gêne</span><span id="feedback-douleur-value" style="color: var(--accent-color); font-weight: 700;">0</span>
+                    </label>
+                    <input type="range" id="feedback-douleur" min="0" max="10" value="0" oninput="updateFeedbackLabels()" style="width: 100%; margin-bottom: 14px; accent-color: var(--accent-color);">
+
+                    <label for="feedback-note" style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;">Note (facultatif)</label>
+                    <textarea id="feedback-note" rows="2" placeholder="Ex : genou droit sensible en fin de série" style="width: 100%; border-radius: 12px; padding: 10px; background-color: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-color); font-family: inherit; resize: vertical;"></textarea>
+
+                    <button onclick="saveSessionFeedback()" class="btn-timer" style="width: 100%; justify-content: center; margin-top: 12px; padding: 12px; font-size: 0.9rem;">ENREGISTRER LE RESSENTI</button>
+                    <div id="feedback-saved" style="display: none; color: #3fb950; font-size: 0.85rem; margin-top: 8px; text-align: center;">✓ Ressenti enregistré</div>
+                </div>
+
+                <button onclick="finishWorkout()" class="btn-action" style="max-width: 420px; width: 100%; margin-bottom: 30px;">RETOUR À L'ACCUEIL</button>
             </div>
         </div>
 
@@ -307,6 +381,104 @@
             </div>
 
             <a id="modal-ex-video" href="#" target="_blank" class="btn-action" style="background-color: #ff0000; color: white; text-decoration: none;">▶ CHERCHER SUR YOUTUBE</a>
+
+            <div id="modal-ex-extras"></div>
+        </div>
+    </div>
+
+    <!-- Modal : créer / modifier un exercice de la bibliothèque -->
+    <div class="modal-overlay" id="modal-ex-editor" onclick="closeExEditor(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 560px; padding: 2rem;">
+            <button class="close-btn" aria-label="Fermer" onclick="closeExEditor()">&times;</button>
+            <h2 class="modal-title" id="ex-editor-title" style="margin-bottom: 1.5rem;">Nouvel exercice</h2>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="ex-editor-nom" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Nom *</label>
+                <input type="text" id="ex-editor-nom" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" placeholder="Ex : Pont fessier">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="ex-editor-tags" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Tags (séparés par des virgules)</label>
+                <input type="text" id="ex-editor-tags" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" placeholder="Ex : Fessiers, Mobilité">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="ex-editor-type" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Type</label>
+                <select id="ex-editor-type" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-color);" onchange="updateExEditorUI()">
+                    <option value="reps">Répétitions</option>
+                    <option value="secs">Isométrie (secondes)</option>
+                    <option value="kegel">Cycles (contraction / relâchement)</option>
+                    <option value="poids">Répétitions avec charge</option>
+                    <option value="distance">Distance (km)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label for="ex-editor-series" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Séries</label>
+                    <input type="number" id="ex-editor-series" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="1" step="1" value="3">
+                </div>
+                <div style="flex: 1;">
+                    <label for="ex-editor-valeur" id="lbl-ex-editor-valeur" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Nombre de répétitions</label>
+                    <input type="number" id="ex-editor-valeur" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="0" step="1" value="10">
+                </div>
+            </div>
+
+            <div id="ex-editor-poids-container" style="display: none; margin-bottom: 1rem;">
+                <label for="ex-editor-poids" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Charge (kg)</label>
+                <input type="number" id="ex-editor-poids" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="0" step="0.5" value="0">
+            </div>
+
+            <div id="ex-editor-kegel-container" style="display: none; gap: 10px; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label for="ex-editor-kegel-on" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Contraction (s)</label>
+                    <input type="number" id="ex-editor-kegel-on" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="1" step="1" value="5">
+                </div>
+                <div style="flex: 1;">
+                    <label for="ex-editor-kegel-off" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Relâchement (s)</label>
+                    <input type="number" id="ex-editor-kegel-off" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="1" step="1" value="5">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label for="ex-editor-repos" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Repos (s)</label>
+                    <input type="number" id="ex-editor-repos" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="0" step="5" value="60">
+                </div>
+                <div style="flex: 1;">
+                    <label for="ex-editor-frequence" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Fréquence / sem.</label>
+                    <input type="number" id="ex-editor-frequence" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" min="0" step="1" value="0">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="ex-editor-desc" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Consignes</label>
+                <textarea id="ex-editor-desc" rows="3" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5); font-family: inherit; resize: vertical;" placeholder="Position, respiration, points d'attention..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label for="ex-editor-equipement" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Équipement</label>
+                    <input type="text" id="ex-editor-equipement" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" placeholder="Ex : Élastique">
+                </div>
+                <div style="flex: 1;">
+                    <label for="ex-editor-video" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Mots-clés vidéo</label>
+                    <input type="text" id="ex-editor-video" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" placeholder="Ex : glute+bridge">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="ex-editor-image" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">URL d'image (facultatif)</label>
+                <input type="text" id="ex-editor-image" class="search-bar" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5);" placeholder="https://...">
+            </div>
+
+            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; color: var(--text-secondary); cursor: pointer;">
+                <input type="checkbox" id="ex-editor-unilateral" style="width: 18px; height: 18px; accent-color: var(--accent-color);">
+                Exercice unilatéral (à faire de chaque côté)
+            </label>
+
+            <button class="btn-action" onclick="saveExerciseEditor()" style="width: 100%; margin-top: 0;">ENREGISTRER</button>
+            <button id="btn-delete-exercise" class="btn-timer" onclick="deleteExerciseFromEditor()" style="display: none; width: 100%; justify-content: center; margin-top: 10px; padding: 12px; color: #ff5555; border-color: rgba(255,85,85,0.3);">🗑 SUPPRIMER CET EXERCICE</button>
         </div>
     </div>
 
@@ -412,7 +584,9 @@
     </div>
 
     <script src="js/utils.js"></script>
+    <script src="js/store.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/coach.js"></script>
     <!-- Modal for Web API Search -->
     <div class="modal-overlay" id="modal-web-search" onclick="closeWebSearchModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">

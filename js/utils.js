@@ -92,6 +92,23 @@ function getDefaultSvgContent(strokeColor) {
 }
 
 /**
+ * Utilitaire: Échapper une chaîne avant insertion dans du HTML.
+ * Les noms, tags et notes sont saisis par l'utilisateur ou importés depuis
+ * une API externe : ils ne doivent jamais être interprétés comme du balisage.
+ * @param {*} value - La valeur à échapper
+ * @returns {string} - La chaîne échappée
+ */
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
  * Utilitaire: Obtenir l'image d'un exercice (Fallback visuel hors-ligne)
  * @param {Object} ex - L'objet exercice
  * @returns {string} - URL de l'image (data URI ou lien direct)
@@ -125,5 +142,5 @@ function getExImage(ex) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getExImage };
+    module.exports = { getExImage, escapeHtml };
 }
