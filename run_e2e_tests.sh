@@ -23,8 +23,11 @@ if [ $COUNT -eq $MAX_RETRIES ]; then
 fi
 
 echo "🧪 Running E2E tests..."
-python3 tests/e2e/test_workout_engine.py
-TEST_RESULT=$?
+TEST_RESULT=0
+for suite in tests/e2e/test_workout_engine.py tests/e2e/test_progress_tracking.py; do
+  echo "--- $suite ---"
+  python3 "$suite" || TEST_RESULT=1
+done
 
 echo "🧹 Cleaning up..."
 kill $SERVER_PID

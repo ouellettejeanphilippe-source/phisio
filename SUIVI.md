@@ -9,9 +9,11 @@ L'application est une **PWA (Progressive Web App)** "Offline-First" entièrement
 ### Fichiers Principaux
 - `index.html` : Squelette de l'interface utilisateur. Inclut la structure DOM pour la navigation, les vues principales (Programmes, Bibliothèque, Statistiques, Paramètres) et les modales superposées (Bottom Sheets).
 - `app.js` : Moteur logique de l'application (Contrôleur). Gère l'état global (`db`, `currentWorkout`), la navigation (`switchTab`), la synchronisation API, et surtout la **machine à états du mode "Séance" (Workout Engine)**.
+- `store.js` : **Couche de données.** Seul fichier qui écrit dans le `localStorage`. Journal de performance, historique détaillé, sauvegarde/restauration, séance en cours, et calculs purs (volume, série de jours, formatage).
+- `coach.js` : **Fonctionnalités de suivi.** Se branche sur `app.js` : journalisation des séries, reprise des charges d'une séance à l'autre, reprise d'une séance interrompue, création/modification/suppression d'exercices et de programmes, sauvegarde, statistiques de progression.
 - `style.css` : Fichier de style global. Définit le système de variables (Dark/AMOLED theme, couleurs d'accentuation), la typographie, les grilles et les animations/transitions fluides (inspirées de One UI/iOS).
 - `utils.js` : Bibliothèque de fonctions utilitaires pures (ex: `getExImage` pour les fallbacks SVG, `escapeICS` pour l'export). Isolée pour faciliter les tests unitaires.
-- `sw.js` : Service Worker. Intercepte les requêtes réseau et sert les fichiers statiques depuis le cache pour garantir le fonctionnement 100% hors ligne.
+- `sw.js` : Service Worker. Sert le code de l'application en « network-first » (pour que les mises à jour arrivent jusqu'au téléphone) avec repli sur le cache, et les ressources immuables en cache-first, garantissant le fonctionnement 100% hors ligne.
 - `manifest.json` & `icon-*.png` : Configuration et assets pour l'installation de la PWA sur l'écran d'accueil mobile.
 - `SUIVI.md` : Ce document technique de référence.
 
@@ -22,7 +24,7 @@ L'application est une **PWA (Progressive Web App)** "Offline-First" entièrement
 ### 2.1 L'Approche Offline-First
 1. **Démarrage (`init()`)** : L'application tente de charger les données (`db`) depuis le `localStorage` de l'appareil.
 2. **Si aucunes données** : L'utilisateur est invité à se rendre dans les paramètres pour effectuer une première synchronisation.
-3. **Pendant l'utilisation** : Toutes les modifications locales (ajout d'une séance rapide, complétion d'un programme, modifications temporaires de répétitions) sont écrites instantanément dans le `localStorage`.
+3. **Pendant l'utilisation** : Toutes les modifications locales (ajout d'une séance rapide, complétion d'un programme, modifications de répétitions, séries réalisées) sont écrites instantanément dans le `localStorage`, via `writeJSON()` qui gère le dépassement de quota.
 4. **Service Worker** : Met en cache `index.html`, les scripts, les styles et les icônes. Même en mode avion, l'application se lance et permet de faire une séance complète.
 
 ### 2.2 Synchronisation Google Sheets (API JSON)
@@ -71,12 +73,9 @@ Le **Workout Engine** gère l'avancement pas à pas dans un tableau d'exercices.
 - `poids` : Comme `reps`, mais associe une charge (`poids` kg).
 - `distance` : Comme `reps`, pour le cardio (`valeur` km).
 
-### 💡 Proposition de Refonte : Pattern Stratégie (Architecture Future)
-Actuellement, la logique des différents types est imbriquée dans de grands blocs `if/else` (dans `renderWorkoutStep`, `startActiveWorkoutTimer`, etc.).
-
-**Meilleur Fonctionnement (Object Oriented / Stratégie) :**
-Créer des classes ou des objets "Stratégie" par type d'exercice pour séparer les responsabilités.
-Exemple conceptuel :
+### ✅ Pattern Stratégie (implémenté)
+La logique propre à chaque type est encapsulée dans l'objet `WorkoutStrategies` de `js/app.js`, au lieu des grands blocs `if/else` d'origine.
+Structure :
 ```javascript
 const WorkoutStrategies = {
     reps: {
@@ -95,7 +94,30 @@ const WorkoutStrategies = {
 const strat = WorkoutStrategies[currentExercise.type] || WorkoutStrategies.reps;
 strat.renderUI(currentExercise);
 ```
-*Avantage : Ajouter un nouveau type (ex: "AMRAP", "EMOM") deviendrait trivial, sans toucher au cœur du moteur.*
+*Avantage : ajouter un nouveau type (ex : "AMRAP", "EMOM") ne demande pas de toucher au cœur du moteur.*
+
+### 📓 Journal de performance
+À chaque série validée, `coachRecordSet()` (js/coach.js) mémorise ce qui a réellement été fait — le compteur manuel s'il a été utilisé, sinon la valeur affichée — avec la charge du moment. En fin de séance, `coachCommitSession()` écrit :
+
+```javascript
+// localStorage['fitness_logs'] : une entrée par exercice et par séance
+{
+  "<exId>": [
+    {
+      date: "2026-05-20T18:30:00.000Z",
+      nom: "Pont fessier",
+      type: "poids",
+      cible: { valeur: 8, poids: 20 },     // ce qui était visé au départ
+      sets: [{ valeur: 8, poids: 20 }, { valeur: 8, poids: 20 }],
+      volume: 320                          // tonnage, reps, secondes ou km selon le type
+    }
+  ]
+}
+```
+
+Au lancement de la séance suivante, `coachPrepareExercises()` remplace les valeurs cibles par `suggestTarget(derniereEntree)` (la meilleure série réalisée). C'est ce mécanisme qui fait survivre la surcharge intelligente d'une séance à l'autre ; il se désactive depuis Paramètres → « Reprendre mes dernières charges ».
+
+Les exercices sont indexés **par identifiant** et non par position : la file d'attente peut être réorganisée en pleine séance sans fausser le journal.
 
 ---
 
@@ -124,20 +146,26 @@ L'application suit scrupuleusement les codes de **Samsung One UI 8.5** et **iOS*
 - [x] Intégration API Externe (WGER) : Recherche d'exercices sur le net pour les intégrer à une séance rapide avec téléchargement local.
 - [x] Statistiques : Carte de chaleur des 30 derniers jours, graphique hebdomadaire dynamique.
 - [x] Outils : Génération d'un fichier `.ics` de rappel d'entraînement.
+- [x] **Journal de performance** : chaque série validée est enregistrée (valeur réalisée, charge, volume) et consultable par exercice.
+- [x] **Progression réelle** : une séance démarre sur ce qui a été réalisé la fois précédente ; la surcharge intelligente n'est plus perdue à la fin de la séance.
+- [x] **Reprise de séance** : la séance en cours survit à un verrouillage d'écran, un appel ou la fermeture de l'onglet.
+- [x] **Sauvegarde & restauration** : export complet versionné, import fusion/remplacement, copie de secours automatique avant toute opération destructrice.
+- [x] **Bibliothèque éditable** : créer, modifier et supprimer exercices et programmes sans passer par Google Sheets.
+- [x] **Ressenti de séance** : effort, douleur et note libre, visibles dans l'historique.
+- [x] **Mises à jour de la PWA** : Service Worker en « network-first » (une app installée peut de nouveau recevoir des correctifs).
 
 ---
 
 ## 🚧 6. À Faire (TODOs & Backlog)
 
 **Fonctionnalités & UX**
-- [ ] **File d'attente dynamique (Skip & Swap)** :
-  - *En cours d'implémentation* : Permettre de "sauter" un exercice pendant la séance, de le repousser à plus tard, ou de réorganiser l'ordre via une vue "À venir".
-- [ ] **Réorganisation pré-séance** : Drag & drop ou boutons haut/bas dans la modale de détails d'un programme pour changer l'ordre *avant* de lancer la séance.
-- [ ] **Historique d'évolution (Progress Over Time)** : Enregistrer les poids soulevés / répétitions max par exercice dans `localStorage` et générer un graphique d'évolution spécifique sur la modale de l'exercice.
+- [x] **File d'attente dynamique (Skip & Swap)** : sauter un exercice, le repousser à plus tard, réorganiser l'ordre via la vue "À venir".
+- [x] **Historique d'évolution (Progress Over Time)** : les valeurs réalisées par exercice sont enregistrées dans `fitness_logs` et un graphique d'évolution s'affiche sur la fiche de l'exercice.
+- [ ] **Réorganisation pré-séance** : Drag & drop dans la modale de détails d'un programme (les boutons haut/bas existent déjà).
 - [ ] **Audio personnalisé** : Permettre à l'utilisateur de choisir des fichiers MP3 locaux pour la fin du timer, au lieu des bips d'oscillateur (AudioContext) basiques.
-- [ ] **Support Multi-Profils** : Permettre de changer d'URL de synchro facilement pour gérer les programmes de plusieurs personnes sur un même appareil.
+- [ ] **Support Multi-Profils** : Gérer plusieurs personnes — et donc plusieurs journaux de performance — sur un même appareil.
 
 **Technique**
-- [ ] **Migration vers le Pattern Stratégie** pour la gestion des types d'exercices (voir section 3).
+- [x] **Migration vers le Pattern Stratégie** pour la gestion des types d'exercices (voir section 3).
 - [ ] **Virtualisation de Liste** : Si la bibliothèque dépasse 500+ exercices, implémenter un "Virtual Scroller" dans `renderExercices` pour n'afficher dans le DOM que les éléments visibles à l'écran, afin d'économiser la RAM mobile.
-- [x] **Tests E2E** : Développer des scripts Playwright robustes pour tester automatiquement le flux du Workout Engine (lancement, timers, fin de séance) après chaque mise à jour.
+- [x] **Tests E2E** : `tests/e2e/test_workout_engine.py` (moteur de séance) et `tests/e2e/test_progress_tracking.py` (journal, reprise de séance, sauvegarde, CRUD). Lancés par `./run_e2e_tests.sh`.

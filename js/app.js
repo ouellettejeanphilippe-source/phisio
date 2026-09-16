@@ -875,6 +875,7 @@ const DEFAULT_DATA = {
                 }
             }
 
+            initCoach();
             hideLoader();
         }
 
@@ -1460,20 +1461,26 @@ const DEFAULT_DATA = {
                     exercices_ids: (p.exercices_ids || []).map(String)
                 }));
 
-                db = {
+                const donneesSync = {
                     exercices: formattedExercices,
                     plans: formattedPlans
                 };
 
-                // Save to localStorage
-                localStorage.setItem('fitness_data', JSON.stringify(db));
+                // Fusion ou remplacement : l'utilisateur décide, ses créations
+                // locales ne disparaissent plus sans prévenir.
+                if (!coachApplySyncedData(donneesSync)) {
+                    showSuccess("Synchronisation annulée.");
+                    return;
+                }
+
+                if (!coachSaveDb()) return;
                 localStorage.setItem('sync_url', url);
                 localStorage.setItem('last_sync', Date.now().toString());
 
                 // Update UI
-                renderPlans(db.plans);
-                renderExercices(db.exercices);
+                coachRefreshLibrary();
                 updateStatusUI();
+                updateStorageInfo();
                 showSuccess("✅ Synchronisation réussie ! Les données sont sauvegardées hors-ligne.");
 
             } catch (err) {
@@ -1488,41 +1495,14 @@ const DEFAULT_DATA = {
         }
 
 
+        // Conservé pour compatibilité : l'export inclut désormais l'historique
+        // et le journal de performance (voir exportBackup dans js/coach.js).
         function exportDataJSON() {
-            triggerHaptic();
-            const data = localStorage.getItem('fitness_data');
-            if (!data) {
-                showError("Aucune donnée à exporter.");
-                return;
-            }
-            try {
-                const blob = new Blob([data], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'fittrack_data_export.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showSuccess("Données exportées avec succès.");
-            } catch (e) {
-                console.error(e);
-                showError("Erreur lors de l'exportation des données.");
-            }
+            exportBackup();
         }
 
         function clearData() {
-            triggerHaptic();
-            if (confirm("Voulez-vous vraiment effacer toutes les données sauvegardées sur cet appareil ?")) {
-                localStorage.removeItem('fitness_data');
-                localStorage.removeItem('last_sync');
-                db = { exercices: [], plans: [] };
-                renderPlans([]);
-                renderExercices([]);
-                updateStatusUI();
-                showSuccess("Données locales effacées avec succès.");
-            }
+            coachClearData();
         }
 
         // Search & Filter logic
@@ -1615,6 +1595,7 @@ const DEFAULT_DATA = {
             };
 
             renderPlanExercisesList();
+            coachRenderPlanActions(plan);
 
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
@@ -1819,6 +1800,8 @@ const DEFAULT_DATA = {
                 videoBtn.style.display = 'inline-flex';
             }
 
+            coachRenderExerciseExtras(ex);
+
             document.getElementById('modal-ex').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
@@ -1860,6 +1843,9 @@ const DEFAULT_DATA = {
                 return;
             }
 
+            // Repartir de ce qui a réellement été réalisé la dernière fois
+            exos = coachPrepareExercises(exos);
+
             // Initialiser l'état
             currentWorkout = {
                 planId: plan.id,
@@ -1869,6 +1855,8 @@ const DEFAULT_DATA = {
                 isResting: false,
                 restInterval: null
             };
+
+            coachOnWorkoutStart();
 
             // Cacher modale et afficher l'écran plein écran
             document.getElementById('modal').classList.remove('active');
@@ -1947,6 +1935,9 @@ const DEFAULT_DATA = {
                     ${eqTagHtml}
                     <button class="btn-timer" onclick="openEditCurrentEx()" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;">✏️ Modifier</button>
                 `;
+
+                coachRenderLastPerf(ex);
+                coachSaveActive();
 
                 document.getElementById('workout-ex-desc').textContent = ex.description;
 
@@ -2032,7 +2023,8 @@ const DEFAULT_DATA = {
             triggerHaptic();
             const ex = currentWorkout.exercices[currentWorkout.currentExIndex];
 
-            // On vient de valider une série
+            // On vient de valider une série : on note ce qui a été réalisé
+            coachRecordSet(ex);
             currentWorkout.currentSet++;
 
             // Doit-on se reposer ?
@@ -2419,30 +2411,26 @@ const DEFAULT_DATA = {
 
             // Mettre à jour l'historique de complétion avec les dates
             let history = {};
-            let sessions = [];
             try {
                 history = JSON.parse(localStorage.getItem('fitness_history') || '{}');
-                sessions = JSON.parse(localStorage.getItem('fitness_sessions') || '[]');
             } catch (e) {
                 console.error("Erreur lors de la lecture de l'historique:", e);
             }
 
             // Legacy counter
             history[currentWorkout.planId] = (history[currentWorkout.planId] || 0) + 1;
-
-            // Detailed session log for stats
-            const planDetails = db.plans.find(p => p.id === currentWorkout.planId) || { nom: 'Séance Rapide' };
-            sessions.push({
-                date: new Date().toISOString(),
-                planId: currentWorkout.planId,
-                nom: planDetails.nom
-            });
-
             localStorage.setItem('fitness_history', JSON.stringify(history));
-            localStorage.setItem('fitness_sessions', JSON.stringify(sessions));
+
+            // Journal détaillé : séries réalisées, durée, volume
+            const session = coachCommitSession(true);
+            coachRenderWorkoutSummary(session);
+
+            document.getElementById('feedback-saved').style.display = 'none';
 
             // Rafraîchir l'interface (pour le badge)
             renderPlans(db.plans);
+            coachCheckResumable();
+            updateStorageInfo();
         }
 
         // --- Stats Rendering ---
@@ -2454,6 +2442,8 @@ const DEFAULT_DATA = {
             heatmapContainer.innerHTML = '';
             historyListContainer.innerHTML = '';
             weeklyChartContainer.innerHTML = '';
+
+            coachRenderStatsExtras();
 
             let sessions = [];
             try {
@@ -2591,12 +2581,23 @@ const DEFAULT_DATA = {
                 item.style.justifyContent = 'space-between';
                 item.style.alignItems = 'center';
 
+                const details = coachFormatSessionDetails(s);
+                const note = s.note
+                    ? `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 6px; font-style: italic;">« ${escapeHtml(s.note)} »</div>`
+                    : '';
+                const badge = s.termine === false
+                    ? '<div style="background: rgba(255,179,0,0.15); color: #ffb300; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">Partielle</div>'
+                    : '<div style="background: var(--accent-dark); color: var(--accent-color); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">✓ Terminé</div>';
+
+                item.style.alignItems = 'flex-start';
                 item.innerHTML = `
-                    <div>
-                        <div style="color: white; font-weight: 600;">${s.nom}</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="color: white; font-weight: 600;">${escapeHtml(s.nom)}</div>
                         <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: capitalize;">${formatter.format(date)}</div>
+                        ${details ? `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">${escapeHtml(details)}</div>` : ''}
+                        ${note}
                     </div>
-                    <div style="background: var(--accent-dark); color: var(--accent-color); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">✓ Terminé</div>
+                    ${badge}
                 `;
                 historyListContainer.appendChild(item);
             });
@@ -2609,6 +2610,8 @@ const DEFAULT_DATA = {
 
         function quitWorkout() {
             triggerHaptic();
+            coachOnWorkoutQuit();
+
             if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);
             if (activeWorkoutTimerInterval) {
                 clearInterval(activeWorkoutTimerInterval);
@@ -3220,7 +3223,7 @@ const DEFAULT_DATA = {
 
                 // Refresh list if we are on the exercices tab
                 if (currentTab === 'exercices') {
-                    renderExercicesList();
+                    renderExercices(db.exercices);
                 }
             } catch (e) {
                 console.error("Erreur sauvegarde locale:", e);

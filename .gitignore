@@ -1,0 +1,9 @@
+# Artefacts générés par les tests et le serveur local
+server.log
+e2e_error.png
+e2e_progress_error.png
+
+# Environnements et dépendances
+node_modules/
+__pycache__/
+.venv/

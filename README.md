@@ -1,15 +1,36 @@
-# Fitness Tracker Pro (Version 2.0)
+# Fitness Tracker Pro (Version 3.0)
 
 Une application web locale ultra-moderne et réactive pour gérer vos programmes d'entraînement, avec une interface inspirée par la fluidité de **Samsung One UI**.
 
+Elle fonctionne entièrement hors ligne, sur votre téléphone, sans compte et sans serveur.
+
 ## Fonctionnalités 🚀
-* **PWA & Mobile-First :** Interface qui s'installe sur téléphone comme une vraie application native (grâce au fichier `manifest.json` et au Service Worker `sw.js`).
-* **Design "One UI" (Mode Sombre AMOLED) :** Ergonomie pensée pour l'utilisation à une main avec une *Viewing Area* en haut, des *Bottom Sheets* (tiroirs glissants), des "Squircles" (coins extrêmement arrondis), et du glassmorphism (effets de verre dépoli).
-* **Mode "Séance en cours" & Chronomètres :** Suivez vos entraînements étape par étape (répétitions, isométrie, cycles de respiration, **poids/charges**, et **distance**).
-* **Statistiques Avancées :** Suivez votre régularité avec un calendrier *Heatmap* de 30 jours et l'historique détaillé de vos séances récentes.
-* **Rappels d'Entraînement :** Exportez vos programmes en un clic vers votre calendrier natif (Google Agenda, Samsung Calendar) via un fichier `.ics`.
-* **Intégration YouTube :** Trouvez les vidéos de vos exercices en un clic.
-* **Synchronisation Google Sheets :** Synchronisez facilement vos données d'exercices depuis le Cloud pour un fonctionnement 100% hors-ligne !
+
+### Le suivi qui compte
+* **Journal de performance :** chaque série validée est enregistrée — répétitions réellement faites, charge, durée. Rien n'est perdu à la fin de la séance.
+* **Progression automatique :** la séance suivante démarre sur ce que vous avez réellement réalisé la fois précédente. Le +1 kg d'aujourd'hui est votre point de départ la prochaine fois.
+* **Rappel « dernière fois » :** pendant la séance, vous voyez ce que vous aviez fait sur cet exercice et quand.
+* **Graphique d'évolution :** la fiche de chaque exercice affiche votre progression et vos dernières séances.
+* **Ressenti :** effort, douleur et note libre en fin de séance — utile pour un suivi de rééducation.
+* **Statistiques :** série de jours consécutifs, séances et séries de la semaine, volume soulevé, temps total, heatmap musculaire.
+
+### Vous ne perdez plus votre séance ni vos données
+* **Reprise de séance :** un appel, un écran verrouillé, une appli fermée ? La séance est retrouvée telle quelle au retour.
+* **Sauvegarde complète :** l'export contient vos programmes, votre historique **et** votre journal de performance.
+* **Import :** restaurez une sauvegarde sur un nouveau téléphone, en remplaçant ou en fusionnant avec ce qui est déjà là.
+* **Filet de sécurité :** une copie de secours est prise automatiquement avant tout import, toute synchronisation et tout effacement. Un bouton « Annuler la dernière opération » la restaure.
+
+### C'est votre bibliothèque
+* **Créer, modifier, supprimer** vos exercices et vos programmes directement dans l'application — Google Sheets devient optionnel.
+* **Synchronisation non destructive :** une synchronisation n'efface plus ce que vous avez créé sur l'appareil ; elle vous propose de fusionner.
+* **Recherche web d'exercices** (API wger) pour enrichir votre bibliothèque.
+
+### Le confort d'une vraie application
+* **PWA & Mobile-First :** s'installe sur le téléphone comme une application native (`manifest.json` + Service Worker), et reçoit les mises à jour.
+* **Design "One UI" (Mode Sombre AMOLED) :** ergonomie pensée pour l'utilisation à une main, *bottom sheets*, squircles et glassmorphism.
+* **Mode "Séance en cours" & Chronomètres :** suivi pas à pas (répétitions, isométrie, cycles de respiration, poids, distance), file d'attente réorganisable, sauter ou repousser un exercice.
+* **Rappels d'Entraînement :** export de vos programmes vers votre calendrier natif via un fichier `.ics`.
+* **Intégration YouTube :** trouvez la vidéo d'un exercice en un clic.
 
 ## Comment installer l'application sur votre téléphone ? 📱
 
@@ -22,14 +43,32 @@ L'application est une **PWA (Progressive Web App)** : elle s'installe comme une 
    - Sur **iOS / iPhone** (Safari) : Cliquez sur le bouton de Partage (le carré avec une flèche vers le haut) et sélectionnez "Sur l'écran d'accueil".
 4. Une fois installée, l'application fonctionnera hors ligne (grâce au *Service Worker*) et apparaîtra dans votre liste d'applications avec son propre icône, sans barre d'adresse !
 
+## ⚠️ Sauvegardez vos données
+
+Vos données vivent dans la mémoire du navigateur de votre téléphone. Elles disparaissent si vous effacez les données du site, si vous désinstallez l'application ou si vous changez d'appareil.
+
+**Prenez l'habitude d'exporter :** Paramètres → Sauvegarde & restauration → **Exporter**. Le fichier `.json` obtenu contient tout (programmes, historique, performances, réglages) et se réimporte en un clic sur n'importe quel appareil.
+
 ## Comment lier l'application à Google Sheets (Apps Script) ? 📊
 
-L'application peut fonctionner de manière **100% autonome sur votre téléphone**, sans aucun serveur local ni script Python ! Pour ce faire, elle utilise un lien Google Apps Script pour récupérer vos données.
+C'est **optionnel** : vous pouvez créer vos exercices et vos programmes directement dans l'application. La synchronisation reste pratique si vous préférez gérer votre base dans un tableur.
 
 1. Déployez l'application web (par exemple via GitHub Pages ou en transférant simplement `index.html` sur votre téléphone).
 2. Ouvrez l'application, allez dans l'onglet **Paramètres**.
 3. Collez l'URL de votre Google Apps Script (se terminant par `/exec`).
 4. Cliquez sur **Synchroniser les données**.
-5. Les données sont maintenant sauvegardées dans la mémoire de votre téléphone (`localStorage`) ! Vous pouvez ouvrir l'application hors-ligne quand vous le souhaitez.
+5. Si vous avez déjà des créations locales, l'application vous propose de **fusionner** plutôt que de les remplacer.
 
-*Note : L'application télécharge vos données et les sauvegarde sur votre téléphone via localStorage. Le fonctionnement est donc entièrement hors ligne par la suite.*
+*Note : l'application télécharge vos données et les sauvegarde sur votre téléphone (`localStorage`). Le fonctionnement est ensuite entièrement hors ligne.*
+
+## Développement 🛠️
+
+```bash
+# Tests unitaires (couche de données, utilitaires, sécurité)
+node --test js/app.test.js js/utils.test.js js/security.test.js js/store.test.js
+
+# Tests de bout en bout (Playwright) : moteur de séance + suivi de progression
+./run_e2e_tests.sh
+```
+
+La documentation technique se trouve dans [`SUIVI.md`](SUIVI.md) et [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
