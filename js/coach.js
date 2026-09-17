@@ -613,7 +613,10 @@ function updateStorageInfo() {
     const nbPerf = Object.keys(logs).reduce((acc, cle) => acc + (logs[cle] || []).length, 0);
     const snap = readSnapshot();
 
-    el.innerHTML = `${db.exercices.length} exercices · ${db.plans.length} programmes · ${sessions.length} séances · ${nbPerf} performances · ${storageUsageKo()} Ko utilisés`;
+    const catalogue = readCatalogue();
+    const ligneCatalogue = catalogue ? ` · catalogue de ${catalogue.exercices.length} exercices` : '';
+
+    el.innerHTML = `${db.exercices.length} exercices · ${db.plans.length} programmes · ${sessions.length} séances · ${nbPerf} performances${ligneCatalogue} · ${storageUsageKo()} Ko utilisés`;
 
     const btnRestore = document.getElementById('btn-restore-snapshot');
     if (btnRestore) {
@@ -1015,7 +1018,8 @@ function coachRenderExerciseExtras(ex) {
         <h3 style="color: white; font-size: 1.1rem; margin: 1.5rem 0 0.75rem;">Progression</h3>
         ${coachProgressionChart(ex.id)}
         ${historique ? `<h3 style="color: white; font-size: 1.1rem; margin: 1.5rem 0 0.75rem;">Dernières séances</h3>${historique}` : ''}
-        <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+        <button class="btn-timer" onclick="enrichExerciseFromCatalogue('${escapeHtml(String(ex.id))}')" style="width: 100%; justify-content: center; margin-top: 1.5rem; padding: 12px; font-size: 0.85rem;">🔎 Compléter depuis le catalogue</button>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="btn-timer" onclick="openExerciseEditor('${escapeHtml(String(ex.id))}')" style="flex: 1; margin: 0; justify-content: center; padding: 12px; font-size: 0.85rem;">✏️ Modifier</button>
             <button class="btn-timer" onclick="deleteExercise('${escapeHtml(String(ex.id))}', closeExModal)" style="flex: 1; margin: 0; justify-content: center; padding: 12px; font-size: 0.85rem; color: #ff5555; border-color: rgba(255,85,85,0.3);">🗑 Supprimer</button>
         </div>
@@ -1041,6 +1045,7 @@ function coachFormatSessionDetails(session) {
 function initCoach() {
     updatePrefillToggleUI();
     updateStorageInfo();
+    updateCatalogueStatus();
     coachCheckResumable();
 
     // Une séance quittée brutalement (fermeture de l'onglet) reste reprenable.

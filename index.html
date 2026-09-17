@@ -83,7 +83,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div id="exercices-tags-container" class="tags-container" style="flex: 1; margin-bottom: 0;"></div>
                 <button class="btn-timer" onclick="openExerciseEditor(null)" style="width: auto; margin-left: 10px; margin-top: 0; padding: 10px 15px; font-size: 0.9rem; justify-content: center; white-space: nowrap;">+ NOUVEL EXERCICE</button>
-                <button class="btn-action" onclick="openWebSearchModal()" style="width: auto; margin-left: 10px; margin-top: 0; padding: 10px 15px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);"><svg style="width:16px; height:16px; margin-right:5px; vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> WEB</button>
+                <button class="btn-action" onclick="openDiscover()" style="width: auto; margin-left: 10px; margin-top: 0; padding: 10px 15px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669); white-space: nowrap;"><svg style="width:16px; height:16px; margin-right:5px; vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> DÉCOUVRIR</button>
             </div>
 
             <div class="grid" id="exercices-grid"></div>
@@ -148,6 +148,32 @@
                     </button>
                 </div>
                 <div id="sync-status" style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); text-align: center;"></div>
+            </div>
+
+            <div class="card" style="max-width: 600px; margin: 2rem auto; cursor: default; padding: 2rem;">
+                <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">Catalogue d'exercices</h2>
+                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    Téléchargez une fois la base publique <strong>wger</strong> (environ 900 exercices avec consignes, muscles ciblés et images).
+                    Elle est ensuite stockée sur l'appareil : la recherche et les suggestions fonctionnent <strong>sans connexion</strong>.
+                </p>
+                <div id="catalogue-status" style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary); text-align: center;"></div>
+                <div id="catalogue-progress" style="display: none; margin-bottom: 1rem;">
+                    <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+                        <div id="catalogue-progress-bar" style="height: 100%; width: 0%; background: var(--accent-gradient); transition: width 0.3s;"></div>
+                    </div>
+                    <div id="catalogue-progress-text" style="text-align: center; font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;"></div>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="btn-download-catalogue" onclick="downloadCatalogueUI()" style="background-color: var(--accent-color); color: #000; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 180px; text-transform: uppercase;">
+                        ⬇️ Télécharger
+                    </button>
+                    <button id="btn-delete-catalogue" onclick="deleteCatalogueUI()" style="display: none; background-color: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: 700; flex: 1; min-width: 180px; text-transform: uppercase;">
+                        🗑️ Supprimer
+                    </button>
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary); text-align: center;">
+                    Source : <a href="https://wger.de" target="_blank" rel="noopener" style="color: var(--accent-color);">wger.de</a> — contenu sous licence CC-BY-SA.
+                </p>
             </div>
 
             <div class="card" style="max-width: 600px; margin: 2rem auto; cursor: default; padding: 2rem;">
@@ -585,26 +611,44 @@
 
     <script src="js/utils.js"></script>
     <script src="js/store.js"></script>
+    <script src="js/catalogue.js"></script>
     <script src="js/app.js"></script>
     <script src="js/coach.js"></script>
-    <!-- Modal for Web API Search -->
-    <div class="modal-overlay" id="modal-web-search" onclick="closeWebSearchModal(event)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" aria-label="Fermer" onclick="closeWebSearchModal()">&times;</button>
-            <h2 class="modal-title" style="margin-bottom: 1rem;"><svg style="width:24px; height:24px; margin-right:10px; vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Recherche Web API</h2>
+    <script src="js/discover.js"></script>
+    <!-- Modal : découvrir de nouveaux exercices dans le catalogue -->
+    <div class="modal-overlay" id="modal-discover" onclick="closeDiscover(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 720px; padding: 2rem; display: flex; flex-direction: column; max-height: 90vh;">
+            <button class="close-btn" aria-label="Fermer" onclick="closeDiscover()">&times;</button>
+            <h2 class="modal-title" style="margin-bottom: 1rem;">Découvrir des exercices</h2>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <input type="text" id="web-search-input" class="search-bar" style="flex: 1; border-radius: 8px;" placeholder="Ex: Push up, Squat..." onkeypress="if(event.key === 'Enter') fetchWebExercises()">
-                <button class="btn-action" onclick="fetchWebExercises()" style="width: auto; margin-top: 0; padding: 10px 20px; font-size: 0.9rem;">CHERCHER</button>
+            <!-- Catalogue pas encore téléchargé -->
+            <div id="discover-setup" style="display: none; text-align: center; padding: 1rem 0;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6;">
+                    Pour proposer de nouveaux exercices et retrouver leurs consignes, l'application a besoin du catalogue public <strong>wger</strong>
+                    (environ 900 exercices). Il se télécharge une seule fois, puis fonctionne hors connexion.
+                </p>
+                <button class="btn-action" onclick="downloadCatalogueUI(true)" style="max-width: 320px; margin: 0 auto;">⬇️ TÉLÉCHARGER LE CATALOGUE</button>
+                <div id="discover-setup-progress" style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);"></div>
             </div>
 
-            <div id="web-search-loader" style="display: none; text-align: center; margin: 20px 0;">
-                <div class="loader" style="display: inline-block;"></div>
-                <p style="color: var(--text-secondary); margin-top: 10px;">Interrogation de l'API Wger...</p>
-            </div>
+            <!-- Navigateur du catalogue -->
+            <div id="discover-main" style="display: none; flex-direction: column; min-height: 0; flex: 1;">
+                <div style="display: flex; gap: 8px; margin-bottom: 1rem;">
+                    <button id="discover-tab-suggest" class="btn-timer" onclick="setDiscoverMode('suggest')" style="flex: 1; margin: 0; justify-content: center; padding: 10px; font-size: 0.9rem;">✨ Pour vous</button>
+                    <button id="discover-tab-search" class="btn-timer" onclick="setDiscoverMode('search')" style="flex: 1; margin: 0; justify-content: center; padding: 10px; font-size: 0.9rem;">🔍 Rechercher</button>
+                </div>
 
-            <div class="grid" id="web-search-results" style="max-height: 400px; overflow-y: auto;">
-                <!-- Results injected here -->
+                <div id="discover-search-controls" style="display: none; margin-bottom: 1rem;">
+                    <input type="text" id="discover-query" class="search-bar" placeholder="Nom de l'exercice..." oninput="renderDiscoverResults()" style="width: 100%; border-radius: 12px; padding: 12px; background-color: rgba(0,0,0,0.5); margin-bottom: 10px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <select id="discover-category" class="search-bar" aria-label="Filtrer par zone" onchange="renderDiscoverResults()" style="flex: 1; min-width: 150px; border-radius: 12px; padding: 10px; background-color: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-color);"></select>
+                        <select id="discover-equipment" class="search-bar" aria-label="Filtrer par matériel" onchange="renderDiscoverResults()" style="flex: 1; min-width: 150px; border-radius: 12px; padding: 10px; background-color: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-color);"></select>
+                    </div>
+                </div>
+
+                <div id="discover-hint" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;"></div>
+                <div id="discover-results" style="overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding-bottom: 1rem;"></div>
             </div>
         </div>
     </div>
