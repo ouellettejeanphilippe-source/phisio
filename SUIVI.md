@@ -9,6 +9,8 @@ L'application est une **PWA (Progressive Web App)** "Offline-First" entièrement
 ### Fichiers Principaux
 - `index.html` : Squelette de l'interface utilisateur. Inclut la structure DOM pour la navigation, les vues principales (Programmes, Bibliothèque, Statistiques, Paramètres) et les modales superposées (Bottom Sheets).
 - `app.js` : Moteur logique de l'application (Contrôleur). Gère l'état global (`db`, `currentWorkout`), la navigation (`switchTab`), la synchronisation API, et surtout la **machine à états du mode "Séance" (Workout Engine)**.
+- `catalogue.js` : **Catalogue d'exercices.** Télécharge et compacte la base publique wger (~900 fiches), puis assure la recherche locale, les suggestions et le rapprochement de noms — sans connexion.
+- `discover.js` : **Interface de découverte.** Navigateur du catalogue (suggestions, recherche, variantes), import d'un exercice et complètement d'un exercice existant.
 - `store.js` : **Couche de données.** Seul fichier qui écrit dans le `localStorage`. Journal de performance, historique détaillé, sauvegarde/restauration, séance en cours, et calculs purs (volume, série de jours, formatage).
 - `coach.js` : **Fonctionnalités de suivi.** Se branche sur `app.js` : journalisation des séries, reprise des charges d'une séance à l'autre, reprise d'une séance interrompue, création/modification/suppression d'exercices et de programmes, sauvegarde, statistiques de progression.
 - `style.css` : Fichier de style global. Définit le système de variables (Dark/AMOLED theme, couleurs d'accentuation), la typographie, les grilles et les animations/transitions fluides (inspirées de One UI/iOS).
@@ -153,6 +155,36 @@ L'application suit scrupuleusement les codes de **Samsung One UI 8.5** et **iOS*
 - [x] **Bibliothèque éditable** : créer, modifier et supprimer exercices et programmes sans passer par Google Sheets.
 - [x] **Ressenti de séance** : effort, douleur et note libre, visibles dans l'historique.
 - [x] **Mises à jour de la PWA** : Service Worker en « network-first » (une app installée peut de nouveau recevoir des correctifs).
+- [x] **Catalogue hors-ligne** : ~900 exercices wger avec consignes, muscles et images, téléchargés une fois puis consultables sans connexion.
+- [x] **Découverte d'exercices** : suggestions selon les zones travaillées et le matériel disponible, recherche par nom / zone / matériel, variantes.
+- [x] **Complètement d'un exercice** : retrouver les consignes manquantes d'un exercice de la bibliothèque, sans écraser ce que l'utilisateur a écrit.
+
+---
+
+## 🔎 5bis. Catalogue et recherche d'exercices
+
+L'API wger ne permet plus de rechercher par sous-chaîne : l'endpoint
+`/api/v2/exercise/search/` renvoie `404` et les endpoints restants n'acceptent
+qu'une égalité exacte sur `name`. La recherche web de l'application ne renvoyait
+donc plus jamais rien.
+
+`js/catalogue.js` télécharge désormais `/api/v2/exerciseinfo/` par pages de 100,
+compacte chaque fiche (~1 Ko contre ~7 Ko) et la range dans `localStorage`
+(mesuré : 902 exercices, 582 en français, 880 avec consignes, 706 Ko). Tout le
+reste se fait sur l'appareil.
+
+**Le rapprochement de noms privilégie la précision.** Un seuil permissif
+associait « Rotation des hanches assis » à « Abduction des hanches assis » :
+deux mouvements différents. Un rapprochement automatique n'est retenu qu'au-delà
+de 0,85 de similarité ; en dessous, les fiches les plus proches sont proposées et
+l'utilisateur choisit. Compléter un exercice n'écrase jamais un champ déjà rempli.
+
+**Les suggestions tiennent compte du matériel.** `inferEquipment` déduit de la
+bibliothèque ce dont dispose l'utilisateur ; les exercices réclamant autre chose
+sont écartés. Les fiches « fourre-tout » (« Rowing Machine » déclare treize
+muscles) sont pénalisées au profit d'exercices ciblés. Le catalogue wger reste
+une base de musculation généraliste : les suggestions sont un point de départ,
+pas une prescription.
 
 ---
 

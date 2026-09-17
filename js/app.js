@@ -1161,64 +1161,36 @@ const DEFAULT_DATA = {
             startWorkout(quickPlan);
         }
 
-        // --- Fetch Web API Suggestions ---
-        async function searchWebAPI(query) {
-            if (!query || query.trim().length < 3) {
-                document.getElementById('web-suggestions-container').style.display = 'none';
-                return;
-            }
-            if (!navigator.onLine) {
-                document.getElementById('web-suggestions-container').style.display = 'none';
+        // --- Suggestions issues du catalogue local ---
+        // L'endpoint `wger.de/api/v2/exercise/search/` utilisé jusqu'ici a été
+        // retiré de l'API (404) : la recherche ne renvoyait plus jamais rien.
+        // On interroge désormais le catalogue téléchargé, ce qui fonctionne
+        // aussi hors connexion et instantanément (voir js/catalogue.js).
+        function searchWebAPI(query) {
+            const container = document.getElementById('web-suggestions-container');
+
+            if (!query || query.trim().length < 3 || !catalogueIsReady()) {
+                container.style.display = 'none';
                 return;
             }
 
-            document.getElementById('web-suggestions-container').style.display = 'block';
-            document.getElementById('web-loading').style.display = 'block';
+            container.style.display = 'block';
+            document.getElementById('web-loading').style.display = 'none';
             document.getElementById('web-exercices-grid').innerHTML = '';
-            webSuggestions = [];
 
-            try {
-                // Search WGER search endpoint (works well for english and general terms, returns images)
-                const res = await fetch(`https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(query)}`);
-                const data = await res.json();
+            // Ne pas re-proposer ce que la bibliothèque contient déjà.
+            const connus = new Set(db.exercices.map(e => normalizeText(e.nom)));
+            const trouves = searchCatalogue(catalogueEntries(), { query: query }, 12)
+                .filter(entry => !connus.has(normalizeText(catalogueName(entry))))
+                .slice(0, 6);
 
-                if (data.suggestions && data.suggestions.length > 0) {
-                    webSuggestions = data.suggestions.slice(0, 6).map(s => {
-                        const baseData = s.data;
-                        return {
-                            id: 'web_' + baseData.id,
-                            nom: baseData.name || "Exercice Inconnu",
-                            tags: baseData.category || "Web",
-                            importance: "Moyenne",
-                            series: 3,
-                            valeur: 10,
-                            type: "reps",
-                            repos: 60,
-                            tagsArray: (baseData.category || "Web").split(',').map(t => t.trim()).filter(t => t !== ''),
-                            description: "Suggestion importée depuis wger.de",
-                            video: baseData.name || "",
-                            image: baseData.image ? "https://wger.de" + baseData.image : "",
-                            frequence: 0,
-                            equipement: "",
-                            unilateral: false,
-                            kegel_on: 5,
-                            kegel_off: 5
-                        };
-                    });
-                }
+            webSuggestions = trouves.map(catalogueToExercise);
 
-                document.getElementById('web-loading').style.display = 'none';
-
-                if (webSuggestions.length > 0) {
-                    renderWebSuggestions(webSuggestions);
-                } else {
-                    document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Aucune suggestion trouvée en ligne.</div>';
-                }
-
-            } catch (err) {
-                console.error("Erreur API WGER:", err);
-                document.getElementById('web-loading').style.display = 'none';
-                document.getElementById('web-exercices-grid').innerHTML = '<div style="color:var(--text-secondary); font-size:0.9rem;">Erreur de connexion à l\'API.</div>';
+            if (webSuggestions.length > 0) {
+                renderWebSuggestions(webSuggestions);
+            } else {
+                document.getElementById('web-exercices-grid').innerHTML =
+                    '<div style="color:var(--text-secondary); font-size:0.9rem;">Aucune suggestion dans le catalogue.</div>';
             }
         }
 
@@ -1552,12 +1524,10 @@ const DEFAULT_DATA = {
                 });
                 renderQuickWorkoutExercices(filtered);
 
-                // Trigger web search with debounce
+                // Le catalogue est local : plus besoin d'attendre le réseau.
                 clearTimeout(searchTimeout);
                 if (query.trim().length >= 3) {
-                    searchTimeout = setTimeout(() => {
-                        searchWebAPI(query);
-                    }, 800);
+                    searchWebAPI(query);
                 } else {
                     document.getElementById('web-suggestions-container').style.display = 'none';
                     webSuggestions = [];
@@ -3123,110 +3093,14 @@ const DEFAULT_DATA = {
         }
 
         // Web API Integration (Wger)
+        // La modale « Recherche Web API » a été remplacée par le navigateur de
+        // catalogue (js/discover.js), l'API de recherche de wger n'existant plus.
         function openWebSearchModal() {
-            document.getElementById('modal-web-search').classList.add('active');
-            document.getElementById('web-search-input').value = '';
-            document.getElementById('web-search-results').innerHTML = '';
-            setTimeout(() => document.getElementById('web-search-input').focus(), 100);
+            openDiscover();
         }
 
-        function closeWebSearchModal(e) {
-            if (e && e.target !== document.getElementById('modal-web-search')) return;
-            document.getElementById('modal-web-search').classList.remove('active');
-        }
-
-        async function fetchWebExercises() {
-            const query = document.getElementById('web-search-input').value.trim();
-            if (!query) return;
-
-            const loader = document.getElementById('web-search-loader');
-            const resultsContainer = document.getElementById('web-search-results');
-
-            loader.style.display = 'block';
-            resultsContainer.innerHTML = '';
-
-            try {
-                // Fetching from wger API
-                const response = await fetch(`https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(query)}&language=2`); // 2 = English
-                const data = await response.json();
-
-                loader.style.display = 'none';
-
-                if (data.suggestions && data.suggestions.length > 0) {
-                    // Extract IDs to get details
-                    const results = data.suggestions.slice(0, 10); // Limit to 10
-
-                    if (results.length === 0) {
-                        resultsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; width: 100%;">Aucun résultat trouvé.</p>';
-                        return;
-                    }
-
-                    const frag = document.createDocumentFragment();
-                    results.forEach(res => {
-                        const card = document.createElement('div');
-                        card.className = 'card';
-                        card.innerHTML = `
-                            <h3 style="color: white; margin-bottom: 10px;">${res.data.name}</h3>
-                            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px; max-height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                                ${res.data.category || 'Catégorie inconnue'}
-                            </div>
-                            <button class="btn-action" onclick="importWebExercise('${res.data.id}', '${res.data.name.replace(/'/g, "\\'")}')" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">⬇️ IMPORTER (LOCAL)</button>
-                        `;
-                        frag.appendChild(card);
-                    });
-                    resultsContainer.appendChild(frag);
-                } else {
-                    resultsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; width: 100%;">Aucun résultat trouvé.</p>';
-                }
-            } catch (err) {
-                console.error("Erreur Web Fetch:", err);
-                loader.style.display = 'none';
-                resultsContainer.innerHTML = '<p style="color: #ff5555; text-align: center; width: 100%;">Erreur de connexion à l\'API. Vérifiez votre connexion internet.</p>';
-            }
-        }
-
-        function importWebExercise(apiId, name) {
-            triggerHaptic();
-
-            // Check if already exists by name
-            if (db.exercices.some(e => e.nom.toLowerCase() === name.toLowerCase())) {
-                showError(`L'exercice "${name}" existe déjà dans votre bibliothèque.`);
-                return;
-            }
-
-            // Create a local db format exercise
-            const newExId = Date.now().toString();
-            const newEx = {
-                id: newExId,
-                nom: name + ' (Web)',
-                description: `Importé depuis le web (ID: ${apiId}). Pensez à modifier les tags et modalités.`,
-                tags: "Import,Web",
-                tagsArray: ["Import", "Web"],
-                type: "reps",
-                series: 3,
-                valeur: 10,
-                repos: 60,
-                equipement: "Au choix",
-                unilateral: false
-            };
-
-            db.exercices.push(newEx);
-
-            // Save to local storage for persistence
-            try {
-                const storedDb = JSON.parse(localStorage.getItem('fitness_data') || '{"exercices":[],"plans":[]}');
-                storedDb.exercices.push(newEx);
-                localStorage.setItem('fitness_data', JSON.stringify(storedDb));
-
-                showSuccess(`"${name}" importé avec succès !`);
-                closeWebSearchModal();
-
-                // Refresh list if we are on the exercices tab
-                if (currentTab === 'exercices') {
-                    renderExercices(db.exercices);
-                }
-            } catch (e) {
-                console.error("Erreur sauvegarde locale:", e);
-                showError("Impossible de sauvegarder l'exercice.");
-            }
+        // Conservé pour compatibilité : l'import passe désormais par le
+        // catalogue, qui fournit consignes, muscles et image (js/discover.js).
+        function importWebExercise(apiId) {
+            importCatalogueExercise(apiId);
         }

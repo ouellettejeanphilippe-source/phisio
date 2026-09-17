@@ -18,7 +18,8 @@ const STORE_KEYS = {
     soundPref: 'fitness_sound_pref',
     prefillPref: 'fitness_prefill_pref',
     snapshot: 'fitness_snapshot',
-    activeSession: 'fitness_active_session'
+    activeSession: 'fitness_active_session',
+    catalogue: 'fitness_catalogue'
 };
 
 /** Nombre d'entrées de journal conservées par exercice (les plus anciennes sont élaguées). */

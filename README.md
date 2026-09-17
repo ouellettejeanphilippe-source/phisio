@@ -23,7 +23,13 @@ Elle fonctionne entièrement hors ligne, sur votre téléphone, sans compte et s
 ### C'est votre bibliothèque
 * **Créer, modifier, supprimer** vos exercices et vos programmes directement dans l'application — Google Sheets devient optionnel.
 * **Synchronisation non destructive :** une synchronisation n'efface plus ce que vous avez créé sur l'appareil ; elle vous propose de fusionner.
-* **Recherche web d'exercices** (API wger) pour enrichir votre bibliothèque.
+
+### Trouver de nouveaux exercices, et leurs consignes
+* **Catalogue hors connexion :** téléchargez une fois la base publique [wger](https://wger.de) — environ 900 exercices, dont 580 en français, avec consignes, muscles ciblés et images. Ensuite, tout fonctionne sans réseau.
+* **Suggestions pour vous :** l'application propose des exercices que vous n'avez pas, choisis d'après les zones que vous travaillez déjà — et uniquement avec le matériel qu'elle vous voit utiliser.
+* **Recherche instantanée :** par nom (en français ou en anglais, accents indifférents), par zone du corps ou par matériel.
+* **Variantes :** les autres versions d'un même mouvement sont listées.
+* **Compléter un exercice existant :** retrouvez les consignes, muscles et images manquants de vos propres exercices. En cas de doute sur la correspondance, l'application vous fait choisir plutôt que de deviner — et **n'écrase jamais** ce que vous avez écrit.
 
 ### Le confort d'une vraie application
 * **PWA & Mobile-First :** s'installe sur le téléphone comme une application native (`manifest.json` + Service Worker), et reçoit les mises à jour.
@@ -72,3 +78,10 @@ node --test js/app.test.js js/utils.test.js js/security.test.js js/store.test.js
 ```
 
 La documentation technique se trouve dans [`SUIVI.md`](SUIVI.md) et [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## Crédits
+
+Le catalogue d'exercices provient de [wger.de](https://wger.de), sous licence
+Creative Commons CC-BY-SA. Il s'agit d'une base de musculation généraliste :
+les suggestions de l'application sont un point de départ, pas un avis médical.
+Pour un programme de rééducation, suivez les consignes de votre kinésithérapeute.
