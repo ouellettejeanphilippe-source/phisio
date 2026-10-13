@@ -24,7 +24,7 @@ fi
 
 echo "🧪 Running E2E tests..."
 TEST_RESULT=0
-for suite in tests/e2e/test_workout_engine.py tests/e2e/test_progress_tracking.py tests/e2e/test_catalogue.py tests/e2e/test_guided_session.py; do
+for suite in tests/e2e/test_workout_engine.py tests/e2e/test_progress_tracking.py tests/e2e/test_catalogue.py tests/e2e/test_guided_session.py tests/e2e/test_today.py; do
   echo "--- $suite ---"
   python3 "$suite" || TEST_RESULT=1
 done

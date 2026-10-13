@@ -78,15 +78,16 @@ def setup_page(page):
     # Mock playBeep
     page.evaluate("window.playBeep = () => {}")
 
-    # Wait for the app to render the plans
-    page.get_by_text("Programme Test").first.wait_for(state="visible", timeout=30000)
+    # L'application s'ouvre sur « Aujourd'hui » : on passe aux programmes
+    page.get_by_role("button", name="Programmes", exact=True).click()
+    page.locator("#plans-grid").get_by_text("Programme Test").first.wait_for(state="visible", timeout=30000)
 
 def test_full_workout_flow(page):
     print("Testing Full Workout Flow...")
     setup_page(page)
 
     # 1. Start Workout from Plan
-    el = page.get_by_text("Programme Test").first
+    el = page.locator("#plans-grid").get_by_text("Programme Test").first
     el.click()
 
     # Modal should be active
@@ -140,7 +141,7 @@ def test_workout_controls(page):
     setup_page(page)
 
     # Start Programme Test
-    page.get_by_text("Programme Test").first.click()
+    page.locator("#plans-grid").get_by_text("Programme Test").first.click()
     page.get_by_role("button", name="▶ DÉMARRER").click()
 
     # Skip Exercise

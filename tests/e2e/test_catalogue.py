@@ -101,13 +101,13 @@ def fresh_page(context, console_errors):
     page.evaluate("(data) => localStorage.setItem('fitness_data', JSON.stringify(data))", LIBRARY)
     page.reload()
     page.evaluate("window.playBeep = () => {}")
-    page.wait_for_selector("#plans-grid .card", timeout=30000)
+    page.wait_for_selector("#plans-grid .card", state="attached", timeout=30000)
     return page
 
 
 def test_discover_requires_catalogue(page):
     print("Testing Discover Without Catalogue...")
-    page.get_by_role("button", name="Bibliothèque").click()
+    page.get_by_role("button", name="Exercices", exact=True).click()
     page.get_by_role("button", name="DÉCOUVRIR").click()
 
     expect(page.locator("#discover-setup")).to_be_visible()
@@ -219,7 +219,7 @@ def test_enrich_exact_match(page):
         coachRefreshLibrary();
     }""")
 
-    page.get_by_role("button", name="Bibliothèque").click()
+    page.get_by_role("button", name="Exercices", exact=True).click()
     page.fill("#search-input", "Planche latérale")
     page.locator("#exercices-grid .card").first.click()
 
@@ -286,7 +286,7 @@ def test_manual_choice_is_applied(page):
 def test_enrichment_never_overwrites(page):
     """Compléter n'écrase jamais ce que l'utilisateur a écrit lui-même."""
     print("Testing Enrichment Preserves User Text...")
-    page.get_by_role("button", name="Bibliothèque").click()
+    page.get_by_role("button", name="Exercices", exact=True).click()
     page.fill("#search-input", "Rotation thoracique")
     page.locator("#exercices-grid .card").first.click()
 
@@ -312,7 +312,7 @@ def test_quick_workout_suggestions_use_catalogue(page):
     for modal in ("#modal-ex", "#modal-discover"):
         page.evaluate(f"document.querySelector('{modal}').classList.remove('active')")
 
-    page.get_by_role("button", name="Programmes").click()
+    page.get_by_role("button", name="Programmes", exact=True).click()
     page.get_by_role("button", name="+ SÉANCE RAPIDE").click()
     page.fill("#search-input", "planche")
     expect(page.locator("#web-suggestions-container")).to_be_visible()

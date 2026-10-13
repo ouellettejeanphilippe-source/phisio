@@ -628,7 +628,7 @@ const DEFAULT_DATA = {
         let activeWorkoutTimerInterval = null;
         let isWorkoutTimerPaused = false;
         let isRestTimerPaused = false;
-        let currentTab = 'plans';
+        let currentTab = 'today';
 
         let activeTagFilters = {
             exercices: null, // null means "Tous"
@@ -868,7 +868,6 @@ const DEFAULT_DATA = {
                     localStorage.setItem('fitness_data', JSON.stringify(db));
                     renderPlans(db.plans);
                     renderExercices(db.exercices);
-                    switchTab('plans'); // Fix blank screen
                     hideError();
                 } catch (e) {
                     showError("Erreur lors du chargement des données par défaut.");
@@ -876,6 +875,7 @@ const DEFAULT_DATA = {
             }
 
             initCoach();
+            switchTab('today');
             hideLoader();
         }
 
@@ -894,13 +894,11 @@ const DEFAULT_DATA = {
         function switchTab(tab) {
             triggerHaptic();
             currentTab = tab;
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(el => el.classList.remove('active'));
-
-            if(tab === 'plans' && navItems[0]) navItems[0].classList.add('active');
-            if(tab === 'exercices' && navItems[1]) navItems[1].classList.add('active');
-            if(tab === 'stats' && navItems[2]) navItems[2].classList.add('active');
-            if(tab === 'settings' && navItems[3]) navItems[3].classList.add('active');
+            // La séance libre est rattachée à l'onglet Programmes
+            const navTab = tab === 'quick-workout' ? 'plans' : tab;
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.tab === navTab);
+            });
 
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
 
@@ -916,11 +914,16 @@ const DEFAULT_DATA = {
             if (searchContainer) {
                 searchContainer.style.display = (tab === 'settings' || tab === 'stats') ? 'none' : 'flex';
             }
+            // L'accueil a son propre en-tête
+            const mainHeader = document.getElementById('main-header');
+            if (mainHeader) mainHeader.style.display = tab === 'today' ? 'none' : '';
+            window.scrollTo(0, 0);
             document.getElementById('search-input').value = '';
             document.getElementById('clear-search-btn').classList.remove('visible');
 
             // Reset views
-            if (tab === 'plans') renderPlans(db.plans);
+            if (tab === 'today') renderToday();
+            else if (tab === 'plans') renderPlans(db.plans);
             else if (tab === 'exercices') {
                 renderTagsFilter('exercices-tags-container', db.exercices, 'exercices');
                 handleSearch();
@@ -1261,14 +1264,18 @@ const DEFAULT_DATA = {
                 console.error("Erreur lors de la lecture de l'historique:", e);
             }
 
+            const exercisesMap = new Map(db.exercices.map(ex => [String(ex.id), ex]));
+            const derniers = typeof lastDoneByPlan === 'function' ? lastDoneByPlan(readSessions()) : {};
+
             plansToRender.forEach(plan => {
-                const exCount = plan.exercices_ids ? plan.exercices_ids.length : 0;
+                const exos = (plan.exercices_ids || []).map(id => exercisesMap.get(String(id))).filter(Boolean);
                 const completedCount = history[plan.id] || 0;
-                const badge = completedCount > 0 ? `<div style="position: absolute; top: -10px; right: -10px; background: var(--accent-color); color: #000; font-weight: bold; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">${completedCount}</div>` : '';
+                const duree = typeof estimateWorkoutDuration === 'function' ? formatEstimate(estimateWorkoutDuration(exos)) : '';
+                const derniere = derniers[String(plan.id)];
+                const quand = derniere ? `fait ${relativeDay(derniere.toISOString())}` : 'jamais fait';
 
                 const card = document.createElement('div');
-                card.className = 'card';
-                card.style.position = 'relative';
+                card.className = 'card plan-card';
                 card.tabIndex = 0;
                 card.onclick = () => openPlanDetails(plan);
                 card.onkeydown = (e) => {
@@ -1278,19 +1285,26 @@ const DEFAULT_DATA = {
                     }
                 };
                 card.innerHTML = `
-                    ${badge}
-                    <div class="card-content">
-                        <div class="card-title">${plan.nom}</div>
-                        <div class="card-meta">
-                            <span class="tag" style="background: var(--accent-dark); color: var(--accent-color);">${plan.goal}x / sem</span>
-                            <span class="tag" style="background: rgba(88, 166, 255, 0.15); color: #58a6ff;">${exCount} exos</span>
-                        </div>
-                        <div class="card-desc">${plan.description}</div>
-                        <div class="card-footer" style="color: var(--accent-color); font-weight: 600;">
-                            <span>VOIR LA SÉANCE →</span>
+                    <div class="plan-card-body">
+                        <div class="card-title">${escapeHtml(plan.nom)}</div>
+                        ${plan.description ? `<div class="card-desc">${escapeHtml(plan.description)}</div>` : ''}
+                        <div class="plan-card-meta">
+                            ${duree ? `<span>⏱ ${duree}</span>` : ''}
+                            <span>${exos.length} exercice${exos.length > 1 ? 's' : ''}</span>
+                            <span>${quand}${completedCount > 1 ? ` · ${completedCount}×` : ''}</span>
                         </div>
                     </div>
                 `;
+                const play = document.createElement('button');
+                play.type = 'button';
+                play.className = 'plan-play';
+                play.setAttribute('aria-label', `Commencer ${plan.nom}`);
+                play.textContent = '▶';
+                play.onclick = (e) => {
+                    e.stopPropagation();
+                    startWorkout(plan);
+                };
+                card.appendChild(play);
                 grid.appendChild(card);
             });
         }
@@ -2605,6 +2619,7 @@ const DEFAULT_DATA = {
             document.getElementById('workout-screen').style.display = 'none';
             document.getElementById('workout-controls').style.display = 'block'; // Reset for next time
             document.body.style.overflow = 'auto';
+            if (currentTab === 'today' && typeof renderToday === 'function') renderToday();
         }
 
         // --- Edit Exercice On-the-fly ---

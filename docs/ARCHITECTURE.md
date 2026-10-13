@@ -27,9 +27,10 @@ Les scripts sont chargés dans cet ordre, chacun s'appuyant sur le précédent :
 | `js/app.js` | **Contrôleur.** État global (`db`, `currentWorkout`), navigation, rendu, et machine à états du mode « Séance ». |
 | `js/coach.js` | **Fonctionnalités de suivi.** Se branche sur `app.js` : journalisation des séries, reprise des charges, reprise de séance, CRUD bibliothèque/programmes, sauvegarde, statistiques de progression. |
 | `js/guide.js` | **Séance guidée.** Déroulé d'une série (fonctions pures testées sous Node) et lecteur qui pilote l'écran de séance : voix, bips, vibrations, minuterie, repos, enchaînement. |
+| `js/today.js` | **Écran « Aujourd'hui ».** Choix du programme du jour, semaine, résumé (fonctions pures testées sous Node), puis rendu de l'accueil. |
 | `js/discover.js` | **Interface de découverte.** Téléchargement du catalogue, navigateur de recherche et de suggestions, import, complètement d'un exercice existant. |
 
-`js/coach.js`, `js/guide.js` et `js/discover.js` accèdent aux variables globales de `js/app.js` (`db`, `currentWorkout`…) : ces déclarations `let` de premier niveau sont partagées entre scripts classiques du même document, ces fichiers étant chargés après `app.js`.
+`js/coach.js`, `js/guide.js`, `js/today.js` et `js/discover.js` accèdent aux variables globales de `js/app.js` (`db`, `currentWorkout`…) : ces déclarations `let` de premier niveau sont partagées entre scripts classiques du même document, ces fichiers étant chargés après `app.js`.
 
 ## Clés de stockage (`STORE_KEYS` dans `js/store.js`)
 
@@ -92,6 +93,26 @@ quand l'application passe en arrière-plan. La synthèse vocale (`speechSynthesi
 voix française) est un confort : sans elle, des bips et vibrations marquent chaque
 étape.
 
+## Écran « Aujourd'hui » (`js/today.js`)
+
+C'est l'onglet par défaut (`switchTab('today')` à la fin de `init()`). Navigation :
+`.nav-item[data-tab]` (Aujourd'hui, Programmes, Exercices, Suivi, et Réglages dans la
+barre latérale sur ordinateur) ; sur mobile, les réglages passent par l'icône de
+l'en-tête. L'accueil a son propre en-tête : `#main-header` (recherche) y est masqué.
+
+`pickTodayPlan(plans, sessions, now)` choisit le programme à proposer :
+1. celui dont le nom contient le jour (« Routine Mardi »), sans tenir compte des
+   accents ni de la casse, et sur un mot entier ;
+2. sinon, parmi les programmes qui ne sont liés à aucun jour, celui qui n'a jamais été
+   fait ou l'a été il y a le plus longtemps (`lastDoneByPlan`).
+« Changer de programme » mémorise un choix pour la durée de la visite
+(`todayOverridePlanId`).
+
+La semaine (`weekStrip`) va du lundi au dimanche ; chaque jour est `done`, `missed`,
+`today` ou `upcoming`. `weekSummary` compte les séances, jours actifs et minutes de la
+semaine en cours. L'écran est redessiné en revenant d'une séance (`quitWorkout`).
+« Kegel express » lance une séance d'une série de chaque exercice de type `kegel`.
+
 ## Sauvegarde et restauration
 
 `buildBackup()` produit une enveloppe versionnée `{format, version, exportedAt, data, sessions, history, logs, settings}`. `parseBackup()` accepte aussi l'ancien format d'export (`{exercices, plans}`) afin de ne jamais rejeter une sauvegarde existante. `applyBackup()` applique en mode `replace` ou `merge` (`mergeDb`, `mergeLogs`, `mergeSessions` dédoublonnent par identifiant et par date).
@@ -151,7 +172,7 @@ sont un point de départ, pas une prescription.
 
 ## Service Worker
 
-`sw.js` sert le code de l'application (HTML, JS, CSS) en **network-first** avec repli sur le cache, et les ressources immuables (icônes, polices) en cache-first. La version précédente servait tout depuis le cache sans jamais le rafraîchir : une fois installée sur le téléphone, l'application ne pouvait plus recevoir de mise à jour. Le nom de cache (`fitness-tracker-v4`) doit être incrémenté à chaque changement de la liste de ressources.
+`sw.js` sert le code de l'application (HTML, JS, CSS) en **network-first** avec repli sur le cache, et les ressources immuables (icônes, polices) en cache-first. La version précédente servait tout depuis le cache sans jamais le rafraîchir : une fois installée sur le téléphone, l'application ne pouvait plus recevoir de mise à jour. Le nom de cache (`fitness-tracker-v5`) doit être incrémenté à chaque changement de la liste de ressources.
 
 ### V3 Engine Refactor
 - **Pattern Stratégie**: Implémenté via `WorkoutStrategies` dans `js/app.js` pour simplifier le formatage et la gestion des timers actifs.

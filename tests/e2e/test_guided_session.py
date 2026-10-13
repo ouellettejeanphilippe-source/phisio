@@ -40,11 +40,12 @@ def fresh_page(context, errors):
     page.evaluate("localStorage.setItem('fitness_voice_pref', '0')")
     page.reload()
     page.evaluate("window.playBeep = () => {}")
-    page.wait_for_selector("#plans-grid .card")
+    page.wait_for_selector("#plans-grid .card", state="attached")
     return page
 
 
 def open_and_start(page):
+    page.get_by_role("button", name="Programmes", exact=True).click()
     page.locator("#plans-grid .card", has_text="Routine guidée").click()
     expect(page.locator("#modal-meta")).to_contain_text("min")
     page.locator("#btn-start-workout").click()
