@@ -6,6 +6,12 @@ Elle fonctionne entièrement hors ligne, sur votre téléphone, sans compte et s
 
 ## Fonctionnalités 🚀
 
+### Ouvrir l'app, appuyer sur un bouton
+* **Écran « Aujourd'hui » :** dès l'ouverture, le programme du jour (« Routine Mardi » le mardi) avec sa durée et ses exercices, et un grand bouton **Commencer**. Pas de programme lié au jour ? L'app propose celui que vous n'avez pas fait depuis le plus longtemps — ou choisissez-en un autre.
+* **Votre semaine d'un coup d'œil :** jours faits, manqués et à venir, minutes de la semaine, série de jours.
+* **Raccourcis :** Kegel express, séance libre, et la dernière séance avec votre ressenti.
+* **Démarrage direct :** chaque carte de programme a son bouton ▶.
+
 ### Une séance qui se déroule toute seule
 * **Séance guidée :** appuyez sur Démarrer, posez le téléphone. L'application annonce chaque exercice, **compte vos répétitions à voix haute** à un rythme régulier, chronomètre les maintiens, alterne « contractez / relâchez », vous fait changer de côté, gère le repos et enchaîne l'exercice suivant. Vous n'avez rien à valider.
 * **Rythme ajustable :** « − lent / vite + » pendant la séance ; le rythme choisi est retenu pour la prochaine fois.

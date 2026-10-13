@@ -9,7 +9,7 @@
  * une fois l'application installée sur le téléphone, aucune mise à jour ne
  * pouvait plus lui parvenir.
  */
-const CACHE_NAME = 'fitness-tracker-v4';
+const CACHE_NAME = 'fitness-tracker-v5';
 
 const APP_SHELL = [
   '/',
@@ -21,6 +21,7 @@ const APP_SHELL = [
   '/js/app.js',
   '/js/coach.js',
   '/js/guide.js',
+  '/js/today.js',
   '/js/discover.js',
   '/manifest.json'
 ];

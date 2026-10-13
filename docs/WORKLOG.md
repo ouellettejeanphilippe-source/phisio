@@ -4,10 +4,9 @@
 - Rien en cours.
 
 ## 📋 À faire
-- **Écran « Aujourd'hui »** : proposer la routine du jour (Lundi, Mardi…) en un tap dès l'ouverture,
-  avec la semaine en pastilles (fait / manqué / à venir).
-- **Navigation simplifiée** : 3 onglets (Aujourd'hui, Routines, Suivi), réglages techniques
-  (Google Sheets, catalogue, sauvegarde) rangés dans « Avancé ».
+- **Réglages simplifiés** : ranger Google Sheets, catalogue et sauvegarde dans une partie « Avancé ».
+- **Suivi** : refondre l'onglet (encore orienté musculation : tonnage, heatmap) autour de la
+  régularité et du ressenti.
 - **Suivi rééducation** : courbes douleur / ressenti et export « pour mon physio ».
 - Affiner l'UI avec la "Bottom Island" et le Glassmorphism.
 - **Multi-profils** : gérer plusieurs personnes (et donc plusieurs journaux) sur un même appareil.
@@ -57,12 +56,20 @@
       (seul le travail réellement fait est journalisé), écran maintenu allumé, pause
       automatique si l'app passe en arrière-plan, retour possible au mode manuel.
       Durée estimée affichée sur chaque programme.
+- [x] **Écran « Aujourd'hui »** (`js/today.js`) : nouvel accueil. Programme du jour (celui qui
+      porte le nom du jour, sinon celui fait il y a le plus longtemps), lancement en un geste,
+      semaine en pastilles, chiffres de régularité, dernière séance avec son ressenti,
+      raccourcis (Kegel express, séance libre) et choix d'un autre programme.
+- [x] **Interface modernisée** : navigation à 4 onglets (Aujourd'hui, Programmes, Exercices,
+      Suivi) avec les réglages dans l'en-tête, surfaces épurées, cartes de programmes avec
+      durée, dernière fois et bouton ▶ pour démarrer directement, bibliothèque compacte.
 - [x] **Correctif** : les fenêtres « File d'attente » et « Modifier » s'ouvraient derrière
       l'écran de séance.
 - [x] **Tests E2E** : `tests/e2e/test_workout_engine.py` (moteur de séance),
       `tests/e2e/test_progress_tracking.py` (journal, reprise, sauvegarde, CRUD) et
       `tests/e2e/test_catalogue.py` (catalogue, découverte, import, complètement) et
-      `tests/e2e/test_guided_session.py` (séance guidée de bout en bout).
+      `tests/e2e/test_guided_session.py` (séance guidée de bout en bout) et
+      `tests/e2e/test_today.py` (écran d'accueil).
 
 ## 💡 Backlog / Idées
 - **Plans d'entraînement intelligents** : génération ou suggestion de programmes dynamiques.

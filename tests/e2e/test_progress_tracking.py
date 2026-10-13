@@ -36,13 +36,13 @@ def fresh_page(context, console_errors):
     page.evaluate("localStorage.setItem('fitness_guided_pref', '0')")
     page.reload()
     page.evaluate("window.playBeep = () => {}")
-    page.wait_for_selector("#plans-grid .card", timeout=30000)
+    page.wait_for_selector("#plans-grid .card", state="attached", timeout=30000)
     return page
 
 
 def create_test_exercise(page):
     """Crée un exercice avec charge, un repos court et deux séries."""
-    page.get_by_role("button", name="Bibliothèque").click()
+    page.get_by_role("button", name="Exercices", exact=True).click()
     page.locator("#exercices-section").get_by_role("button", name="+ NOUVEL EXERCICE").click()
     page.fill("#ex-editor-nom", "Exercice E2E")
     page.fill("#ex-editor-tags", "Test")
@@ -58,7 +58,7 @@ def create_test_exercise(page):
 
 def create_test_plan(page):
     """Crée un programme contenant l'exercice de test."""
-    page.get_by_role("button", name="Programmes").click()
+    page.get_by_role("button", name="Programmes", exact=True).click()
     page.once("dialog", lambda d: d.accept("Programme E2E"))
     page.locator("#plans-section").get_by_role("button", name="+ NOUVEAU PROGRAMME").click()
     expect(page.locator("#modal")).to_have_class(re.compile(r"active"))
@@ -89,7 +89,7 @@ def test_library_and_plan_crud(page):
     ), "Le programme créé doit être persisté"
 
     # Modification de l'exercice depuis sa fiche
-    page.get_by_role("button", name="Bibliothèque").click()
+    page.get_by_role("button", name="Exercices", exact=True).click()
     page.fill("#search-input", "Exercice E2E")
     page.locator("#exercices-grid .card").first.click()
     page.locator("#modal-ex-extras").get_by_role("button", name="✏️ Modifier").click()
@@ -117,7 +117,7 @@ def test_library_and_plan_crud(page):
 
 def test_performance_logging(page, ex_id):
     print("Testing Performance Logging...")
-    page.get_by_role("button", name="Programmes").click()
+    page.get_by_role("button", name="Programmes", exact=True).click()
     page.locator("#plans-grid .card", has_text="Programme E2E").click()
     page.locator("#btn-start-workout").click()
 
@@ -179,7 +179,7 @@ def test_resume_interrupted_workout(page):
     page.evaluate("quitWorkout()")
 
     page.reload()
-    page.wait_for_selector("#plans-grid .card", timeout=30000)
+    page.wait_for_selector("#plans-grid .card", state="attached", timeout=30000)
     expect(page.locator("#resume-banner")).to_be_visible()
 
     page.locator("#resume-banner").get_by_role("button", name="REPRENDRE").click()
@@ -253,11 +253,11 @@ def test_sync_preserves_local_content(page):
 
 def test_stats_and_progression(page):
     print("Testing Stats & Progression...")
-    page.get_by_role("button", name="Statistiques").click()
+    page.get_by_role("button", name="Suivi", exact=True).click()
     expect(page.locator("#stats-summary")).to_contain_text("séances cette semaine")
     expect(page.locator("#stats-history-list")).to_contain_text("Programme E2E")
 
-    page.get_by_role("button", name="Bibliothèque").click()
+    page.get_by_role("button", name="Exercices", exact=True).click()
     page.fill("#search-input", "Exercice E2E")
     page.locator("#exercices-grid .card").first.click()
     expect(page.locator("#modal-ex-extras")).to_contain_text("Dernière fois")
