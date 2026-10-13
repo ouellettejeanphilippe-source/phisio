@@ -26,9 +26,10 @@ Les scripts sont chargés dans cet ordre, chacun s'appuyant sur le précédent :
 | `js/catalogue.js` | **Catalogue d'exercices.** Téléchargement et compactage de la base wger, recherche locale, suggestions, rapprochement de noms. Fonctions de calcul pures. |
 | `js/app.js` | **Contrôleur.** État global (`db`, `currentWorkout`), navigation, rendu, et machine à états du mode « Séance ». |
 | `js/coach.js` | **Fonctionnalités de suivi.** Se branche sur `app.js` : journalisation des séries, reprise des charges, reprise de séance, CRUD bibliothèque/programmes, sauvegarde, statistiques de progression. |
+| `js/guide.js` | **Séance guidée.** Déroulé d'une série (fonctions pures testées sous Node) et lecteur qui pilote l'écran de séance : voix, bips, vibrations, minuterie, repos, enchaînement. |
 | `js/discover.js` | **Interface de découverte.** Téléchargement du catalogue, navigateur de recherche et de suggestions, import, complètement d'un exercice existant. |
 
-`js/coach.js` et `js/discover.js` accèdent aux variables globales de `js/app.js` (`db`, `currentWorkout`…) : ces déclarations `let` de premier niveau sont partagées entre scripts classiques du même document, ces fichiers étant chargés après `app.js`.
+`js/coach.js`, `js/guide.js` et `js/discover.js` accèdent aux variables globales de `js/app.js` (`db`, `currentWorkout`…) : ces déclarations `let` de premier niveau sont partagées entre scripts classiques du même document, ces fichiers étant chargés après `app.js`.
 
 ## Clés de stockage (`STORE_KEYS` dans `js/store.js`)
 
@@ -42,6 +43,7 @@ Les scripts sont chargés dans cet ordre, chacun s'appuyant sur le précédent :
 | `fitness_snapshot` | Copie de secours prise avant import, synchronisation ou effacement. |
 | `fitness_catalogue` | Catalogue d'exercices téléchargé (~900 fiches, ~700 Ko). Volontairement **exclu des sauvegardes** : il est re-téléchargeable, contrairement aux données de l'utilisateur. |
 | `sync_url`, `last_sync`, `fitness_sound_pref`, `fitness_prefill_pref` | Réglages. |
+| `fitness_guided_pref`, `fitness_voice_pref` | Séance guidée et guidage vocal (`GUIDE_KEYS` dans `js/guide.js`), activés par défaut. |
 
 Toutes les écritures passent par `writeJSON()`, qui intercepte le dépassement de quota : le journal le plus ancien est élagué puis l'écriture est retentée, plutôt que de perdre silencieusement la donnée qui vient d'être produite.
 
@@ -52,6 +54,43 @@ Toutes les écritures passent par `writeJSON()`, qui intercepte le dépassement 
 3. L'état complet est réécrit dans `fitness_active_session` à chaque étape : une interruption (verrouillage, appel, fermeture de l'onglet) ne fait plus perdre la séance.
 4. `coachCommitSession()` écrit une entrée par exercice dans `fitness_logs` et une séance détaillée dans `fitness_sessions`, puis purge la séance en cours.
 5. Quitter en cours de route propose d'enregistrer le travail déjà réalisé ou de garder la séance en attente.
+
+## Séance guidée (`js/guide.js`)
+
+Par défaut, l'application mène la séance : l'utilisateur n'a plus à valider ses
+séries ni à lancer ses minuteurs.
+
+`renderWorkoutStep()` (js/app.js) cède la main à `guideTakeOver()` dès que la
+préférence est active. Le lecteur construit le déroulé de la série en cours avec
+`buildSetSteps(ex)`, une liste d'étapes `{kind, secs}` :
+
+| Type d'exercice | Étapes |
+| --- | --- |
+| `reps`, `poids` | une étape `rep` par répétition, au rythme `ex.tempo` (3 s par défaut) |
+| `secs` | une étape `hold` |
+| `kegel` | `contract` / `relax` alternés, `kegel_on` / `kegel_off` secondes |
+| `distance` | une étape `manual` (`secs: null`) : on attend « J'ai terminé » |
+| unilatéral | les étapes du côté gauche, `switch` (5 s), puis le côté droit |
+
+Une étape `prepare` annonce chaque nouvel exercice (5 s) ; elle est prise sur le
+repos prévu, pour ne pas allonger la séance. Entre deux séries, le repos `rest`
+suffit, ou une mise en place de 3 s s'il est plus court.
+
+La minuterie avance au temps réel écoulé (`Date.now()`), pas au nombre de ticks,
+et s'accélère via `guideTimeScale` dans les tests. Fin de série :
+`coachRecordSet()` journalise la série ; si l'utilisateur l'a écourtée,
+`doneInSet()` remplace la valeur par ce qui a réellement été fait (moyenne par côté
+pour un exercice unilatéral). La séance est sauvegardée à chaque série, et une
+reprise redémarre la série en cours avec son annonce.
+
+Le rythme réglé pendant la séance est écrit dans `ex.tempo`, dans la bibliothèque :
+la séance suivante le reprend. `estimateWorkoutDuration()` applique les mêmes
+règles que le lecteur pour afficher la durée d'un programme.
+
+L'écran est maintenu allumé (Screen Wake Lock) et la séance se met en pause
+quand l'application passe en arrière-plan. La synthèse vocale (`speechSynthesis`,
+voix française) est un confort : sans elle, des bips et vibrations marquent chaque
+étape.
 
 ## Sauvegarde et restauration
 
@@ -112,7 +151,7 @@ sont un point de départ, pas une prescription.
 
 ## Service Worker
 
-`sw.js` sert le code de l'application (HTML, JS, CSS) en **network-first** avec repli sur le cache, et les ressources immuables (icônes, polices) en cache-first. La version précédente servait tout depuis le cache sans jamais le rafraîchir : une fois installée sur le téléphone, l'application ne pouvait plus recevoir de mise à jour. Le nom de cache (`fitness-tracker-v3`) doit être incrémenté à chaque changement de la liste de ressources.
+`sw.js` sert le code de l'application (HTML, JS, CSS) en **network-first** avec repli sur le cache, et les ressources immuables (icônes, polices) en cache-first. La version précédente servait tout depuis le cache sans jamais le rafraîchir : une fois installée sur le téléphone, l'application ne pouvait plus recevoir de mise à jour. Le nom de cache (`fitness-tracker-v4`) doit être incrémenté à chaque changement de la liste de ressources.
 
 ### V3 Engine Refactor
 - **Pattern Stratégie**: Implémenté via `WorkoutStrategies` dans `js/app.js` pour simplifier le formatage et la gestion des timers actifs.

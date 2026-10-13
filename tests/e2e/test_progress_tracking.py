@@ -32,6 +32,8 @@ def fresh_page(context, console_errors):
     )
     page.goto(BASE_URL)
     page.evaluate("localStorage.clear()")
+    # Ces tests valident le mode manuel ; la séance guidée a son propre test.
+    page.evaluate("localStorage.setItem('fitness_guided_pref', '0')")
     page.reload()
     page.evaluate("window.playBeep = () => {}")
     page.wait_for_selector("#plans-grid .card", timeout=30000)

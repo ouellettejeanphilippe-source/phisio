@@ -4,6 +4,11 @@
 - Rien en cours.
 
 ## 📋 À faire
+- **Écran « Aujourd'hui »** : proposer la routine du jour (Lundi, Mardi…) en un tap dès l'ouverture,
+  avec la semaine en pastilles (fait / manqué / à venir).
+- **Navigation simplifiée** : 3 onglets (Aujourd'hui, Routines, Suivi), réglages techniques
+  (Google Sheets, catalogue, sauvegarde) rangés dans « Avancé ».
+- **Suivi rééducation** : courbes douleur / ressenti et export « pour mon physio ».
 - Affiner l'UI avec la "Bottom Island" et le Glassmorphism.
 - **Multi-profils** : gérer plusieurs personnes (et donc plusieurs journaux) sur un même appareil.
 - **Audio personnalisé** : remplacer les bips de l'AudioContext par des fichiers MP3 choisis par l'utilisateur.
@@ -45,9 +50,19 @@
 - [x] **Complètement d'un exercice** : retrouver consignes, muscles, matériel et image
       d'un exercice de la bibliothèque, sans jamais écraser ce que l'utilisateur a écrit.
       Rapprochement strict, choix manuel proposé en cas de doute.
+- [x] **Séance guidée** (`js/guide.js`) : l'application mène la séance seule. Elle annonce
+      l'exercice, rythme et compte les répétitions à voix haute, chronomètre les maintiens,
+      alterne contraction / relâchement, fait changer de côté, enchaîne repos et exercices.
+      Rythme réglable et mémorisé par exercice, pause, « Passer » / « Finir la série »
+      (seul le travail réellement fait est journalisé), écran maintenu allumé, pause
+      automatique si l'app passe en arrière-plan, retour possible au mode manuel.
+      Durée estimée affichée sur chaque programme.
+- [x] **Correctif** : les fenêtres « File d'attente » et « Modifier » s'ouvraient derrière
+      l'écran de séance.
 - [x] **Tests E2E** : `tests/e2e/test_workout_engine.py` (moteur de séance),
       `tests/e2e/test_progress_tracking.py` (journal, reprise, sauvegarde, CRUD) et
-      `tests/e2e/test_catalogue.py` (catalogue, découverte, import, complètement).
+      `tests/e2e/test_catalogue.py` (catalogue, découverte, import, complètement) et
+      `tests/e2e/test_guided_session.py` (séance guidée de bout en bout).
 
 ## 💡 Backlog / Idées
 - **Plans d'entraînement intelligents** : génération ou suggestion de programmes dynamiques.
