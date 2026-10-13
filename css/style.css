@@ -867,3 +867,193 @@
         grid-template-columns: 1fr;
     }
 }
+
+        /* ------------------------------------------------------------ */
+        /* Séance guidée (js/guide.js)                                  */
+        /* ------------------------------------------------------------ */
+
+        /* Les fenêtres ouvertes pendant une séance passent devant l'écran de séance */
+        #modal-workout-queue,
+        #modal-edit-ex,
+        #modal-guide-menu {
+            z-index: 2100;
+        }
+
+        .guided-view {
+            --phase-color: var(--accent-color);
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 14px;
+            min-height: 100%;
+            padding-bottom: 12px;
+        }
+
+        .guided-view[data-kind="hold"],
+        .guided-view[data-kind="contract"] { --phase-color: #ff6f91; }
+        .guided-view[data-kind="relax"],
+        .guided-view[data-kind="rest"] { --phase-color: #3fd0a0; }
+        .guided-view[data-kind="prepare"],
+        .guided-view[data-kind="switch"] { --phase-color: #ffb300; }
+        .guided-view.is-paused { --phase-color: var(--text-secondary); }
+
+        .guided-head { margin-top: 0.5rem; }
+
+        .guided-ex-name {
+            font-size: clamp(1.6rem, 7vw, 2.4rem);
+            line-height: 1.15;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .guided-sub {
+            margin-top: 6px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .guided-ring-wrap {
+            position: relative;
+            width: min(68vw, 280px);
+            aspect-ratio: 1;
+            margin: 6px auto 0;
+        }
+
+        .guided-ring {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .guided-ring-bg {
+            fill: none;
+            stroke: var(--surface-hover);
+            stroke-width: 10;
+        }
+
+        .guided-ring-progress {
+            fill: none;
+            stroke: var(--phase-color);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 691;
+            stroke-dashoffset: 691;
+            transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
+        }
+
+        .guided-ring-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .guided-big {
+            font-size: clamp(4rem, 22vw, 6rem);
+            font-weight: 800;
+            line-height: 1;
+            color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .guided-big-unit {
+            margin-top: 6px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .guided-phase {
+            font-size: 1.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--phase-color);
+            transition: color 0.3s;
+        }
+
+        .guided-tempo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .guided-tempo button {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .guided-desc {
+            max-width: 520px;
+            color: var(--text-primary);
+            opacity: 0.85;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .guided-next {
+            margin-top: auto;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .guided-controls {
+            gap: 10px;
+            padding: 16px 20px calc(16px + var(--safe-area-bottom));
+            background-color: #050505;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .guided-btn {
+            flex: 1;
+            min-height: 64px;
+            border-radius: 18px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        #guided-btn-menu {
+            flex: 0 0 64px;
+            font-size: 1.6rem;
+        }
+
+        .guided-btn-main {
+            flex: 2;
+            border: none;
+            background: var(--accent-gradient);
+            color: #000;
+            font-size: 1.15rem;
+        }
+
+        .guide-menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .guide-menu-list button {
+            text-align: left;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .guide-menu-list button.danger { color: #ff5555; }

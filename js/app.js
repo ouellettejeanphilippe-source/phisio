@@ -1554,7 +1554,8 @@ const DEFAULT_DATA = {
             }).filter(e => e);
 
             document.getElementById('modal-title').textContent = plan.nom;
-            document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>`;
+            const duree = typeof estimateWorkoutDuration === 'function' ? formatEstimate(estimateWorkoutDuration(currentViewedPlanExercises)) : '';
+            document.getElementById('modal-meta').innerHTML = `<span class="tag">${plan.goal}x / semaine</span>` + (duree ? ` <span class="tag">⏱ ${duree}</span>` : '');
             document.getElementById('modal-desc').textContent = plan.description;
 
             // Setup "Démarrer" button
@@ -1855,6 +1856,9 @@ const DEFAULT_DATA = {
 
             // Mise à jour de la barre de progression
             document.getElementById('workout-progress').textContent = `${currentWorkout.currentExIndex + 1} / ${currentWorkout.exercices.length}`;
+
+            // Séance guidée (js/guide.js) : l'application mène la séance elle-même
+            if (typeof guideTakeOver === 'function' && guideTakeOver()) return;
 
             // Si on se repose
             if (currentWorkout.isResting) {
@@ -2284,6 +2288,12 @@ const DEFAULT_DATA = {
             triggerHaptic();
             document.getElementById('modal-workout-queue').classList.remove('active');
 
+            // Séance guidée : on garde la progression, l'utilisateur reprend quand il veut
+            if (typeof guide !== 'undefined' && guide.active) {
+                guideRender();
+                return;
+            }
+
             // Re-render the workout step in case the immediate next exercise changed
             if (document.getElementById('workout-screen').style.display !== 'none' && !currentWorkout.isResting) {
                 renderWorkoutStep();
@@ -2371,6 +2381,7 @@ const DEFAULT_DATA = {
         }
 
         function showWorkoutEnd() {
+            if (typeof guideStop === 'function') guideStop();
             document.getElementById('workout-progress').textContent = "Terminé";
             document.getElementById('workout-ex-view').style.display = 'none';
             document.getElementById('workout-rest-view').style.display = 'none';
@@ -2580,6 +2591,10 @@ const DEFAULT_DATA = {
 
         function quitWorkout() {
             triggerHaptic();
+            if (typeof guideStop === 'function') {
+                guideStop();
+                guide.sessionOff = false;
+            }
             coachOnWorkoutQuit();
 
             if (currentWorkout.restInterval) clearInterval(currentWorkout.restInterval);

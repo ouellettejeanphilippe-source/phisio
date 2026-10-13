@@ -6,6 +6,12 @@ Elle fonctionne entièrement hors ligne, sur votre téléphone, sans compte et s
 
 ## Fonctionnalités 🚀
 
+### Une séance qui se déroule toute seule
+* **Séance guidée :** appuyez sur Démarrer, posez le téléphone. L'application annonce chaque exercice, **compte vos répétitions à voix haute** à un rythme régulier, chronomètre les maintiens, alterne « contractez / relâchez », vous fait changer de côté, gère le repos et enchaîne l'exercice suivant. Vous n'avez rien à valider.
+* **Rythme ajustable :** « − lent / vite + » pendant la séance ; le rythme choisi est retenu pour la prochaine fois.
+* **Toujours la main :** pause, « Passer », « Finir la série » (seul ce que vous avez fait est enregistré), et un menu pour modifier, reporter ou passer un exercice — ou revenir au mode manuel.
+* **Pensée pour le quotidien :** l'écran reste allumé, la séance se met en pause si vous quittez l'application, et chaque programme affiche sa durée estimée.
+
 ### Le suivi qui compte
 * **Journal de performance :** chaque série validée est enregistrée — répétitions réellement faites, charge, durée. Rien n'est perdu à la fin de la séance.
 * **Progression automatique :** la séance suivante démarre sur ce que vous avez réellement réalisé la fois précédente. Le +1 kg d'aujourd'hui est votre point de départ la prochaine fois.
@@ -71,7 +77,7 @@ C'est **optionnel** : vous pouvez créer vos exercices et vos programmes directe
 
 ```bash
 # Tests unitaires (couche de données, utilitaires, sécurité)
-node --test js/app.test.js js/utils.test.js js/security.test.js js/store.test.js
+node --test js/*.test.js
 
 # Tests de bout en bout (Playwright) : moteur de séance + suivi de progression
 ./run_e2e_tests.sh

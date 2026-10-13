@@ -58,6 +58,8 @@ def setup_page(page):
     # Inject mock data into localStorage
     page.evaluate(f"(data) => localStorage.setItem('fitness_data', JSON.stringify(data))", MOCK_DATA)
     page.evaluate("localStorage.setItem('fitness_sound_pref', '0')")
+    # Ces tests valident le mode manuel ; la séance guidée a son propre test.
+    page.evaluate("localStorage.setItem('fitness_guided_pref', '0')")
 
     # Reload
     page.reload()
